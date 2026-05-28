@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 1,
+  "currentIteration": 2,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T07:54:59.075Z",
+  "updatedAt": "2026-05-28T07:55:00.017Z",
   "maxIterations": 12,
   "todos": [
     {
@@ -15,7 +15,7 @@
     {
       "id": 2,
       "title": "Iteration 2: Complete plans/issues/002-config-schemas-and-artifacts.md only, preserving Issue 001 behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 3,
@@ -113,6 +113,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-001-after",
       "completedAt": "2026-05-28T07:54:58.899Z"
+    },
+    {
+      "number": 2,
+      "status": "running",
+      "todoId": 2,
+      "beforeRef": "ralph/clipper-prd-issues/iter-002-before",
+      "startedAt": "2026-05-28T07:54:59.859Z"
     }
   ]
 }
