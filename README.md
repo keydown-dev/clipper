@@ -492,6 +492,8 @@ result = run_pipeline(
 
 The result should include paths and summary data for source video, metadata, transcript, scores, clips, montage, counts, durations, and runtime.
 
+Stage 2 narrative edit planning is intentionally deferred. Its extension point is after scoring and before cutting: a future planner can consume the transcript plus `work/scores.json` candidate segments and write an ordered clip plan compatible with the existing cut/montage artifact flow.
+
 ## Manual Validation Flows
 
 ### Local file

@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 14,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:52:06.250Z",
+  "updatedAt": "2026-05-28T18:54:03.394Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -75,7 +75,7 @@
     {
       "id": 12,
       "title": "Iteration 12: Complete plans/issues/012-final-verification-and-closeout.md only, run final verification, and report remaining risks.",
-      "status": "running"
+      "status": "complete"
     }
   ],
   "iterations": [
@@ -662,10 +662,42 @@
     },
     {
       "number": 14,
-      "status": "running",
+      "status": "accepted",
       "todoId": 12,
       "beforeRef": "ralph/clipper-prd-issues/iter-014-before",
-      "startedAt": "2026-05-28T18:52:06.085Z"
+      "startedAt": "2026-05-28T18:52:06.085Z",
+      "diff": {
+        "filesChanged": 1,
+        "insertions": 2,
+        "deletions": 0
+      },
+      "usage": {
+        "input": 35222,
+        "output": 2997,
+        "cacheRead": 532480,
+        "cacheWrite": 0,
+        "totalTokens": 570699,
+        "cost": 0.53226,
+        "contextWindow": 272000,
+        "contextTokens": 27284
+      },
+      "summary": "Completed Issue 012 final verification and closeout. The final local verification suite passes, CLI help works, doctor passes, generated-video smoke tests pass, and optional real-service checks are documented as skipped because their env gates are unset.",
+      "changedFiles": [
+        "README.md",
+        "Added an explicit note that Stage 2 narrative edit planning is deferred."
+      ],
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification — Iteration 14\n\nStatus: passed\n\n## Commands run\n\n- `uv sync`\n  - Result: passed\n  - Output: resolved/audited dependencies successfully.\n\n- `uv run clipper --help`\n  - Result: passed\n  - Output: CLI help rendered with commands: doctor, start, list, transcribe, score, cut, montage, pipeline.\n\n- `uv run clipper doctor`\n  - Result: passed\n  - Output: `Summary: pass=10 warn=0 fail=0`.\n\n- `uv run pytest`\n  - Result: passed\n  - Output before README edit: `76 passed, 3 skipped in 3.52s`.\n\n- `uv run pytest tests/test_issue007.py tests/test_issue008.py::test_generated_video_can_be_cut_with_audio_and_silent_modes tests/test_issue009.py::test_generated_clips_assemble_with_duration_dimensions_and_audio_modes tests/test_issue010.py::test_pipeline_runs_generated_local_video_with_mocked_transcription_and_scoring`\n  - Result: passed\n  - Output: `5 passed in 1.95s`.\n\n- Optional env-gated check discovery via `uv run python ...`\n  - Result: passed\n  - Output: `CLIPPER_RUN_LLM_TESTS=unset`, `CLIPPER_RUN_WHISPER_TESTS=unset`; optional real-service tests intentionally not run.\n\n- `uv run pytest`\n  - Result: passed after README edit\n  - Output: `76 passed, 3 skipped in 3.53s`.\n\n## Notes\n\n- Generated-video smoke path passed through the targeted generated media, cut, montage, and mocked pipeline tests.\n- `clipper doctor` passed locally with FFmpeg/ffprobe available and default non-connectivity checks only.\n- Optional LLM connectivity and real Whisper model tests remain documented and env-gated; they were not configured in this environment."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-prd-issues/iter-014-after",
+      "completedAt": "2026-05-28T18:54:03.311Z"
     }
   ]
 }
