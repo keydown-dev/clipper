@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 
 from .artifacts import ArtifactError, ArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
 from .config import load_config
+from .cutting import CutOptions, cut_video
 from .progress import CliProgress
 from .scoring import score_video
 from .transcription import TranscriptionOptions, transcribe_video
@@ -320,6 +321,38 @@ def run_score(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def run_cut(args: argparse.Namespace) -> int:
+    """Cut scored segments into individual clip files."""
+
+    command_config = config_from_args(args)
+    video, clips_path, manifest, reused = cut_video(
+        store=command_config.store,
+        video=args.video,
+        options=CutOptions(min_score=args.min_score, silent=args.silent),
+        reuse=args.reuse,
+        force=args.force,
+        json_output=command_config.json_output,
+        progress=CliProgress(enabled=command_config.verbose > 0),
+    )
+    result = {
+        "clips_path": str(clips_path),
+        "source_file": manifest["source_file"],
+        "clip_count": len(manifest["clips"]),
+        "clips": manifest["clips"],
+        "min_score": manifest.get("min_score", args.min_score),
+        "silent": manifest.get("silent", args.silent),
+        "reused": reused,
+    }
+    if command_config.json_output:
+        print_json(success_envelope(video=video, artifact_path=str(clips_path), result=result))
+    else:
+        action = "Reused" if reused else "Cut"
+        print(f"{action} video {video}")
+        print(f"Clips: {clips_path}")
+        print(f"Clip count: {result['clip_count']}")
+    return EXIT_SUCCESS
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -493,6 +526,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["list"] = run_list
     handlers["transcribe"] = run_transcribe
     handlers["score"] = run_score
+    handlers["cut"] = run_cut
 
     doctor = subparsers.add_parser("doctor", parents=[common], help="Validate local Clipper environment.")
     doctor.add_argument("--check-llm", action="store_true", help="Also check LLM connectivity.")
@@ -566,23 +600,29 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the Clipper CLI."""
 
+    environ_before_dotenv = dict(os.environ)
     load_dotenv()
     parser = build_parser()
-    args = parser.parse_args(argv)
-    if args.handler is None:
-        parser.print_help()
-        return EXIT_USAGE
     try:
-        return int(args.handler(args))
-    except KeyboardInterrupt:
-        return EXIT_CANCELLED
-    except ArtifactError as exc:
-        config = config_from_args(args)
-        if config.json_output:
-            print_json(error_envelope("artifact_error", str(exc)))
-        else:
-            print(f"error: {exc}", file=sys.stderr)
-        return EXIT_FAILURE
+        args = parser.parse_args(argv)
+        if args.handler is None:
+            parser.print_help()
+            return EXIT_USAGE
+        try:
+            return int(args.handler(args))
+        except KeyboardInterrupt:
+            return EXIT_CANCELLED
+        except ArtifactError as exc:
+            config = config_from_args(args)
+            if config.json_output:
+                print_json(error_envelope("artifact_error", str(exc)))
+            else:
+                print(f"error: {exc}", file=sys.stderr)
+            return EXIT_FAILURE
+    finally:
+        for key in set(os.environ) - set(environ_before_dotenv):
+            os.environ.pop(key, None)
+        os.environ.update(environ_before_dotenv)
 
 
 if __name__ == "__main__":
