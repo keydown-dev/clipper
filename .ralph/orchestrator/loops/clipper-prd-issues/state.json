@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 13,
+  "currentIteration": 14,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:52:05.669Z",
+  "updatedAt": "2026-05-28T18:52:06.250Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -75,7 +75,7 @@
     {
       "id": 12,
       "title": "Iteration 12: Complete plans/issues/012-final-verification-and-closeout.md only, run final verification, and report remaining risks.",
-      "status": "queued"
+      "status": "running"
     }
   ],
   "iterations": [
@@ -659,6 +659,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-013-after",
       "completedAt": "2026-05-28T18:52:05.590Z"
+    },
+    {
+      "number": 14,
+      "status": "running",
+      "todoId": 12,
+      "beforeRef": "ralph/clipper-prd-issues/iter-014-before",
+      "startedAt": "2026-05-28T18:52:06.085Z"
     }
   ]
 }
