@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 10,
+  "currentIteration": 11,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:42:51.293Z",
+  "updatedAt": "2026-05-28T18:42:51.866Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -60,7 +60,7 @@
     {
       "id": 9,
       "title": "Iteration 9: Complete plans/issues/009-montage-assembly.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 10,
@@ -523,6 +523,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-010-after",
       "completedAt": "2026-05-28T18:42:51.209Z"
+    },
+    {
+      "number": 11,
+      "status": "running",
+      "todoId": 9,
+      "beforeRef": "ralph/clipper-prd-issues/iter-011-before",
+      "startedAt": "2026-05-28T18:42:51.712Z"
     }
   ]
 }
