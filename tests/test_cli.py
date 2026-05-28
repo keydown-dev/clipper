@@ -33,7 +33,11 @@ def test_placeholder_commands_run(command: str, capsys: pytest.CaptureFixture[st
     if command in {"start", "pipeline"}:
         args.append("input.mp4")
     assert main(args) == EXIT_SUCCESS
-    assert f"clipper {command}: placeholder command" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    if command == "list":
+        assert "No videos found" in output
+    else:
+        assert f"clipper {command}: placeholder command" in output
 
 
 def test_shared_options_parse_after_subcommand() -> None:
@@ -47,6 +51,6 @@ def test_shared_options_parse_after_subcommand() -> None:
     assert config.verbose == 1
 
 
-def test_json_output_is_enveloped(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["list", "--json"]) == EXIT_SUCCESS
-    assert capsys.readouterr().out == '{"ok":true,"result":{"command":"list","message":"clipper list: placeholder command; implementation pending."}}\n'
+def test_json_output_is_enveloped(capsys: pytest.CaptureFixture[str], tmp_path) -> None:
+    assert main(["list", "--store", str(tmp_path / ".clipper"), "--json"]) == EXIT_SUCCESS
+    assert capsys.readouterr().out == '{"ok":true,"result":{"videos":[]}}\n'

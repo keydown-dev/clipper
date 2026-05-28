@@ -1,0 +1,13 @@
+## orchestrator/clipper-prd-issues
+ M .env.example
+ M .ralph/orchestrator/loops/clipper-prd-issues/iterations/002/verification.md
+ M .ralph/orchestrator/loops/clipper-prd-issues/iterations/002/worker-output.jsonl
+ M clipper/cli.py
+ M tests/test_cli.py
+?? .ralph/orchestrator/loops/clipper-prd-issues/iterations/002/handoff-out.md
+?? clipper/__pycache__/
+?? clipper/artifacts.py
+?? clipper/config.py
+?? clipper/schemas.py
+?? tests/__pycache__/
+?? tests/test_issue002.py

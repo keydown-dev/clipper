@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 2,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T07:55:00.017Z",
+  "updatedAt": "2026-05-28T07:58:59.097Z",
   "maxIterations": 12,
   "todos": [
     {
@@ -15,7 +15,7 @@
     {
       "id": 2,
       "title": "Iteration 2: Complete plans/issues/002-config-schemas-and-artifacts.md only, preserving Issue 001 behavior; verify acceptance criteria.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": 3,
@@ -116,10 +116,47 @@
     },
     {
       "number": 2,
-      "status": "running",
+      "status": "accepted",
       "todoId": 2,
       "beforeRef": "ralph/clipper-prd-issues/iter-002-before",
-      "startedAt": "2026-05-28T07:54:59.859Z"
+      "startedAt": "2026-05-28T07:54:59.859Z",
+      "diff": {
+        "filesChanged": 14,
+        "insertions": 1118,
+        "deletions": 20
+      },
+      "usage": {
+        "input": 38459,
+        "output": 11303,
+        "cacheRead": 468480,
+        "cacheWrite": 0,
+        "totalTokens": 518242,
+        "cost": 0.7656250000000002,
+        "contextWindow": 272000,
+        "contextTokens": 29730
+      },
+      "summary": "Completed Issue 002 foundations:\n\n- Added configuration loading with defaults, `.env` support, env overrides, and explicit store override support.\n- Added artifact helpers for pathlib JSON IO, fixed per-video layout, safe/default video names, URL/local canonical references, video listing, video resolution, and existing-output policy.\n- Added typed artifact contracts and lightweight validators for metadata, transcript, scores, clip manifests, montage results, and pipeline results.\n- Added shared CLI JSON success/failure envelope helpers and implemented real `clipper list` while leaving other Issue 001 placeholder commands runnable.\n- Made `--reuse` and `--force` mutually exclusive via argparse shared helper.\n- Updated `.env.example` with documented LLM/Whisper/artifact defaults.\n- Added Issue 002 test coverage and adjusted Issue 001 CLI tests for the now-implemented `list` command.",
+      "changedFiles": [
+        ".env.example",
+        "clipper/cli.py",
+        "clipper/config.py",
+        "clipper/artifacts.py",
+        "clipper/schemas.py",
+        "tests/test_cli.py",
+        "tests/test_issue002.py"
+      ],
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification — Iteration 002\n\nStatus: passed\n\n## Commands\n\n```bash\nuv run pytest\n```\n\n## Results\n\n```text\ncollected 26 items\n\ntests/test_cli.py ...................                                    [ 73%]\ntests/test_issue002.py .......                                           [100%]\n\n============================== 26 passed in 0.05s ==============================\n```\n\n## Acceptance coverage\n\n- Config defaults, env overrides, and `.env` loading covered by tests.\n- `.env.example` documents LLM/Whisper values and optional `LLM_API_KEY`.\n- JSON IO, schema validation, and CLI JSON envelopes covered by tests.\n- Artifact layout, store overrides, video naming, fixed paths, and list support covered by tests.\n- Existing-output fail/reuse/force/mutual exclusion/invalid JSON behavior covered by tests.\n- Schema validation requires `schema_version: 1`, video-relative paths, core fields, and permits extra provider/tool fields."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-prd-issues/iter-002-after",
+      "completedAt": "2026-05-28T07:58:58.788Z"
     }
   ]
 }
