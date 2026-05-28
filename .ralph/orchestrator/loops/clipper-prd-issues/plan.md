@@ -6,7 +6,7 @@ Control: active
 
 - [x] 1. Iteration 1: Complete plans/issues/001-project-foundation.md only, verify its acceptance criteria, and report evidence. (complete)
 - [x] 2. Iteration 2: Complete plans/issues/002-config-schemas-and-artifacts.md only, preserving Issue 001 behavior; verify acceptance criteria. (complete)
-- [ ] 3. Iteration 3: Complete plans/issues/003-doctor-command.md only, preserving prior behavior; verify acceptance criteria. (running)
+- [x] 3. Iteration 3: Complete plans/issues/003-doctor-command.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [ ] 4. Iteration 4: Complete plans/issues/004-start-video.md only, preserving prior behavior; verify acceptance criteria. (queued)
 - [ ] 5. Iteration 5: Complete plans/issues/005-transcription.md only, preserving prior behavior; verify acceptance criteria. (deferred)
 - [ ] 6. Iteration 6: Complete plans/issues/006-llm-scoring.md only, preserving prior behavior; verify acceptance criteria. (deferred)

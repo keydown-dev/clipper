@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
+import platform
+import shutil
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Sequence
@@ -13,6 +17,7 @@ from typing import Any, Callable, Sequence
 from dotenv import load_dotenv
 
 from .artifacts import ArtifactError, list_videos
+from .config import load_config
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
@@ -20,7 +25,6 @@ EXIT_USAGE = 2
 EXIT_CANCELLED = 130
 
 PLACEHOLDER_COMMANDS = (
-    "doctor",
     "start",
     "list",
     "transcribe",
@@ -38,6 +42,15 @@ class CommandConfig:
     store: Path
     json_output: bool
     verbose: int
+
+
+@dataclass(frozen=True)
+class DoctorCheck:
+    """Single doctor check result."""
+
+    name: str
+    status: str
+    message: str
 
 
 def build_common_parent() -> argparse.ArgumentParser:
@@ -108,6 +121,119 @@ def emit_result(config: CommandConfig, command: str, message: str) -> None:
         print(message)
 
 
+def _check_python_version() -> DoctorCheck:
+    minimum = (3, 11)
+    current = sys.version_info[:3]
+    version = platform.python_version()
+    if current >= minimum:
+        return DoctorCheck("python", "pass", f"Python {version} meets >= 3.11.")
+    return DoctorCheck("python", "fail", f"Python {version} is too old; install Python 3.11 or newer.")
+
+
+def _check_executable(name: str) -> DoctorCheck:
+    path = shutil.which(name)
+    if path:
+        return DoctorCheck(name, "pass", f"Found {name} at {path}.")
+    return DoctorCheck(name, "fail", f"{name} was not found on PATH; install FFmpeg and ensure {name} is available.")
+
+
+def _check_python_dependency(module_name: str, package_name: str | None = None) -> DoctorCheck:
+    package = package_name or module_name
+    if importlib.util.find_spec(module_name) is not None:
+        return DoctorCheck(f"python dependency: {package}", "pass", f"Import target {module_name} is available.")
+    return DoctorCheck(f"python dependency: {package}", "fail", f"Cannot import {module_name}; install project dependencies with `uv sync`.")
+
+
+def _check_artifact_store_writable(store: Path) -> DoctorCheck:
+    try:
+        store.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(prefix=".doctor-", dir=store, delete=True):
+            pass
+    except OSError as exc:
+        return DoctorCheck("artifact store writable", "fail", f"Cannot write to {store}: {exc}")
+    return DoctorCheck("artifact store writable", "pass", f"Artifact store {store} is writable.")
+
+
+def _check_llm_config(*, check_connectivity: bool) -> DoctorCheck:
+    try:
+        cfg = load_config(env_file=None)
+    except (OSError, ValueError) as exc:
+        return DoctorCheck("llm configuration", "fail", f"Invalid LLM configuration: {exc}")
+    if not cfg.llm_base_url or not cfg.llm_model:
+        return DoctorCheck("llm configuration", "fail", "Set LLM_BASE_URL and LLM_MODEL before scoring clips.")
+    if not check_connectivity:
+        key_note = "LLM_API_KEY is set" if cfg.llm_api_key else "LLM_API_KEY is not set; this is OK only for local endpoints that do not require auth"
+        return DoctorCheck("llm configuration", "pass", f"Configured {cfg.llm_model} at {cfg.llm_base_url}. {key_note}. Use --check-llm to test connectivity.")
+    try:
+        from openai import OpenAI
+
+        client = OpenAI(base_url=cfg.llm_base_url, api_key=cfg.llm_api_key or "not-needed", timeout=cfg.llm_timeout_seconds)
+        client.models.list()
+    except Exception as exc:  # pragma: no cover - depends on user's network/service
+        return DoctorCheck("llm connectivity", "fail", f"Could not reach LLM endpoint {cfg.llm_base_url}: {exc}")
+    return DoctorCheck("llm connectivity", "pass", f"Connected to LLM endpoint {cfg.llm_base_url}.")
+
+
+def _check_whisper(*, load_model: bool) -> DoctorCheck:
+    try:
+        cfg = load_config(env_file=None)
+    except (OSError, ValueError) as exc:
+        return DoctorCheck("whisper configuration", "fail", f"Invalid Whisper configuration: {exc}")
+    if importlib.util.find_spec("faster_whisper") is None:
+        return DoctorCheck("whisper readiness", "fail", "faster-whisper is not importable; install project dependencies with `uv sync`.")
+    if not load_model:
+        return DoctorCheck("whisper readiness", "pass", f"faster-whisper is importable; configured model={cfg.whisper_model}, device={cfg.whisper_device}, compute_type={cfg.whisper_compute_type}. Use --check-whisper to load the model.")
+    try:
+        from faster_whisper import WhisperModel
+
+        WhisperModel(cfg.whisper_model, device=cfg.whisper_device, compute_type=cfg.whisper_compute_type)
+    except Exception as exc:  # pragma: no cover - may download/use local hardware
+        return DoctorCheck("whisper model", "fail", f"Could not load Whisper model {cfg.whisper_model}: {exc}")
+    return DoctorCheck("whisper model", "pass", f"Loaded Whisper model {cfg.whisper_model}.")
+
+
+def build_doctor_checks(config: CommandConfig, *, check_llm: bool = False, check_whisper: bool = False) -> list[DoctorCheck]:
+    """Build doctor results without requiring external connectivity by default."""
+
+    checks = [
+        _check_python_version(),
+        _check_executable("ffmpeg"),
+        _check_executable("ffprobe"),
+        _check_python_dependency("yt_dlp", "yt-dlp"),
+        _check_python_dependency("openai"),
+        _check_python_dependency("dotenv", "python-dotenv"),
+        _check_python_dependency("questionary"),
+        _check_artifact_store_writable(config.store),
+        _check_llm_config(check_connectivity=check_llm),
+        _check_whisper(load_model=check_whisper),
+    ]
+    return checks
+
+
+def doctor_result(checks: list[DoctorCheck]) -> dict[str, Any]:
+    counts = {"pass": 0, "warn": 0, "fail": 0}
+    serialized = []
+    for check in checks:
+        counts[check.status] += 1
+        serialized.append({"name": check.name, "status": check.status, "message": check.message})
+    return {"checks": serialized, "summary": counts}
+
+
+def run_doctor(args: argparse.Namespace) -> int:
+    """Validate local Clipper environment."""
+
+    config = config_from_args(args)
+    result = doctor_result(build_doctor_checks(config, check_llm=args.check_llm, check_whisper=args.check_whisper))
+    if config.json_output:
+        print_json(success_envelope(result=result))
+    else:
+        for check in result["checks"]:
+            print(f"[{check['status'].upper()}] {check['name']}: {check['message']}")
+        summary = result["summary"]
+        print(f"Summary: pass={summary['pass']} warn={summary['warn']} fail={summary['fail']}")
+    return EXIT_SUCCESS
+
+
 def run_placeholder(args: argparse.Namespace) -> int:
     """Run a placeholder command until implementation-specific issues fill it in."""
 
@@ -148,9 +274,9 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["list"] = run_list
 
     doctor = subparsers.add_parser("doctor", parents=[common], help="Validate local Clipper environment.")
-    doctor.add_argument("--check-llm", action="store_true", help="Also check LLM connectivity when implemented.")
-    doctor.add_argument("--check-whisper", action="store_true", help="Also load/check Whisper model when implemented.")
-    doctor.set_defaults(handler=handlers["doctor"])
+    doctor.add_argument("--check-llm", action="store_true", help="Also check LLM connectivity.")
+    doctor.add_argument("--check-whisper", action="store_true", help="Also load/check Whisper model.")
+    doctor.set_defaults(handler=run_doctor)
 
     start = subparsers.add_parser("start", parents=[common], help="Create a video workspace from a URL or local video.")
     start.add_argument("input", nargs="?", metavar="URL_OR_VIDEO_PATH", help="Remote URL or local source video path.")
