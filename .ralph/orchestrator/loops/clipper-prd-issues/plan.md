@@ -11,7 +11,7 @@ Control: active
 - [x] 5. Iteration 5: Complete plans/issues/005-transcription.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [x] 13. Iteration 5.1: Complete plans/issues/005.1-transcription-verbose-progress.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [x] 6. Iteration 6: Complete plans/issues/006-llm-scoring.md only, preserving prior behavior; verify acceptance criteria. (complete)
-- [ ] 7. Iteration 7: Complete plans/issues/007-generated-video-fixtures.md only, preserving prior behavior; verify acceptance criteria. (running)
+- [x] 7. Iteration 7: Complete plans/issues/007-generated-video-fixtures.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [ ] 8. Iteration 8: Complete plans/issues/008-cut-clips.md only, preserving prior behavior; verify acceptance criteria. (deferred)
 - [ ] 9. Iteration 9: Complete plans/issues/009-montage-assembly.md only, preserving prior behavior; verify acceptance criteria. (deferred)
 - [ ] 10. Iteration 10: Complete plans/issues/010-pipeline-orchestrator.md only, preserving prior behavior; verify acceptance criteria. (deferred)

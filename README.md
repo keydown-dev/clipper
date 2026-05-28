@@ -470,6 +470,8 @@ Testing expectations:
 - test CLI routing, `--json`, `--reuse`, and `--force`
 - generate low-resolution 10-second deterministic test videos during tests instead of committing binary video fixtures; fixture helpers should allow duration/size overrides
 
+Generated video fixture helpers live in `tests/helpers/generated_media.py`. Use `generate_test_video(tmp_path)` for the default 10-second 320x180 MP4 with sine-wave audio, or override `duration`, `width`, `height`, and `audio` for cut/montage edge cases. The helper skips FFmpeg-dependent pytest tests when `ffmpeg` or `ffprobe` is unavailable. Use `probe_duration()` with `assert_duration_close()` for duration checks so FFmpeg/ffprobe rounding stays within the project ±0.5s tolerance.
+
 Optional integration tests:
 
 ```bash
