@@ -8,15 +8,17 @@ import json
 import os
 import platform
 import shutil
+import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from dotenv import load_dotenv
 
-from .artifacts import ArtifactError, list_videos
+from .artifacts import ArtifactError, ArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
 from .config import load_config
 
 EXIT_SUCCESS = 0
@@ -243,6 +245,147 @@ def run_placeholder(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _video_relative(layout: ArtifactLayout, path: Path) -> str:
+    return path.relative_to(layout.root).as_posix()
+
+
+def _json_safe(value: Any) -> Any:
+    return json.loads(json.dumps(value, default=str))
+
+
+def _probe_duration(path: Path) -> float:
+    try:
+        output = subprocess.check_output(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "json", str(path)],
+            text=True,
+            stderr=subprocess.STDOUT,
+        )
+        duration = float(json.loads(output)["format"]["duration"])
+    except (OSError, subprocess.CalledProcessError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ArtifactError(f"could not determine video duration with ffprobe for {path}: {exc}") from exc
+    if duration <= 0:
+        raise ArtifactError(f"could not determine positive video duration with ffprobe for {path}")
+    return duration
+
+
+def _prepare_local_source(input_ref: str, layout: ArtifactLayout) -> tuple[Path, float, dict[str, Any]]:
+    src = Path(input_ref).expanduser()
+    if not src.exists() or not src.is_file():
+        raise ArtifactError(f"local input file not found: {input_ref}")
+    duration = _probe_duration(src)
+    ext = src.suffix or ".mp4"
+    dest = layout.source_dir / f"source{ext}"
+    shutil.copy2(src, dest)
+    return dest, duration, {"title": src.stem}
+
+
+def _prepare_remote_source(input_ref: str, layout: ArtifactLayout, *, proxy: str | None = None) -> tuple[Path, float, dict[str, Any]]:
+    try:
+        from yt_dlp import YoutubeDL
+    except ImportError as exc:  # pragma: no cover - doctor catches this in normal installs
+        raise ArtifactError("yt-dlp is not installed; install project dependencies with `uv sync`") from exc
+
+    options: dict[str, Any] = {
+        "format": "bestvideo[height<=720]+bestaudio/best[height<=720]",
+        "outtmpl": str(layout.source_dir / "source.%(ext)s"),
+        "noplaylist": True,
+    }
+    if proxy:
+        options["proxy"] = proxy
+    try:
+        with YoutubeDL(options) as downloader:
+            info = downloader.extract_info(input_ref, download=True)
+    except Exception as exc:
+        raise ArtifactError(f"download failed for {input_ref}; check the URL, network, proxy, and yt-dlp support: {exc}") from exc
+
+    candidates = sorted(
+        path
+        for path in layout.source_dir.glob("source.*")
+        if path.is_file() and path.suffix not in {".part", ".ytdl", ".json"}
+    )
+    if not candidates:
+        raise ArtifactError("download completed but no source/source.{ext} file was produced")
+    source = candidates[0]
+    duration = info.get("duration") if isinstance(info, dict) else None
+    if not isinstance(duration, (int, float)) or isinstance(duration, bool) or duration <= 0:
+        duration = _probe_duration(source)
+    extras = info if isinstance(info, dict) else {}
+    return source, float(duration), extras
+
+
+def _start_metadata(input_ref: str, input_type: str, canonical: str, source_path: str, duration: float, extras: dict[str, Any]) -> dict[str, Any]:
+    metadata: dict[str, Any] = {
+        "schema_version": 1,
+        "input_ref": input_ref,
+        "input_type": input_type,
+        "canonical_input_ref": canonical,
+        "source_path": source_path,
+        "title": str(extras.get("title") or Path(input_ref).stem or input_ref),
+        "duration": float(duration),
+        "created_at": _utc_now(),
+    }
+    for src_key, dst_key in [("thumbnail", "thumbnail_url"), ("id", "video_id"), ("webpage_url", "source_url"), ("extractor", "extractor")]:
+        if extras.get(src_key) is not None:
+            metadata[dst_key] = extras[src_key]
+    if extras:
+        metadata["provider_metadata"] = _json_safe(extras)
+    return metadata
+
+
+def run_start(args: argparse.Namespace) -> int:
+    """Create a video workspace and register/download its source video."""
+
+    if not args.input:
+        raise ArtifactError("clipper start requires INPUT")
+    config = config_from_args(args)
+    input_ref = args.input
+    remote = is_remote(input_ref)
+    canonical = canonical_input_ref(input_ref)
+    name = validate_video_name(args.name) if args.name else default_video_name(input_ref)
+    layout = ArtifactLayout.for_video(config.store, name)
+
+    if args.reuse:
+        if not layout.metadata.exists():
+            raise ArtifactError(f"--reuse requires existing metadata: {layout.metadata}")
+        metadata = read_validated_json(layout.metadata, "metadata")
+        if metadata.get("canonical_input_ref") != canonical:
+            raise ArtifactError("--reuse target metadata does not match the requested input")
+        if not (layout.root / metadata["source_path"]).exists():
+            raise ArtifactError(f"--reuse requires existing source: {metadata['source_path']}")
+        result = {"name": name, "path": str(layout.root), "metadata_path": str(layout.metadata), "source_path": metadata["source_path"], "reused": True}
+    else:
+        if layout.root.exists() and not args.force:
+            raise ArtifactError(f"output already exists: {layout.root}")
+        layout.create_dirs()
+        if args.force:
+            shutil.rmtree(layout.source_dir, ignore_errors=True)
+            layout.source_dir.mkdir(parents=True, exist_ok=True)
+            layout.metadata.unlink(missing_ok=True)
+        if remote:
+            source, duration, extras = _prepare_remote_source(input_ref, layout, proxy=args.proxy)
+            input_type = "remote"
+        else:
+            source, duration, extras = _prepare_local_source(input_ref, layout)
+            input_type = "local"
+        source_path = _video_relative(layout, source)
+        metadata = _start_metadata(input_ref, input_type, canonical, source_path, duration, extras)
+        write_json(layout.metadata, metadata)
+        result = {"name": name, "path": str(layout.root), "metadata_path": str(layout.metadata), "source_path": source_path, "reused": False}
+
+    if config.json_output:
+        print_json(success_envelope(video=name, artifact_path=str(layout.metadata), result=result))
+    else:
+        action = "Reused" if result["reused"] else "Started"
+        print(f"{action} video {name} at {layout.root}")
+        print(f"Metadata: {layout.metadata}")
+        print(f"Source: {result['source_path']}")
+    return EXIT_SUCCESS
+
+
 def run_list(args: argparse.Namespace) -> int:
     """List existing video workspaces in the artifact store."""
 
@@ -271,6 +414,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     """Register all first-version placeholder subcommands."""
 
     handlers: dict[str, Callable[[argparse.Namespace], int]] = {name: run_placeholder for name in PLACEHOLDER_COMMANDS}
+    handlers["start"] = run_start
     handlers["list"] = run_list
 
     doctor = subparsers.add_parser("doctor", parents=[common], help="Validate local Clipper environment.")

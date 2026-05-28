@@ -8,7 +8,7 @@ from clipper.cli import EXIT_SUCCESS, EXIT_USAGE, build_parser, config_from_args
 
 
 COMMANDS = ["doctor", "start", "list", "transcribe", "score", "cut", "montage", "pipeline"]
-PLACEHOLDER_COMMANDS = ["start", "transcribe", "score", "cut", "montage", "pipeline"]
+PLACEHOLDER_COMMANDS = ["transcribe", "score", "cut", "montage", "pipeline"]
 
 
 def test_root_without_command_prints_help_and_usage_exit(capsys: pytest.CaptureFixture[str]) -> None:

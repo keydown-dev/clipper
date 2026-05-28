@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 4,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T08:01:49.638Z",
+  "updatedAt": "2026-05-28T08:06:54.617Z",
   "maxIterations": 12,
   "todos": [
     {
@@ -25,7 +25,7 @@
     {
       "id": 4,
       "title": "Iteration 4: Complete plans/issues/004-start-video.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": 5,
@@ -201,10 +201,49 @@
     },
     {
       "number": 4,
-      "status": "running",
+      "status": "accepted",
       "todoId": 4,
       "beforeRef": "ralph/clipper-prd-issues/iter-004-before",
-      "startedAt": "2026-05-28T08:01:49.487Z"
+      "startedAt": "2026-05-28T08:01:49.487Z",
+      "diff": {
+        "filesChanged": 3,
+        "insertions": 269,
+        "deletions": 2
+      },
+      "usage": {
+        "input": 60505,
+        "output": 6912,
+        "cacheRead": 362496,
+        "cacheWrite": 0,
+        "totalTokens": 429913,
+        "cost": 0.6911330000000001,
+        "contextWindow": 272000,
+        "contextTokens": 27180
+      },
+      "summary": "Completed iteration 4 / issue 004: `clipper start` now creates video workspaces for local files and remote HTTP(S) URLs, writes metadata, supports `--reuse`/`--force`, forwards download proxy settings, and emits human or JSON output.",
+      "changedFiles": [
+        "clipper/cli.py",
+        "Added start implementation.",
+        "Added ffprobe duration probing for local files and remote fallback.",
+        "Added metadata generation with traceability fields and provider extras.",
+        "tests/test_cli.py",
+        "tests/test_issue004.py",
+        "Added local start, output policy, mock remote download/proxy, and remote failure tests.",
+        ".ralph/orchestrator/loops/clipper-prd-issues/iterations/004/verification.md",
+        "Recorded verification results."
+      ],
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands\n\n- `pytest -q`\n  - Result: not_run\n  - Output: `/bin/bash: pytest: command not found`\n\n- `uv run pytest -q`\n  - Result: passed\n  - Output: `30 passed in 0.06s`\n\n## Acceptance criteria checked\n\n- Local file start is covered by tests: source is copied to `source/source.{ext}` and metadata contains required traceability fields.\n- Existing workspace policy is covered by tests: default fail, `--reuse` validates matching canonical input/source, `--force` overwrites start outputs.\n- Remote download integration is mock-tested, including yt-dlp format and proxy forwarding.\n- Download failure emits an actionable artifact error.\n- Human/JSON output is implemented; JSON includes resolved video name/path and metadata artifact path."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-prd-issues/iter-004-after",
+      "completedAt": "2026-05-28T08:06:54.331Z"
     }
   ]
 }

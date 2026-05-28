@@ -1,0 +1,7 @@
+## orchestrator/clipper-prd-issues
+ M .ralph/orchestrator/loops/clipper-prd-issues/iterations/004/verification.md
+ M .ralph/orchestrator/loops/clipper-prd-issues/iterations/004/worker-output.jsonl
+ M clipper/cli.py
+ M tests/test_cli.py
+?? .ralph/orchestrator/loops/clipper-prd-issues/iterations/004/handoff-out.md
+?? tests/test_issue004.py
