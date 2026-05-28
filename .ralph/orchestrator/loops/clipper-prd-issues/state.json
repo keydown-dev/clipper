@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 8,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:24:59.832Z",
+  "updatedAt": "2026-05-28T18:31:41.289Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -50,7 +50,7 @@
     {
       "id": 14,
       "title": "Iteration 6.1: Complete plans/issues/006.1-scoring-verbose-progress.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "deferred"
+      "status": "queued"
     },
     {
       "id": 8,
@@ -117,7 +117,7 @@
           {
             "command": "worker-reported verification",
             "exitCode": 0,
-            "summary": "# Verification \u2014 Iteration 001\n\nStatus: passed\n\n## Commands run\n\n```bash\nuv sync\n```\n\nResult: passed. Created `.venv`, resolved/installed project dependencies, and generated `uv.lock`.\n\n```bash\nuv run clipper --help\nuv run clipper doctor --help\nuv run clipper start --help\nuv run clipper list --help\nuv run clipper transcribe --help\nuv run clipper score --help\nuv run clipper cut --help\nuv run clipper montage --help\nuv run clipper pipeline --help\nuv run pytest\n```\n\nResult: passed. Root help and all placeholder command help printed successfully. `pytest` collected 19 tests and all 19 passed.\n\n## Acceptance criteria evidence\n\n- `uv sync` succeeds: passed.\n- `uv run clipper --help` works: passed.\n- Placeholder help works for `doctor`, `start`, `list`, `transcribe`, `score`, `cut`, `montage`, and `pipeline`: passed.\n- `uv run pytest` passes: passed, 19 passed.\n- `README.md` remains accurate for setup and CLI shape: passed; implemented commands/options align with documented initial CLI shape and created `.env.example` used by setup."
+            "summary": "# Verification — Iteration 001\n\nStatus: passed\n\n## Commands run\n\n```bash\nuv sync\n```\n\nResult: passed. Created `.venv`, resolved/installed project dependencies, and generated `uv.lock`.\n\n```bash\nuv run clipper --help\nuv run clipper doctor --help\nuv run clipper start --help\nuv run clipper list --help\nuv run clipper transcribe --help\nuv run clipper score --help\nuv run clipper cut --help\nuv run clipper montage --help\nuv run clipper pipeline --help\nuv run pytest\n```\n\nResult: passed. Root help and all placeholder command help printed successfully. `pytest` collected 19 tests and all 19 passed.\n\n## Acceptance criteria evidence\n\n- `uv sync` succeeds: passed.\n- `uv run clipper --help` works: passed.\n- Placeholder help works for `doctor`, `start`, `list`, `transcribe`, `score`, `cut`, `montage`, and `pipeline`: passed.\n- `uv run pytest` passes: passed, 19 passed.\n- `README.md` remains accurate for setup and CLI shape: passed; implemented commands/options align with documented initial CLI shape and created `.env.example` used by setup."
           }
         ]
       },
@@ -161,7 +161,7 @@
           {
             "command": "worker-reported verification",
             "exitCode": 0,
-            "summary": "# Verification \u2014 Iteration 002\n\nStatus: passed\n\n## Commands\n\n```bash\nuv run pytest\n```\n\n## Results\n\n```text\ncollected 26 items\n\ntests/test_cli.py ...................                                    [ 73%]\ntests/test_issue002.py .......                                           [100%]\n\n============================== 26 passed in 0.05s ==============================\n```\n\n## Acceptance coverage\n\n- Config defaults, env overrides, and `.env` loading covered by tests.\n- `.env.example` documents LLM/Whisper values and optional `LLM_API_KEY`.\n- JSON IO, schema validation, and CLI JSON envelopes covered by tests.\n- Artifact layout, store overrides, video naming, fixed paths, and list support covered by tests.\n- Existing-output fail/reuse/force/mutual exclusion/invalid JSON behavior covered by tests.\n- Schema validation requires `schema_version: 1`, video-relative paths, core fields, and permits extra provider/tool fields."
+            "summary": "# Verification — Iteration 002\n\nStatus: passed\n\n## Commands\n\n```bash\nuv run pytest\n```\n\n## Results\n\n```text\ncollected 26 items\n\ntests/test_cli.py ...................                                    [ 73%]\ntests/test_issue002.py .......                                           [100%]\n\n============================== 26 passed in 0.05s ==============================\n```\n\n## Acceptance coverage\n\n- Config defaults, env overrides, and `.env` loading covered by tests.\n- `.env.example` documents LLM/Whisper values and optional `LLM_API_KEY`.\n- JSON IO, schema validation, and CLI JSON envelopes covered by tests.\n- Artifact layout, store overrides, video naming, fixed paths, and list support covered by tests.\n- Existing-output fail/reuse/force/mutual exclusion/invalid JSON behavior covered by tests.\n- Schema validation requires `schema_version: 1`, video-relative paths, core fields, and permits extra provider/tool fields."
           }
         ]
       },
@@ -202,7 +202,7 @@
           {
             "command": "worker-reported verification",
             "exitCode": 0,
-            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```sh\nuv run pytest\n```\n\nResult: passed \u2014 27 tests passed.\n\n```sh\nuv run clipper doctor --store /tmp/clipper-doctor-check\nuv run clipper doctor --store /tmp/clipper-doctor-check --json | uv run python -m json.tool >/tmp/clipper-doctor-json.txt\n```\n\nResult: passed \u2014 human output reported pass/warn/fail checks clearly; JSON output parsed successfully.\n\n```sh\nuv run clipper doctor >/tmp/clipper-doctor-human.txt\nuv run clipper doctor --json > /tmp/clipper-doctor-raw.json\nuv run python -m json.tool /tmp/clipper-doctor-raw.json >/tmp/clipper-doctor-json-pretty.txt\nrm -rf .clipper\n```\n\nResult: passed \u2014 exact acceptance commands ran; JSON was parseable."
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```sh\nuv run pytest\n```\n\nResult: passed — 27 tests passed.\n\n```sh\nuv run clipper doctor --store /tmp/clipper-doctor-check\nuv run clipper doctor --store /tmp/clipper-doctor-check --json | uv run python -m json.tool >/tmp/clipper-doctor-json.txt\n```\n\nResult: passed — human output reported pass/warn/fail checks clearly; JSON output parsed successfully.\n\n```sh\nuv run clipper doctor >/tmp/clipper-doctor-human.txt\nuv run clipper doctor --json > /tmp/clipper-doctor-raw.json\nuv run python -m json.tool /tmp/clipper-doctor-raw.json >/tmp/clipper-doctor-json-pretty.txt\nrm -rf .clipper\n```\n\nResult: passed — exact acceptance commands ran; JSON was parseable."
           }
         ]
       },
@@ -339,7 +339,7 @@
           {
             "command": "worker-reported verification",
             "exitCode": 0,
-            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue005.py tests/test_cli.py\n```\n\nResult: passed \u2014 30 passed, 1 skipped.\n\n```bash\nuv run pytest\n```\n\nResult: passed \u2014 41 passed, 1 skipped.\n\nNotes:\n- Default tests use mocked faster-whisper output; no real Whisper model download/load was introduced.\n- Verified JSON+verbose keeps stdout parseable while diagnostics/progress go to stderr through tests."
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue005.py tests/test_cli.py\n```\n\nResult: passed — 30 passed, 1 skipped.\n\n```bash\nuv run pytest\n```\n\nResult: passed — 41 passed, 1 skipped.\n\nNotes:\n- Default tests use mocked faster-whisper output; no real Whisper model download/load was introduced.\n- Verified JSON+verbose keeps stdout parseable while diagnostics/progress go to stderr through tests."
           }
         ]
       },
@@ -385,7 +385,7 @@
           {
             "command": "worker-reported verification",
             "exitCode": 0,
-            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue006.py\n```\n\nResult: passed \u2014 9 passed, 1 skipped (real LLM test gated by `CLIPPER_RUN_LLM_TESTS=1`).\n\n```bash\nuv run pytest\n```\n\nResult: passed \u2014 49 passed, 2 skipped.\n\nNotes:\n- Default tests use mocked OpenAI-compatible clients and do not call a real LLM.\n- Real LLM smoke test is skipped unless `CLIPPER_RUN_LLM_TESTS=1` is set."
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue006.py\n```\n\nResult: passed — 9 passed, 1 skipped (real LLM test gated by `CLIPPER_RUN_LLM_TESTS=1`).\n\n```bash\nuv run pytest\n```\n\nResult: passed — 49 passed, 2 skipped.\n\nNotes:\n- Default tests use mocked OpenAI-compatible clients and do not call a real LLM.\n- Real LLM smoke test is skipped unless `CLIPPER_RUN_LLM_TESTS=1` is set."
           }
         ]
       },
@@ -413,7 +413,7 @@
         "contextWindow": 272000,
         "contextTokens": 26894
       },
-      "summary": "Completed Issue 007 by adding deterministic generated video fixture helpers and tests. The helpers create low-resolution FFmpeg test videos in temporary directories, support duration/size/audio overrides, skip FFmpeg-dependent tests when `ffmpeg` or `ffprobe` is unavailable, and provide a shared \u00b10.5s duration assertion helper.",
+      "summary": "Completed Issue 007 by adding deterministic generated video fixture helpers and tests. The helpers create low-resolution FFmpeg test videos in temporary directories, support duration/size/audio overrides, skip FFmpeg-dependent tests when `ffmpeg` or `ffprobe` is unavailable, and provide a shared ±0.5s duration assertion helper.",
       "changedFiles": [
         "tests/helpers/__init__.py",
         "tests/helpers/generated_media.py",
