@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 8,
+  "currentIteration": 9,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:31:41.289Z",
+  "updatedAt": "2026-05-28T18:31:41.850Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -50,7 +50,7 @@
     {
       "id": 14,
       "title": "Iteration 6.1: Complete plans/issues/006.1-scoring-verbose-progress.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 8,
@@ -434,6 +434,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-008-after",
       "completedAt": "2026-05-28T15:08:44.344Z"
+    },
+    {
+      "number": 9,
+      "status": "running",
+      "todoId": 14,
+      "beforeRef": "ralph/clipper-prd-issues/iter-009-before",
+      "startedAt": "2026-05-28T18:31:41.690Z"
     }
   ]
 }
