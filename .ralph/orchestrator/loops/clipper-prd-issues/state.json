@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 4,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T08:06:54.617Z",
+  "updatedAt": "2026-05-28T10:46:49.141Z",
   "maxIterations": 12,
   "todos": [
     {
@@ -30,7 +30,7 @@
     {
       "id": 5,
       "title": "Iteration 5: Complete plans/issues/005-transcription.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "deferred"
+      "status": "queued"
     },
     {
       "id": 6,
