@@ -4,8 +4,8 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 5,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T10:49:54.515Z",
-  "maxIterations": 12,
+  "updatedAt": "2026-05-28T13:54:26.394Z",
+  "maxIterations": 13,
   "todos": [
     {
       "id": 1,
@@ -31,6 +31,11 @@
       "id": 5,
       "title": "Iteration 5: Complete plans/issues/005-transcription.md only, preserving prior behavior; verify acceptance criteria.",
       "status": "complete"
+    },
+    {
+      "id": 13,
+      "title": "Iteration 5.1: Complete plans/issues/005.1-transcription-verbose-progress.md only, preserving prior behavior; verify acceptance criteria.",
+      "status": "queued"
     },
     {
       "id": 6,

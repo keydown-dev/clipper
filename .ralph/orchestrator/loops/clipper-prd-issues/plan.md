@@ -9,6 +9,7 @@ Control: active
 - [x] 3. Iteration 3: Complete plans/issues/003-doctor-command.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [x] 4. Iteration 4: Complete plans/issues/004-start-video.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [x] 5. Iteration 5: Complete plans/issues/005-transcription.md only, preserving prior behavior; verify acceptance criteria. (complete)
+- [ ] 13. Iteration 5.1: Complete plans/issues/005.1-transcription-verbose-progress.md only, preserving prior behavior; verify acceptance criteria. (queued)
 - [ ] 6. Iteration 6: Complete plans/issues/006-llm-scoring.md only, preserving prior behavior; verify acceptance criteria. (deferred)
 - [ ] 7. Iteration 7: Complete plans/issues/007-generated-video-fixtures.md only, preserving prior behavior; verify acceptance criteria. (deferred)
 - [ ] 8. Iteration 8: Complete plans/issues/008-cut-clips.md only, preserving prior behavior; verify acceptance criteria. (deferred)
