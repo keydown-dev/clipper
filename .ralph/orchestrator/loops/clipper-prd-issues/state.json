@@ -2,15 +2,15 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 0,
+  "currentIteration": 1,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T07:52:42.184Z",
+  "updatedAt": "2026-05-28T07:52:42.770Z",
   "maxIterations": 12,
   "todos": [
     {
       "id": 1,
       "title": "Iteration 1: Complete plans/issues/001-project-foundation.md only, verify its acceptance criteria, and report evidence.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 2,
@@ -68,5 +68,13 @@
       "status": "deferred"
     }
   ],
-  "iterations": []
+  "iterations": [
+    {
+      "number": 1,
+      "status": "running",
+      "todoId": 1,
+      "beforeRef": "ralph/clipper-prd-issues/iter-001-before",
+      "startedAt": "2026-05-28T07:52:42.620Z"
+    }
+  ]
 }
