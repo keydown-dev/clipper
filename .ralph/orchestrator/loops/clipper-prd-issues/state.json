@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 3,
+  "currentIteration": 4,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T08:01:48.524Z",
+  "updatedAt": "2026-05-28T08:01:49.638Z",
   "maxIterations": 12,
   "todos": [
     {
@@ -25,7 +25,7 @@
     {
       "id": 4,
       "title": "Iteration 4: Complete plans/issues/004-start-video.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 5,
@@ -198,6 +198,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-003-after",
       "completedAt": "2026-05-28T08:01:48.330Z"
+    },
+    {
+      "number": 4,
+      "status": "running",
+      "todoId": 4,
+      "beforeRef": "ralph/clipper-prd-issues/iter-004-before",
+      "startedAt": "2026-05-28T08:01:49.487Z"
     }
   ]
 }
