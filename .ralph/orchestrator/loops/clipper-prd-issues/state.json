@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 5,
+  "currentIteration": 6,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T13:54:26.394Z",
+  "updatedAt": "2026-05-28T13:54:26.914Z",
   "maxIterations": 13,
   "todos": [
     {
@@ -35,7 +35,7 @@
     {
       "id": 13,
       "title": "Iteration 5.1: Complete plans/issues/005.1-transcription-verbose-progress.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 6,
@@ -295,6 +295,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-005-after",
       "completedAt": "2026-05-28T10:49:54.286Z"
+    },
+    {
+      "number": 6,
+      "status": "running",
+      "todoId": 13,
+      "beforeRef": "ralph/clipper-prd-issues/iter-006-before",
+      "startedAt": "2026-05-28T13:54:26.767Z"
     }
   ]
 }
