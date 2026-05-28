@@ -55,6 +55,8 @@ cp .env.example .env
 uv run clipper doctor
 ```
 
+`uv sync` creates the project virtual environment and installs the CLI entry point used by `uv run clipper ...`. `clipper doctor` is the first command to run from a clean checkout; it checks Python, FFmpeg/ffprobe, Python dependencies, artifact-store write access, `.env`/LLM configuration, and faster-whisper import readiness without contacting external services by default.
+
 Example `.env` values:
 
 ```env
@@ -67,6 +69,23 @@ WHISPER_MODEL=small
 WHISPER_DEVICE=cpu
 WHISPER_COMPUTE_TYPE=int8
 ```
+
+## Quickstart Local Smoke Flow
+
+This smoke flow validates setup and local-file handling without requiring network access, real LLM credentials, or a Whisper model download:
+
+```bash
+uv sync
+cp .env.example .env
+uv run clipper doctor
+ffmpeg -f lavfi -i testsrc2=size=320x180:rate=30 -f lavfi -i sine=frequency=1000 \
+  -t 3 -pix_fmt yuv420p /tmp/clipper-smoke.mp4 -y
+uv run clipper start /tmp/clipper-smoke.mp4 --name smoke-demo
+uv run clipper list
+uv run clipper list --json
+```
+
+The `start` command copies the local file into `.clipper/smoke-demo/source/` and writes `.clipper/smoke-demo/work/metadata.json`. Re-run the same `start` command with `--reuse` to validate reuse behavior, or `--force` to replace the workspace.
 
 ## CLI Overview
 
@@ -120,6 +139,21 @@ Examples:
 uv run clipper list --json
 uv run clipper transcribe my-video --store .clipper --verbose
 ```
+
+### Subcommand Reference
+
+| Command | Purpose | Help/smoke command |
+| --- | --- | --- |
+| `doctor` | Check local dependencies and configuration. | `uv run clipper doctor --json` |
+| `start INPUT` | Register/download a source into a video workspace. | `uv run clipper start ./video.mp4 --name local-demo` |
+| `list` | Show known video workspaces and artifact flags. | `uv run clipper list --json` |
+| `transcribe [VIDEO]` | Produce `work/transcript.json` with faster-whisper. | `uv run clipper transcribe --help` |
+| `score [VIDEO]` | Produce `work/scores.json` with an OpenAI-compatible LLM. | `uv run clipper score --help` |
+| `cut [VIDEO]` | Cut passing scored segments into `clips/` and `work/clips.json`. | `uv run clipper cut --help` |
+| `montage [VIDEO]` | Assemble clips into `output/montage.mp4` and `output/montage.json`. | `uv run clipper montage --help` |
+| `pipeline INPUT` | Run start, transcribe, score, cut, and montage. | `uv run clipper pipeline --help` |
+
+Use `uv run clipper COMMAND --help` for the exact options accepted by each subcommand.
 
 ## Output and Re-run Semantics
 
@@ -457,6 +491,39 @@ result = run_pipeline(
 ```
 
 The result should include paths and summary data for source video, metadata, transcript, scores, clips, montage, counts, durations, and runtime.
+
+## Manual Validation Flows
+
+### Local file
+
+```bash
+uv run clipper doctor
+uv run clipper start ./source/example.mp4 --name local-example
+uv run clipper transcribe local-example --verbose
+uv run clipper score local-example --directive "Find expressive reactions" --json
+uv run clipper cut local-example --min-score 6
+uv run clipper montage local-example --max-duration 60
+```
+
+### URL input
+
+```bash
+uv run clipper doctor
+uv run clipper start "https://youtube.com/watch?v=XXX" --name url-example
+uv run clipper pipeline "https://youtube.com/watch?v=XXX" --name url-example --reuse \
+  --directive "Find laughter and strong reactions" --max-duration 60
+```
+
+Use `--proxy PROXY_URL` with `start` or `pipeline` when yt-dlp needs a proxy. URL validation requires network access and yt-dlp support for the provider.
+
+## Troubleshooting
+
+- `uv run clipper doctor` reports missing `ffmpeg` or `ffprobe`: install FFmpeg with `brew install ffmpeg` and make sure Homebrew's bin directory is on `PATH`.
+- `.env` or LLM configuration fails: copy `.env.example` to `.env`, set `LLM_BASE_URL` and `LLM_MODEL`, and set `LLM_API_KEY` only if the endpoint requires authentication.
+- Want to test real services: run `uv run clipper doctor --check-llm` for LLM connectivity and `uv run clipper doctor --check-whisper` to load the configured Whisper model.
+- `start` says the output already exists: use `--reuse` to validate and reuse matching artifacts, or `--force` to overwrite the target workspace.
+- `--json` output is not parseable: rerun without `--verbose`, or check stderr; diagnostics are expected on stderr while stdout remains a single JSON envelope.
+- Whisper or LLM tests are skipped by default. Opt in with `CLIPPER_RUN_WHISPER_TESTS=1` or `CLIPPER_RUN_LLM_TESTS=1` when credentials/models are available.
 
 ## Error Handling
 

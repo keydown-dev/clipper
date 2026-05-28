@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 13,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:49:16.522Z",
+  "updatedAt": "2026-05-28T18:52:05.669Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -70,7 +70,7 @@
     {
       "id": 11,
       "title": "Iteration 11: Complete plans/issues/011-cli-polish-and-docs.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": 12,
@@ -616,10 +616,49 @@
     },
     {
       "number": 13,
-      "status": "running",
+      "status": "accepted",
       "todoId": 11,
       "beforeRef": "ralph/clipper-prd-issues/iter-013-before",
-      "startedAt": "2026-05-28T18:49:16.357Z"
+      "startedAt": "2026-05-28T18:49:16.357Z",
+      "diff": {
+        "filesChanged": 2,
+        "insertions": 103,
+        "deletions": 1
+      },
+      "usage": {
+        "input": 45113,
+        "output": 5826,
+        "cacheRead": 634368,
+        "cacheWrite": 0,
+        "totalTokens": 685307,
+        "cost": 0.7175290000000001,
+        "contextWindow": 272000,
+        "contextTokens": 29699
+      },
+      "summary": "Completed the bounded CLI polish/docs slice by strengthening canonical README guidance and adding CLI smoke coverage for representative help, JSON output, JSON errors, usage exit codes, and verbose+JSON behavior.",
+      "changedFiles": [
+        "README.md",
+        "Added a quickstart local smoke flow using a generated FFmpeg video.",
+        "Added a subcommand reference covering every implemented command.",
+        "Added manual local-file and URL validation flows.",
+        "tests/test_cli.py",
+        "Added representative pipeline help coverage.",
+        "Added JSON error envelope/failure exit coverage.",
+        "Added usage error exit-code coverage.",
+        "Added verbose+JSON parseability coverage."
+      ],
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_cli.py\n```\n\nResult: passed — 18 passed, 1 skipped.\n\n```bash\nuv run pytest\n```\n\nResult: passed — 76 passed, 3 skipped.\n\nAdditional checks:\n\n```bash\ngit status --short\n```\n\nResult: only intended source/docs files are modified:\n\n```text\n M README.md\n M tests/test_cli.py\n```"
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-prd-issues/iter-013-after",
+      "completedAt": "2026-05-28T18:52:05.590Z"
     }
   ]
 }

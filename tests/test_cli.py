@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from clipper.cli import EXIT_SUCCESS, EXIT_USAGE, build_parser, config_from_args, main
+from clipper.cli import EXIT_FAILURE, EXIT_SUCCESS, EXIT_USAGE, build_parser, config_from_args, main
 
 
 COMMANDS = ["doctor", "start", "list", "transcribe", "score", "cut", "montage", "pipeline"]
@@ -80,3 +80,38 @@ def test_shared_options_parse_after_subcommand() -> None:
 def test_json_output_is_enveloped(capsys: pytest.CaptureFixture[str], tmp_path) -> None:
     assert main(["list", "--store", str(tmp_path / ".clipper"), "--json"]) == EXIT_SUCCESS
     assert capsys.readouterr().out == '{"ok":true,"result":{"videos":[]}}\n'
+
+
+def test_representative_help_documents_command_options(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        main(["pipeline", "--help"])
+    assert exc_info.value.code == 0
+    output = capsys.readouterr().out
+    for expected in ["URL_OR_VIDEO_PATH", "--directive", "--min-score", "--max-duration", "--reuse", "--force", "--json"]:
+        assert expected in output
+
+
+def test_json_errors_use_envelope_and_failure_exit(capsys: pytest.CaptureFixture[str], tmp_path) -> None:
+    missing = tmp_path / "missing.mp4"
+    assert main(["start", str(missing), "--store", str(tmp_path / ".clipper"), "--json"]) == EXIT_FAILURE
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload == {
+        "ok": False,
+        "error": {"code": "artifact_error", "message": f"local input file not found: {missing}"},
+    }
+
+
+def test_usage_errors_exit_with_usage_code(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        main(["list", "--definitely-not-an-option"])
+    assert exc_info.value.code == EXIT_USAGE
+    assert "unrecognized arguments: --definitely-not-an-option" in capsys.readouterr().err
+
+
+def test_json_stdout_stays_parseable_with_verbose(capsys: pytest.CaptureFixture[str], tmp_path) -> None:
+    assert main(["list", "--store", str(tmp_path / ".clipper"), "--json", "--verbose"]) == EXIT_SUCCESS
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == {"ok": True, "result": {"videos": []}}
+    assert captured.err == ""
