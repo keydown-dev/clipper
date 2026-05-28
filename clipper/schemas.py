@@ -160,9 +160,19 @@ def validate_scores(data: Any) -> dict[str, Any]:
     data = _require_mapping(data)
     _require(data, ["source_file", "directive", "segments"])
     _relative_path(data["source_file"], "source_file")
+    if not isinstance(data["directive"], str):
+        raise SchemaError("directive must be a string")
+    if not isinstance(data["segments"], list):
+        raise SchemaError("segments must be a list")
     for seg in data["segments"]:
+        if not isinstance(seg, dict):
+            raise SchemaError("segment must be an object")
         _require(seg, ["start", "end", "score", "reason"])
+        _number(seg["start"], "segment.start")
+        _number(seg["end"], "segment.end")
         _number(seg["score"], "segment.score")
+        if not isinstance(seg["reason"], str):
+            raise SchemaError("segment.reason must be a string")
     return data
 
 

@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 from .artifacts import ArtifactError, ArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
 from .config import load_config
 from .progress import CliProgress
+from .scoring import score_video
 from .transcription import TranscriptionOptions, transcribe_video
 
 EXIT_SUCCESS = 0
@@ -284,6 +285,40 @@ def run_transcribe(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def run_score(args: argparse.Namespace) -> int:
+    """Score transcript segments with an OpenAI-compatible LLM."""
+
+    command_config = config_from_args(args)
+    app_config = load_config(store_override=command_config.store)
+    video, scores_path, scores, reused = score_video(
+        store=command_config.store,
+        video=args.video,
+        directive=args.directive,
+        config=app_config,
+        reuse=args.reuse,
+        force=args.force,
+        json_output=command_config.json_output,
+    )
+    result = {
+        "scores_path": str(scores_path),
+        "source_file": scores["source_file"],
+        "directive": scores["directive"],
+        "segments": len(scores["segments"]),
+        "warnings": scores.get("warnings", []),
+        "reused": reused,
+    }
+    if command_config.json_output:
+        print_json(success_envelope(video=video, artifact_path=str(scores_path), result=result))
+    else:
+        action = "Reused" if reused else "Scored"
+        print(f"{action} video {video}")
+        print(f"Scores: {scores_path}")
+        print(f"Segments: {result['segments']}")
+        for warning in result["warnings"]:
+            print(f"warning: {warning}", file=sys.stderr)
+    return EXIT_SUCCESS
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -456,6 +491,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["start"] = run_start
     handlers["list"] = run_list
     handlers["transcribe"] = run_transcribe
+    handlers["score"] = run_score
 
     doctor = subparsers.add_parser("doctor", parents=[common], help="Validate local Clipper environment.")
     doctor.add_argument("--check-llm", action="store_true", help="Also check LLM connectivity.")
