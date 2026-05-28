@@ -6,9 +6,11 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import urlparse
 
 from .artifacts import ArtifactError, ArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
 from .config import ClipperConfig
+from .progress import CliProgress
 from .schemas import SCHEMA_VERSION
 
 BASELINE_SYSTEM_PROMPT = """You are a video clip scorer. Given a transcript with timestamps, identify the most visually interesting segments based on the user's directive.
@@ -40,6 +42,27 @@ class TranscriptWindow:
     start: float
     end: float
     segments: list[dict[str, Any]]
+
+
+@dataclass
+class TokenUsageTotals:
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    responses_with_usage: int = 0
+    responses_without_usage: int = 0
+
+    def add(self, usage: Any) -> None:
+        prompt = _usage_value(usage, "prompt_tokens")
+        completion = _usage_value(usage, "completion_tokens")
+        total = _usage_value(usage, "total_tokens")
+        if prompt is None and completion is None and total is None:
+            self.responses_without_usage += 1
+            return
+        self.prompt_tokens += int(prompt or 0)
+        self.completion_tokens += int(completion or 0)
+        self.total_tokens += int(total if total is not None else int(prompt or 0) + int(completion or 0))
+        self.responses_with_usage += 1
 
 
 def transcript_bounds(transcript: dict[str, Any]) -> tuple[float, float]:
@@ -185,34 +208,89 @@ def _message_content(response: Any) -> str:
         raise ArtifactError("LLM response did not include choices[0].message.content") from exc
 
 
-def _call_llm(client: Any, *, options: ScoringOptions, messages: list[dict[str, str]]) -> str:
+def _usage_value(usage: Any, key: str) -> int | None:
+    if usage is None:
+        return None
+    value = usage.get(key) if isinstance(usage, dict) else getattr(usage, key, None)
+    if isinstance(value, bool) or value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _response_usage(response: Any) -> Any:
+    if isinstance(response, dict):
+        return response.get("usage")
+    return getattr(response, "usage", None)
+
+
+def _call_llm(client: Any, *, options: ScoringOptions, messages: list[dict[str, str]]) -> tuple[str, Any]:
     try:
         response = client.chat.completions.create(model=options.model, messages=messages, temperature=options.temperature, timeout=options.timeout_seconds)
     except Exception as exc:
         raise ArtifactError(f"LLM scoring request failed: {exc}") from exc
-    return _message_content(response)
+    return _message_content(response), _response_usage(response)
 
 
-def score_transcript(transcript: dict[str, Any], *, client: Any, options: ScoringOptions) -> tuple[list[dict[str, Any]], list[str]]:
+def _log_window_progress(progress: CliProgress | None, *, index: int, total: int, window: TranscriptWindow) -> None:
+    if not progress:
+        return
+    percent = int((index / total) * 100) if total else 100
+    progress.log(f"scoring progress: window {index}/{total} ({percent}%) range={window.start:.2f}-{window.end:.2f}s")
+
+
+def _summarize_warnings(warnings: list[str]) -> str:
+    dropped = sum(1 for warning in warnings if "dropped" in warning)
+    clamped = sum(1 for warning in warnings if "clamped" in warning)
+    retried = sum(1 for warning in warnings if "retried" in warning)
+    return f"warnings={len(warnings)} dropped={dropped} clamped={clamped} retries={retried}"
+
+
+def score_transcript(
+    transcript: dict[str, Any],
+    *,
+    client: Any,
+    options: ScoringOptions,
+    progress: CliProgress | None = None,
+    token_usage: TokenUsageTotals | None = None,
+) -> tuple[list[dict[str, Any]], list[str]]:
     lower, upper = transcript_bounds(transcript)
     all_segments: list[dict[str, Any]] = []
     warnings: list[str] = []
-    for window in chunk_transcript(transcript):
+    windows = chunk_transcript(transcript)
+    total_windows = len(windows)
+    for index, window in enumerate(windows, start=1):
+        if progress:
+            progress.log(f"scoring window {index}/{total_windows}: range={window.start:.2f}-{window.end:.2f}s segments={len(window.segments)}")
         try:
-            raw = parse_segments_response(_call_llm(client, options=options, messages=build_messages(directive=options.directive, window=window)))
+            content, usage = _call_llm(client, options=options, messages=build_messages(directive=options.directive, window=window))
+            if token_usage:
+                token_usage.add(usage)
+            raw = parse_segments_response(content)
         except (ValueError, json.JSONDecodeError):
+            if progress:
+                progress.log(f"retrying invalid JSON for window {window.start:.2f}-{window.end:.2f}s")
             try:
-                raw = parse_segments_response(_call_llm(client, options=options, messages=build_messages(directive=options.directive, window=window, retry=True)))
+                content, usage = _call_llm(client, options=options, messages=build_messages(directive=options.directive, window=window, retry=True))
+                if token_usage:
+                    token_usage.add(usage)
+                raw = parse_segments_response(content)
                 warnings.append(f"retried invalid JSON for window {window.start:.2f}-{window.end:.2f}")
             except (ValueError, json.JSONDecodeError) as exc:
                 warnings.append(f"dropped window {window.start:.2f}-{window.end:.2f}: invalid JSON after retry ({exc})")
+                _log_window_progress(progress, index=index, total=total_windows, window=window)
                 continue
         valid, segment_warnings = validate_normalize_segments(raw, lower_bound=lower, upper_bound=upper)
         all_segments.extend(valid)
         warnings.extend(segment_warnings)
+        _log_window_progress(progress, index=index, total=total_windows, window=window)
     merged = merge_overlapping_segments(all_segments)
     if not merged:
         warnings.append("no valid candidate segments remained after validation")
+    if progress and warnings:
+        progress.log(_summarize_warnings(warnings))
     return merged, warnings
 
 
@@ -222,6 +300,13 @@ def make_openai_client(config: ClipperConfig) -> Any:
     except ImportError as exc:  # pragma: no cover - doctor catches this in normal installs
         raise ArtifactError("openai is not installed; install project dependencies with `uv sync`") from exc
     return OpenAI(base_url=config.llm_base_url, api_key=config.llm_api_key or "not-needed", timeout=config.llm_timeout_seconds)
+
+
+def _base_url_origin(base_url: str) -> str:
+    parsed = urlparse(base_url)
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return base_url
 
 
 def score_video(
@@ -234,16 +319,32 @@ def score_video(
     force: bool = False,
     json_output: bool = False,
     client: Any | None = None,
+    progress: CliProgress | None = None,
 ) -> tuple[str, Path, dict[str, Any], bool]:
     root = resolve_video(store, video, json_output=json_output)
     layout = ArtifactLayout.for_video(root.parent, root.name)
     transcript = read_validated_json(layout.transcript, "transcript")
     policy = output_policy([layout.scores], reuse=reuse, force=force, schema="scores")
     if policy == "reuse":
+        if progress:
+            progress.log(f"reusing existing scores for video {layout.video}: {layout.scores}")
         return layout.video, layout.scores, read_validated_json(layout.scores, "scores"), True
-    client = client or make_openai_client(config)
     options = ScoringOptions(directive=directive, model=config.llm_model, temperature=config.llm_temperature, timeout_seconds=config.llm_timeout_seconds)
-    segments, warnings = score_transcript(transcript, client=client, options=options)
+    windows = chunk_transcript(transcript)
+    if progress:
+        progress.log(f"video {layout.video}: transcript={layout.transcript}")
+        progress.log(f"scoring directive: {directive}")
+        progress.log(
+            "LLM "
+            f"base_url={_base_url_origin(config.llm_base_url)} model={options.model} "
+            f"temperature={options.temperature} timeout={options.timeout_seconds}"
+        )
+        progress.log(f"transcript duration={float(transcript.get('duration') or 0.0)} segments={len(transcript.get('segments', []))}")
+        progress.log(f"scoring windows={len(windows)}")
+        progress.log(f"scores output={layout.scores}")
+    client = client or make_openai_client(config)
+    token_usage = TokenUsageTotals()
+    segments, warnings = score_transcript(transcript, client=client, options=options, progress=progress, token_usage=token_usage)
     scores: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "source_file": transcript["source_file"],
@@ -253,4 +354,16 @@ def score_video(
     if warnings:
         scores["warnings"] = warnings
     write_json(layout.scores, scores)
+    if progress:
+        if token_usage.responses_with_usage:
+            progress.log(
+                "token usage: "
+                f"prompt={token_usage.prompt_tokens} completion={token_usage.completion_tokens} "
+                f"total={token_usage.total_tokens} responses_with_usage={token_usage.responses_with_usage}"
+            )
+            if token_usage.responses_without_usage:
+                progress.log(f"token usage unavailable for {token_usage.responses_without_usage} response(s)")
+        else:
+            progress.log("token usage unavailable: API did not provide usage metadata")
+        progress.log(f"completed scoring: segments={len(segments)} scores={layout.scores}")
     return layout.video, layout.scores, scores, False

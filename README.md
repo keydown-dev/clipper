@@ -350,6 +350,22 @@ Find quiet, contemplative moments with thoughtful discussion
 Find any segment where someone says something controversial or surprising
 ```
 
+### Verbose scoring progress
+
+Use `--verbose` to observe long-running scoring runs:
+
+```bash
+uv run clipper score VIDEO --directive "Find compelling clips" --verbose
+```
+
+Verbose scoring writes lifecycle diagnostics, model/config details, window progress, warnings, and token usage summaries to stderr. Stdout remains reserved for the normal human result, or for a single parseable JSON envelope when combined with `--json`:
+
+```bash
+uv run clipper score VIDEO --directive "Find compelling clips" --json --verbose
+```
+
+Token usage is shown only when the configured OpenAI-compatible endpoint returns usage metadata; Clipper does not estimate tokens locally when usage is absent.
+
 ## Cutting Clips
 
 `clipper cut [VIDEO]` extracts scored segments from a source video workspace.

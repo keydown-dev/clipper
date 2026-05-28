@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 9,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:31:41.850Z",
+  "updatedAt": "2026-05-28T18:35:43.661Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -50,7 +50,7 @@
     {
       "id": 14,
       "title": "Iteration 6.1: Complete plans/issues/006.1-scoring-verbose-progress.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": 8,
@@ -437,10 +437,49 @@
     },
     {
       "number": 9,
-      "status": "running",
+      "status": "accepted",
       "todoId": 14,
       "beforeRef": "ralph/clipper-prd-issues/iter-009-before",
-      "startedAt": "2026-05-28T18:31:41.690Z"
+      "startedAt": "2026-05-28T18:31:41.690Z",
+      "diff": {
+        "filesChanged": 6,
+        "insertions": 284,
+        "deletions": 14
+      },
+      "usage": {
+        "input": 52964,
+        "output": 10395,
+        "cacheRead": 813056,
+        "cacheWrite": 0,
+        "totalTokens": 876415,
+        "cost": 0.983198,
+        "contextWindow": 272000,
+        "contextTokens": 44393
+      },
+      "summary": "Completed iteration 9 / todo #14: implemented verbose scoring progress for `clipper score` while preserving non-verbose behavior and JSON stdout cleanliness.",
+      "changedFiles": [
+        "clipper/scoring.py",
+        "Added lifecycle/config diagnostics, deterministic window progress, warning summaries, reuse logging, and completion output.",
+        "Reports unavailable token usage without estimating locally.",
+        "clipper/cli.py",
+        "tests/test_issue006.py",
+        "Extended fakes to support response usage metadata.",
+        "Added tests for quiet non-verbose scoring, verbose stderr/JSON stdout split, window progress to 100%, token usage present/absent, retry usage totals, reuse behavior, and non-TTY plain progress.",
+        "README.md",
+        "Documented verbose scoring usage, stderr diagnostics, JSON stdout behavior, and token usage dependency on API metadata."
+      ],
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands run\n\n```bash\nuv run pytest tests/test_issue006.py\n```\n\nResult: passed — 15 passed, 1 skipped.\n\n```bash\nuv run pytest\n```\n\nResult: failed in pre-existing/unrelated config environment isolation test:\n`tests/test_issue002.py::test_config_defaults_env_and_dotenv` expected `WHISPER_MODEL=base` from its temp dotenv but observed `small` after earlier tests loaded the project `.env` into process environment. All issue 006 scoring tests passed.\n\n## Acceptance coverage\n\n- Non-verbose scoring remains quiet on stderr.\n- `--json --verbose` keeps stdout parseable JSON and sends diagnostics/progress to stderr.\n- Verbose output includes video/transcript lifecycle, directive, LLM base URL/model/temperature/timeout, transcript segment count, window count, progress to 100%, scores path, warnings, and token usage.\n- Token usage is accumulated when mocked OpenAI-style usage metadata is present, including retry responses.\n- Missing usage metadata is reported without local token estimation.\n- Reuse mode does not instantiate/call the LLM and does not show scoring progress.\n- Non-TTY progress uses plain lines and no carriage-return/control-character animation."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-prd-issues/iter-009-after",
+      "completedAt": "2026-05-28T18:35:43.574Z"
     }
   ]
 }

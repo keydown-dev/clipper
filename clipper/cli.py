@@ -298,6 +298,7 @@ def run_score(args: argparse.Namespace) -> int:
         reuse=args.reuse,
         force=args.force,
         json_output=command_config.json_output,
+        progress=CliProgress(enabled=command_config.verbose > 0),
     )
     result = {
         "scores_path": str(scores_path),
