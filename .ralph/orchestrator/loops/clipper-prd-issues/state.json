@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 2,
+  "currentIteration": 3,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T07:58:59.097Z",
+  "updatedAt": "2026-05-28T07:59:00.510Z",
   "maxIterations": 12,
   "todos": [
     {
@@ -20,7 +20,7 @@
     {
       "id": 3,
       "title": "Iteration 3: Complete plans/issues/003-doctor-command.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 4,
@@ -157,6 +157,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-002-after",
       "completedAt": "2026-05-28T07:58:58.788Z"
+    },
+    {
+      "number": 3,
+      "status": "running",
+      "todoId": 3,
+      "beforeRef": "ralph/clipper-prd-issues/iter-003-before",
+      "startedAt": "2026-05-28T07:59:00.362Z"
     }
   ]
 }
