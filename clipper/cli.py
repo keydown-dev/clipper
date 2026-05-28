@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 
 from .artifacts import ArtifactError, ArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
 from .config import load_config
+from .transcription import TranscriptionOptions, transcribe_video
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
@@ -29,7 +30,6 @@ EXIT_CANCELLED = 130
 PLACEHOLDER_COMMANDS = (
     "start",
     "list",
-    "transcribe",
     "score",
     "cut",
     "montage",
@@ -245,6 +245,43 @@ def run_placeholder(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def run_transcribe(args: argparse.Namespace) -> int:
+    """Transcribe a video workspace with faster-whisper."""
+
+    command_config = config_from_args(args)
+    app_config = load_config(store_override=command_config.store)
+    options = TranscriptionOptions(
+        model=args.model or app_config.whisper_model,
+        device=args.device or app_config.whisper_device,
+        compute_type=args.compute_type or app_config.whisper_compute_type,
+        language=args.language,
+    )
+    video, transcript_path, transcript, reused = transcribe_video(
+        store=command_config.store,
+        video=args.video,
+        options=options,
+        reuse=args.reuse,
+        force=args.force,
+        json_output=command_config.json_output,
+    )
+    result = {
+        "transcript_path": str(transcript_path),
+        "source_file": transcript["source_file"],
+        "language": transcript["language"],
+        "duration": transcript["duration"],
+        "segments": len(transcript["segments"]),
+        "reused": reused,
+    }
+    if command_config.json_output:
+        print_json(success_envelope(video=video, artifact_path=str(transcript_path), result=result))
+    else:
+        action = "Reused" if reused else "Transcribed"
+        print(f"{action} video {video}")
+        print(f"Transcript: {transcript_path}")
+        print(f"Segments: {result['segments']}")
+    return EXIT_SUCCESS
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -416,6 +453,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers: dict[str, Callable[[argparse.Namespace], int]] = {name: run_placeholder for name in PLACEHOLDER_COMMANDS}
     handlers["start"] = run_start
     handlers["list"] = run_list
+    handlers["transcribe"] = run_transcribe
 
     doctor = subparsers.add_parser("doctor", parents=[common], help="Validate local Clipper environment.")
     doctor.add_argument("--check-llm", action="store_true", help="Also check LLM connectivity.")
@@ -434,7 +472,10 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
 
     transcribe = subparsers.add_parser("transcribe", parents=[common], help="Transcribe a video workspace.")
     transcribe.add_argument("video", nargs="?", metavar="VIDEO", help="Video name or video directory path.")
-    transcribe.add_argument("--language", help="Force transcription language.")
+    transcribe.add_argument("--model", help="Whisper model name (default: WHISPER_MODEL or small).")
+    transcribe.add_argument("--device", help="Whisper device (default: WHISPER_DEVICE or cpu).")
+    transcribe.add_argument("--compute-type", help="Whisper compute type (default: WHISPER_COMPUTE_TYPE or int8).")
+    transcribe.add_argument("--language", help="Force transcription language; omit to auto-detect.")
     add_reuse_force(transcribe)
     transcribe.set_defaults(handler=handlers["transcribe"])
 

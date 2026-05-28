@@ -141,10 +141,18 @@ def validate_transcript(data: Any) -> dict[str, Any]:
     _number(data["duration"], "duration")
     if data["language"] is not None and not isinstance(data["language"], str):
         raise SchemaError("language must be a string or null")
+    if not isinstance(data["segments"], list):
+        raise SchemaError("segments must be a list")
     for seg in data["segments"]:
+        if not isinstance(seg, dict):
+            raise SchemaError("segment must be an object")
         _require(seg, ["id", "start", "end", "text"])
+        if not isinstance(seg["id"], int) or isinstance(seg["id"], bool):
+            raise SchemaError("segment.id must be an integer")
         _number(seg["start"], "segment.start")
         _number(seg["end"], "segment.end")
+        if not isinstance(seg["text"], str):
+            raise SchemaError("segment.text must be a string")
     return data
 
 

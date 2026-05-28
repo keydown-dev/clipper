@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 5,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T10:46:49.685Z",
+  "updatedAt": "2026-05-28T10:49:54.515Z",
   "maxIterations": 12,
   "todos": [
     {
@@ -30,7 +30,7 @@
     {
       "id": 5,
       "title": "Iteration 5: Complete plans/issues/005-transcription.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": 6,
@@ -247,10 +247,49 @@
     },
     {
       "number": 5,
-      "status": "running",
+      "status": "accepted",
       "todoId": 5,
       "beforeRef": "ralph/clipper-prd-issues/iter-005-before",
-      "startedAt": "2026-05-28T10:46:49.537Z"
+      "startedAt": "2026-05-28T10:46:49.537Z",
+      "diff": {
+        "filesChanged": 6,
+        "insertions": 316,
+        "deletions": 6
+      },
+      "usage": {
+        "input": 37249,
+        "output": 7367,
+        "cacheRead": 449024,
+        "cacheWrite": 0,
+        "totalTokens": 493640,
+        "cost": 0.6317670000000002,
+        "contextWindow": 272000,
+        "contextTokens": 30765
+      },
+      "summary": "Implemented local transcription with faster-whisper and wired `clipper transcribe`.",
+      "changedFiles": [
+        ".ralph/orchestrator/loops/clipper-prd-issues/iterations/005/verification.md",
+        ".ralph/orchestrator/loops/clipper-prd-issues/iterations/005/worker-output.jsonl",
+        "clipper/cli.py",
+        "clipper/schemas.py",
+        "tests/test_cli.py",
+        "tests/test_issue002.py",
+        ".ralph/orchestrator/loops/clipper-prd-issues/iterations/005/handoff-out.md",
+        "clipper/transcription.py",
+        "tests/test_issue005.py"
+      ],
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands\n\n- `uv run pytest`\n\n## Results\n\n- Test suite passed: 38 passed, 1 skipped.\n- The skipped test is the env-gated real Whisper integration test, which only runs when `CLIPPER_RUN_WHISPER_TESTS=1`.\n\n## Acceptance criteria checked\n\n- Transcription behavior unit-tested with mocked faster-whisper output.\n- Transcript JSON schema tested, including segment `id`, `start`, `end`, and `text` fields.\n- Whisper model load failures produce actionable JSON/CLI errors through `ArtifactError`.\n- `clipper transcribe --help` and command routing are covered by tests.\n- Real Whisper integration test is gated by `CLIPPER_RUN_WHISPER_TESTS=1`."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-prd-issues/iter-005-after",
+      "completedAt": "2026-05-28T10:49:54.286Z"
     }
   ]
 }

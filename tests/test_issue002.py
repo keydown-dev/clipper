@@ -118,7 +118,7 @@ def test_list_and_cli_json_envelopes(tmp_path: Path, capsys: pytest.CaptureFixtu
     out = json.loads(capsys.readouterr().out)
     assert out["ok"] is True
     assert out["result"]["videos"][0]["title"] == "Title"
-    assert main(["transcribe", "missing", "--store", str(tmp_path / ".clipper"), "--json"]) == EXIT_SUCCESS
+    assert main(["score", "missing", "--store", str(tmp_path / ".clipper"), "--json"]) == EXIT_SUCCESS
     assert json.loads(capsys.readouterr().out)["ok"] is True
 
 

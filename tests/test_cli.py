@@ -8,7 +8,7 @@ from clipper.cli import EXIT_SUCCESS, EXIT_USAGE, build_parser, config_from_args
 
 
 COMMANDS = ["doctor", "start", "list", "transcribe", "score", "cut", "montage", "pipeline"]
-PLACEHOLDER_COMMANDS = ["transcribe", "score", "cut", "montage", "pipeline"]
+PLACEHOLDER_COMMANDS = ["score", "cut", "montage", "pipeline"]
 
 
 def test_root_without_command_prints_help_and_usage_exit(capsys: pytest.CaptureFixture[str]) -> None:
@@ -39,8 +39,8 @@ def test_placeholder_commands_run(command: str, capsys: pytest.CaptureFixture[st
     assert f"clipper {command}: placeholder command" in capsys.readouterr().out
 
 
-def test_list_command_runs(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["list"]) == EXIT_SUCCESS
+def test_list_command_runs(capsys: pytest.CaptureFixture[str], tmp_path) -> None:
+    assert main(["list", "--store", str(tmp_path / ".clipper")]) == EXIT_SUCCESS
     assert "No videos found" in capsys.readouterr().out
 
 
