@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 12,
+  "currentIteration": 13,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:49:15.916Z",
+  "updatedAt": "2026-05-28T18:49:16.522Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -70,7 +70,7 @@
     {
       "id": 11,
       "title": "Iteration 11: Complete plans/issues/011-cli-polish-and-docs.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 12,
@@ -613,6 +613,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-012-after",
       "completedAt": "2026-05-28T18:49:15.837Z"
+    },
+    {
+      "number": 13,
+      "status": "running",
+      "todoId": 11,
+      "beforeRef": "ralph/clipper-prd-issues/iter-013-before",
+      "startedAt": "2026-05-28T18:49:16.357Z"
     }
   ]
 }

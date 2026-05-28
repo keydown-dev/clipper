@@ -16,5 +16,5 @@ Control: active
 - [x] 8. Iteration 8: Complete plans/issues/008-cut-clips.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [x] 9. Iteration 9: Complete plans/issues/009-montage-assembly.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [x] 10. Iteration 10: Complete plans/issues/010-pipeline-orchestrator.md only, preserving prior behavior; verify acceptance criteria. (complete)
-- [ ] 11. Iteration 11: Complete plans/issues/011-cli-polish-and-docs.md only, preserving prior behavior; verify acceptance criteria. (queued)
+- [ ] 11. Iteration 11: Complete plans/issues/011-cli-polish-and-docs.md only, preserving prior behavior; verify acceptance criteria. (running)
 - [ ] 12. Iteration 12: Complete plans/issues/012-final-verification-and-closeout.md only, run final verification, and report remaining risks. (queued)
