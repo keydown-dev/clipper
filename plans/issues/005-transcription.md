@@ -14,7 +14,7 @@ Implement local video transcription with faster-whisper.
 - Implement transcription library function.
 - Support configurable model, device, compute type, and language.
 - Default to model `small`, device `cpu`, and compute type `int8`.
-- Support `--language` to force language; otherwise auto-detect.
+- Support `--language` to force language; otherwise auto-detect; transcript `language` may be `null` if not detected.
 - Persist transcript JSON using the shared schema with `source_file`, `language`, `duration`, and timestamped `segments`.
 - Respect fail/reuse/force output policy.
 - Wire `clipper transcribe`.

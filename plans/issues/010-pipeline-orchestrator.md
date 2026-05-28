@@ -15,11 +15,11 @@ Implement the end-to-end importable pipeline and `clipper pipeline` command.
 ## Tasks
 
 - Implement `run_pipeline` as a stable public function.
-- Accept URL or local video file input.
-- Orchestrate download/register, transcribe, score, cut, and montage.
-- Propagate directive, min score, min/max duration, silent, proxy, reuse, and force options.
+- Accept URL or local video file input plus optional `--name` to create/use the corresponding video workspace.
+- Orchestrate start source preparation, transcribe, score, cut, and montage.
+- Propagate name, directive, min score, min/max duration, silent, proxy, reuse, and force options.
 - Return a structured pipeline result containing source, metadata, transcript, scores, clips, montage, counts, durations, and runtime.
-- Stop before montage creation when no clips pass the threshold.
+- Stop before montage creation when no clips pass the threshold; exit non-zero and avoid writing/updating the pipeline result, while preserving valid upstream artifacts.
 - Wire `clipper pipeline`.
 
 ## Acceptance Criteria

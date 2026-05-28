@@ -29,7 +29,7 @@ It runs locally on macOS, uses FFmpeg for media work, faster-whisper for transcr
 - macOS
 - Python 3.11+
 - [`uv`](https://docs.astral.sh/uv/)
-- FFmpeg installed with Homebrew:
+- FFmpeg and ffprobe installed with Homebrew:
 
 ```bash
 brew install ffmpeg
@@ -41,6 +41,7 @@ Python dependencies should be declared in `pyproject.toml` and installed with `u
 - `faster-whisper`
 - `openai`
 - `python-dotenv`
+- `questionary`
 
 Expected test dependency:
 
@@ -58,8 +59,10 @@ Example `.env` values:
 
 ```env
 LLM_BASE_URL=https://ollama.com/v1
-LLM_API_KEY=your-key-here
+LLM_API_KEY=your-key-here  # optional for local endpoints that do not require auth
 LLM_MODEL=deepseek-v4-flash
+LLM_TEMPERATURE=0
+LLM_TIMEOUT_SECONDS=60
 WHISPER_MODEL=small
 WHISPER_DEVICE=cpu
 WHISPER_COMPUTE_TYPE=int8
@@ -67,14 +70,17 @@ WHISPER_COMPUTE_TYPE=int8
 
 ## CLI Overview
 
+Commands that operate on an existing video accept an optional positional `[VIDEO]`. When provided, `[VIDEO]` may be either a video name under `.clipper/` or a path to a video directory. When omitted, Clipper resolves the video as follows: if exactly one video exists in `.clipper/`, use it automatically; if multiple videos exist and the terminal is interactive, use `questionary` to prompt the user to select one; if multiple videos exist under `--json` or non-interactive execution, fail clearly and ask for `[VIDEO]`. If interactive selection is cancelled, exit with code 130 without changing artifacts.
+
 ```bash
 uv run clipper doctor
-uv run clipper download URL
-uv run clipper transcribe VIDEO_PATH
-uv run clipper score TRANSCRIPT_JSON --directive "Find expressive moments"
-uv run clipper cut SCORES_JSON --min-score 6
-uv run clipper montage CLIP_MANIFEST_OR_DIR
-uv run clipper pipeline URL_OR_VIDEO_PATH --directive "Find expressive moments"
+uv run clipper start URL_OR_VIDEO_PATH --name optional-video-name
+uv run clipper list
+uv run clipper transcribe [VIDEO]
+uv run clipper score [VIDEO] --directive "Find expressive moments"
+uv run clipper cut [VIDEO] --min-score 6
+uv run clipper montage [VIDEO]
+uv run clipper pipeline URL_OR_VIDEO_PATH --name optional-video-name --directive "Find expressive moments"
 ```
 
 All commands should support clean human-readable output. Commands that produce structured results should also support:
@@ -83,36 +89,101 @@ All commands should support clean human-readable output. Commands that produce s
 --json
 ```
 
-Verbose debugging should be available with:
+JSON CLI output should use a consistent result envelope. Successful commands should print:
+
+```json
+{"ok":true,"video":"my-video","artifact_path":"work/transcript.json","result":{}}
+```
+
+Successful envelopes require `ok` and `result`, and may include `video` and `artifact_path` when applicable.
+
+Failures should print the JSON error envelope to stdout and exit non-zero:
+
+```json
+{"ok":false,"error":{"code":"message_code","message":"Human-readable failure"}}
+```
+
+When `--json` is active, stdout must remain parseable JSON; verbose diagnostics may go to stderr. Error envelopes require stable `code` and human-readable `message`, and may include optional `details` when useful.
+
+Shared command options should be available after every subcommand through a shared parser/config helper to avoid drift:
 
 ```bash
+--store PATH
+--json
 -v
 --verbose
 ```
 
+Examples:
+
+```bash
+uv run clipper list --json
+uv run clipper transcribe my-video --store .clipper --verbose
+```
+
 ## Output and Re-run Semantics
 
-Artifacts should be organized per video/job to avoid collisions between runs.
+Artifacts should be organized per video under a project-local `.clipper/` artifact store to avoid collisions between runs. The artifact store defaults to `.clipper/`, and may be overridden with per-command `--store PATH` or `CLIPPER_STORE_PATH`. In Clipper, a **video** is a named unit of work rooted at `.clipper/{video}/`. Local video files are copied into the video source directory by default so artifacts remain self-contained. By default, each video directory should use a human-readable lowercase safe source/title stem plus a short stable hash of the canonical input reference, e.g. `.clipper/my-video-a1b2c3d4/`. For remote inputs, only `http` and `https` URLs are supported in v1, and the canonical input reference is the normalized URL. For local inputs, it is the resolved absolute path.
 
-Default behavior when outputs already exist:
+Default behavior when a command's target step output already exists, including `clipper start` against an existing named video:
 
 - fail loudly
 
 Explicit alternatives:
 
-- `--reuse` reuses existing outputs
-- `--force` overwrites existing outputs
+- `--reuse` validates and uses existing step outputs, then continues with missing downstream outputs; for `clipper start`, existing metadata must match the same canonical input reference
+- `--force` overwrites each target step output as needed
 
-This behavior should be consistent across commands.
+This behavior should be consistent across commands. The policy is step-output based, not whole-video based: an existing transcript should not prevent scoring unless scoring's own output already exists. Steps with multiple outputs, such as montage's `output/montage.mp4` and `output/montage.json`, treat those files as one output set: default fails if any target exists, `--reuse` requires the complete set to exist and validate, and `--force` overwrites the set. `--reuse` and `--force` are mutually exclusive. Reused JSON artifacts must be loaded and schema-validated; malformed or schema-invalid reused artifacts fail clearly. Artifact schemas should require stable core fields, include top-level `schema_version: 1`, store artifact paths relative to the video directory, and allow additional provider/tool fields for traceability and future extension. Artifacts may include top-level `warnings: []` for non-fatal validation repairs, dropped candidates, or degraded behavior.
 
 ## Default Directories
 
-The implementation may organize these under per-video/job artifact directories, but the conceptual artifact groups are:
+By default, Clipper writes these under per-video directories inside `.clipper/` or the configured artifact store. Each video directory uses exactly these artifact groups:
 
 - `source/` — source videos
 - `work/` — metadata, transcripts, scores, manifests
 - `clips/` — extracted clips
 - `output/` — final montages
+
+Standard artifact filenames within a video should be fixed so commands and agents can discover them consistently:
+
+```text
+.clipper/{video}/
+  source/source.{ext}
+  work/metadata.json
+  work/transcript.json
+  work/scores.json
+  work/clips.json
+  work/pipeline.json
+  output/montage.mp4
+  output/montage.json
+```
+
+Core artifact schema examples:
+
+```json
+{"schema_version":1,"input_ref":"./video.mp4","input_type":"local","canonical_input_ref":"/abs/video.mp4","source_path":"source/source.mp4","title":"video","duration":123.4,"created_at":"2026-05-26T12:00:00Z"}
+```
+
+```json
+{"schema_version":1,"source_file":"source/source.mp4","language":"en","duration":123.4,"segments":[{"id":0,"start":0.0,"end":5.2,"text":"Welcome"}]}
+```
+
+```json
+{"schema_version":1,"source_file":"source/source.mp4","directive":"Find expressive moments","segments":[{"start":12.5,"end":22.0,"score":8,"reason":"Strong reaction"}]}
+```
+
+```json
+{"schema_version":1,"source_file":"source/source.mp4","clips":[{"id":"clip-0001","path":"clips/clip-0001.mp4","start":12.5,"end":22.0,"duration":9.5,"score":8,"reason":"Strong reaction"}]}
+```
+
+```json
+{"schema_version":1,"montage_path":"output/montage.mp4","clips":["clips/clip-0001.mp4"],"duration":9.5,"width":1920,"height":1080,"silent":false}
+```
+
+```json
+{"schema_version":1,"metadata_path":"work/metadata.json","transcript_path":"work/transcript.json","scores_path":"work/scores.json","clips_path":"work/clips.json","montage_path":"output/montage.mp4","clip_count":1,"runtime_seconds":42.0}
+```
 
 All scripts should handle absolute and relative paths and create required directories automatically.
 
@@ -129,32 +200,38 @@ LLM_MODEL=deepseek-v4-flash
 DEFAULT_WIDTH=1920
 DEFAULT_HEIGHT=1080
 DEFAULT_MIN_SCORE=6
+CLIPPER_STORE_PATH=.clipper
 ```
 
 ## Doctor Command
 
 `clipper doctor` should validate the local environment before expensive media steps run.
 
+`clipper doctor --json` should return a result with `checks: [{name, status, message}]` plus summary counts. Check `status` values should be `pass`, `warn`, or `fail`.
+
 Checks should include:
 
 - Python version
-- FFmpeg availability
+- FFmpeg and ffprobe availability
 - Python dependency imports
 - writable artifact directories
-- `.env` / LLM configuration
-- optional LLM connectivity
-- faster-whisper/model readiness or actionable warnings
+- `.env` / LLM configuration; `LLM_API_KEY` is optional for local/OpenAI-compatible endpoints that do not require auth
+- optional LLM connectivity only when explicitly requested, e.g. `--check-llm`
+- faster-whisper import/config readiness by default, with real model loading only when explicitly requested, e.g. `--check-whisper`
 
-## Download
+## Start
 
-`clipper download` downloads a video from YouTube or any yt-dlp-supported site.
+`clipper start INPUT` creates a named video workspace under `.clipper/`. For a remote input, it downloads a video from YouTube or any yt-dlp-supported site. For a local input, it copies the local file into the video workspace. `start` only prepares source and metadata; later commands or `pipeline` perform transcription, scoring, cutting, and montage assembly.
 
 Important behavior:
 
-- Use yt-dlp.
+- Accept `--name` to set the video name explicitly; otherwise default to `safe-stem-short-hash`. User-provided names must be slug-safe: lowercase letters, numbers, dashes, and underscores only.
+- Use yt-dlp for remote inputs.
 - Prefer best video at or below 720p plus best audio.
+- Copy local inputs into `source/source.{ext}`.
+- For remote downloads, let yt-dlp/FFmpeg choose the actual final extension, discover the resulting `source/source.{ext}` path, and store that video-relative path in metadata `source_path`.
 - Save source metadata as JSON.
-- Support `--proxy` and forward it to yt-dlp.
+- Support `--proxy` for remote inputs and forward it to yt-dlp.
 
 Recommended yt-dlp format:
 
@@ -162,11 +239,15 @@ Recommended yt-dlp format:
 bestvideo[height<=720]+bestaudio/best[height<=720]
 ```
 
-Metadata should include available fields such as title, duration, thumbnail URL, video ID, source URL, and local source path.
+## List
+
+`clipper list` lists existing videos in `.clipper/` for humans or automation. It should show at least the video name, path, title, duration, and artifact flags for whether metadata, transcript, scores, clips, and montage outputs currently exist.
+
+Metadata should require the traceability core fields `schema_version`, `input_ref`, `input_type`, `canonical_input_ref`, `source_path`, `title`, `duration`, and `created_at`. Timestamps such as `created_at` should be UTC ISO-8601 strings ending in `Z`, e.g. `2026-05-26T12:00:00Z`. `input_type` should be either `remote` for URL inputs or `local` for local file inputs. `title` should come from provider metadata or local filename fallback. `duration` should be numeric and determined via yt-dlp metadata or ffprobe; metadata creation should fail clearly if duration cannot be determined. Metadata may include provider extras such as thumbnail URL, video ID, source URL, extractor, and raw yt-dlp metadata.
 
 ## Transcription
 
-`clipper transcribe` transcribes a source video with faster-whisper.
+`clipper transcribe [VIDEO]` transcribes a source video workspace with faster-whisper.
 
 Defaults:
 
@@ -174,13 +255,14 @@ Defaults:
 - device: `cpu`
 - compute type: `int8`
 
-It should support `--language` to force a language, otherwise auto-detect.
+It should support `--language` to force a language, otherwise auto-detect. Transcript `language` may be `null` if faster-whisper does not provide a detected language.
 
 Transcript JSON shape:
 
 ```json
 {
-  "source_file": "podcast_episode.mp4",
+  "schema_version": 1,
+  "source_file": "source/source.mp4",
   "language": "en",
   "duration": 3600.5,
   "segments": [
@@ -196,12 +278,12 @@ Transcript JSON shape:
 
 ## Scoring
 
-`clipper score` takes a transcript JSON and asks an OpenAI-compatible LLM to identify candidate segments.
+`clipper score [VIDEO]` takes a video workspace transcript and asks an OpenAI-compatible LLM to identify candidate segments using the chat completions API shape (`client.chat.completions.create`). Default generation settings are temperature `0` and timeout `60` seconds.
 
 The directive is critical:
 
 ```bash
-uv run clipper score work/example_transcript.json \
+uv run clipper score my-video \
   --directive "Find moments where hosts laugh, react strongly, or discuss surprising topics"
 ```
 
@@ -227,19 +309,24 @@ Return ONLY a JSON array of objects. No markdown, no explanation, no code fences
 ### Robust Scoring Requirements
 
 - Include timestamps in the transcript prompt.
-- Chunk long transcripts into overlapping windows of about 10 minutes.
+- Chunk long transcripts into overlapping windows of about 10 minutes with about 30 seconds of overlap.
 - Score each window independently.
-- Parse only valid JSON.
-- Retry once with stricter instructions if the model returns invalid JSON.
+- Parse valid JSON arrays, including extracting the first JSON array from common markdown/code-fence wrappers.
+- Retry once with stricter instructions if extraction/parsing fails.
 - Validate each segment has `start`, `end`, `score`, and `reason`.
+- Reject individual segments with scores outside 0-10 and report validation warnings.
+- Clamp segment times to transcript bounds when safe, and drop segments with `end <= start` or unusable times.
 - Normalize segment values where safe.
 - Merge or deduplicate overlapping segments, preferring higher scores.
+
+If scoring produces zero valid candidate segments, `clipper score` should still write `scores.json` with an empty `segments` array and a warning; `clipper cut` is responsible for failing clearly when no clips pass the threshold.
 
 Score JSON shape:
 
 ```json
 {
-  "source_file": "podcast_episode.mp4",
+  "schema_version": 1,
+  "source_file": "source/source.mp4",
   "directive": "Find moments where hosts laugh...",
   "segments": [
     {
@@ -263,16 +350,18 @@ Find any segment where someone says something controversial or surprising
 
 ## Cutting Clips
 
-`clipper cut` extracts scored segments from a source video.
+`clipper cut [VIDEO]` extracts scored segments from a source video workspace.
 
 Important behavior:
 
 - Default `--min-score` is `6`.
-- Merge segments that overlap significantly before cutting.
+- Merge segments that overlap at all before cutting; merged clips use the earliest start, latest end, maximum score, and combined reasons.
+- Sort merged passing segments chronologically and name clip files/IDs sequentially as `clip-0001`, `clip-0002`, etc.
 - Fast stream-copy cutting is the default.
+- Do not add padding by default; cut exactly the scored/merged start and end times.
 - Audio is preserved by default.
 - `--silent` strips audio.
-- If no segments pass the threshold, fail clearly and do not create an empty montage.
+- If no segments pass the threshold, fail clearly and do not create or update `work/clips.json`, clip files, or an empty montage.
 
 Example fast FFmpeg shape:
 
@@ -284,15 +373,15 @@ Silent mode should add audio stripping behavior, e.g. `-an`.
 
 ## Montage
 
-`clipper montage` concatenates clips into one normalized video.
+`clipper montage [VIDEO]` concatenates clips from a video workspace into one normalized video.
 
 First-version behavior:
 
 - chronological ordering by default
-- include clips above the selected score threshold
-- support `--min-duration`
+- use `work/clips.json` exactly as produced by `clipper cut`; score filtering belongs to `cut`
+- support `--min-duration`; fail clearly without creating a montage if selected clips cannot meet it
 - support `--max-duration`
-- eliminate or trim clips as needed to fit maximum duration
+- include clips chronologically and trim the final included clip when needed to fit `--max-duration`
 - preserve audio by default
 - `--silent` strips audio
 - normalize output dimensions, default `1920x1080`
@@ -309,9 +398,9 @@ Silent mode should add `-an`.
 
 ## Pipeline
 
-`clipper pipeline` runs the full flow:
+`clipper pipeline INPUT` creates or reuses a video workspace, then runs the full flow:
 
-1. download/register source
+1. start source preparation
 2. transcribe
 3. score
 4. cut
@@ -321,6 +410,7 @@ Example:
 
 ```bash
 uv run clipper pipeline "https://youtube.com/watch?v=XXX" \
+  --name optional-video-name \
   --directive "Find moments of laughter and expressiveness" \
   --min-score 6 \
   --max-duration 60
@@ -337,7 +427,7 @@ uv run clipper pipeline ./source/example.mp4 \
 The pipeline should also be importable:
 
 ```python
-from clip_pipe.pipeline import run_pipeline
+from clipper.pipeline import run_pipeline
 
 result = run_pipeline(
     input_ref="https://youtube.com/watch?v=XXX",
@@ -352,12 +442,14 @@ The result should include paths and summary data for source video, metadata, tra
 
 ## Error Handling
 
+Exit codes should be minimal and conventional: `0` for success, `1` for command/domain failure, `2` for CLI usage errors, and `130` for user cancellation.
+
 - Commands should exit with clear messages and non-zero status on failure.
 - yt-dlp failures should stop the run.
 - Whisper model failures should explain how to fix or download/load the model.
 - LLM invalid JSON should retry once, then fail clearly.
-- No clips above threshold should stop before montage creation.
-- FFmpeg failures should include the failed operation and relevant stderr.
+- No clips above threshold should stop before montage creation; pipeline should exit non-zero and avoid writing/updating the pipeline result, while preserving valid upstream artifacts.
+- FFmpeg failures should include the failed operation and relevant stderr. If a cut or montage operation fails after writing partial outputs, Clipper should clean up outputs from the failed operation and avoid writing/updating the result manifest.
 
 ## Testing
 
@@ -372,9 +464,9 @@ Testing expectations:
 - use pytest
 - test schemas and JSON IO
 - test scorer prompt/chunking/parsing/retry/validation/overlap behavior
-- test cut and montage behavior with generated FFmpeg videos
+- test cut and montage behavior with generated FFmpeg videos, using ±0.5s tolerance for duration assertions
 - test CLI routing, `--json`, `--reuse`, and `--force`
-- generate tiny test videos during tests instead of committing binary video fixtures
+- generate low-resolution 10-second deterministic test videos during tests instead of committing binary video fixtures; fixture helpers should allow duration/size overrides
 
 Optional integration tests:
 

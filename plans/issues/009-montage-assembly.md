@@ -12,10 +12,10 @@ Assemble selected clips into a normalized montage video.
 
 ## Tasks
 
-- Discover clips from manifest or per-video clip directory.
+- Read clips from `work/clips.json` exactly as produced by `clipper cut`; do not re-filter scores in montage.
 - Sort clips chronologically by default.
-- Support `--min-duration` and `--max-duration`.
-- Eliminate or trim clips as needed to fit maximum duration.
+- Support `--min-duration` and `--max-duration`; fail clearly without creating a montage if selected clips cannot meet `--min-duration`.
+- Include clips chronologically and trim the final included clip when needed to fit maximum duration.
 - Concatenate with FFmpeg concat demuxer.
 - Normalize dimensions with the documented scale/pad filter, defaulting to 1920x1080.
 - Encode with a broadly compatible H.264 output, e.g. libx264 with CRF/preset defaults from `README.md`.
@@ -31,3 +31,4 @@ Assemble selected clips into a normalized montage video.
 - Output dimension normalization is tested or verified with FFmpeg/ffprobe where practical.
 - Audio default and silent behavior are tested.
 - CLI supports human and `--json` output.
+- Tests verify partial-output cleanup on FFmpeg failure.

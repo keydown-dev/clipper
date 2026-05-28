@@ -11,7 +11,8 @@ The tool should run locally on macOS, use `uv` for Python dependency management,
 Create a Python package exposing a single console command:
 
 - `clipper doctor`
-- `clipper download`
+- `clipper start`
+- `clipper list`
 - `clipper transcribe`
 - `clipper score`
 - `clipper cut`
@@ -29,7 +30,7 @@ The first version builds the deterministic core pipeline. Stage 2 narrative edit
 3. As a terminal user, I want a single `clipper` command, so that the workflow is easy to remember.
 4. As an automation agent, I want `--json` output, so that command results are parseable.
 5. As a first-time user, I want `clipper doctor`, so that local environment failures are caught early.
-6. As a user, I want to process either a URL or local file, so that I can use downloaded or existing media.
+6. As a user, I want to start a named video from either a remote URL or local file, so that I can use downloaded or existing media.
 7. As a user, I want per-video artifacts, so that runs do not collide.
 8. As a user, I want default fail-loud output behavior, so that stale artifacts are not silently reused.
 9. As a user, I want `--reuse`, so that I can intentionally resume previous work.
@@ -57,7 +58,7 @@ The first version builds the deterministic core pipeline. Stage 2 narrative edit
 - Keep module internals importable and testable.
 - Add typed schemas/contracts for metadata, transcripts, scores, clips, montages, and pipeline results.
 - Use per-video artifact directories.
-- Existing outputs fail by default; `--reuse` reuses; `--force` overwrites.
+- Existing outputs fail by default; `--reuse` validates and reuses step outputs; `--force` overwrites step outputs.
 - Preserve audio by default; `--silent` strips audio.
 - Use fast FFmpeg stream-copy clipping by default.
 - Default `--min-score` is 6.
@@ -69,7 +70,7 @@ The first version builds the deterministic core pipeline. Stage 2 narrative edit
 
 - Test external behavior and public contracts, not private implementation details.
 - Explicitly test schemas/JSON IO, scoring, cut/montage, pipeline, and CLI.
-- Generate short deterministic test videos with FFmpeg.
+- Generate low-resolution 10-second deterministic test videos with FFmpeg.
 - Mock external network/LLM/Whisper behavior by default.
 - Gate real LLM tests behind `CLIPPER_RUN_LLM_TESTS=1`.
 - Gate real Whisper tests behind `CLIPPER_RUN_WHISPER_TESTS=1`.
