@@ -1,0 +1,8 @@
+## orchestrator/clipper-prd-issues
+ M .ralph/orchestrator/loops/clipper-prd-issues/iterations/012/verification.md
+ M clipper/cli.py
+ M clipper/pipeline.py
+ M tests/__pycache__/test_cli.cpython-313-pytest-9.0.3.pyc
+ M tests/test_cli.py
+?? .ralph/orchestrator/loops/clipper-prd-issues/iterations/012/handoff-out.md
+?? tests/test_issue010.py

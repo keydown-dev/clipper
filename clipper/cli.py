@@ -37,7 +37,6 @@ PLACEHOLDER_COMMANDS = (
     "score",
     "cut",
     "montage",
-    "pipeline",
 )
 
 
@@ -394,6 +393,41 @@ def run_montage(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def run_pipeline_cli(args: argparse.Namespace) -> int:
+    """Run the full pipeline for a URL or local source."""
+
+    if not args.input:
+        raise ArtifactError("clipper pipeline requires INPUT")
+    command_config = config_from_args(args)
+    from .pipeline import run_pipeline
+
+    result = run_pipeline(
+        input_ref=args.input,
+        name=args.name,
+        store=command_config.store,
+        directive=args.directive,
+        min_score=args.min_score,
+        min_duration=args.min_duration,
+        max_duration=args.max_duration,
+        silent=args.silent,
+        proxy=args.proxy,
+        reuse=args.reuse,
+        force=args.force,
+        json_output=command_config.json_output,
+        progress=CliProgress(enabled=command_config.verbose > 0),
+    )
+    layout = ArtifactLayout.for_video(command_config.store, result["video"])
+    if command_config.json_output:
+        print_json(success_envelope(video=result["video"], artifact_path=str(layout.pipeline), result=result))
+    else:
+        action = "Reused" if all(result.get("reused", {}).values()) else "Ran"
+        print(f"{action} pipeline for video {result['video']}")
+        print(f"Pipeline: {layout.pipeline}")
+        print(f"Clips: {result['clip_count']}")
+        print(f"Montage: {result['montage_path']}")
+    return EXIT_SUCCESS
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -569,6 +603,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["score"] = run_score
     handlers["cut"] = run_cut
     handlers["montage"] = run_montage
+    handlers["pipeline"] = run_pipeline_cli
 
     doctor = subparsers.add_parser("doctor", parents=[common], help="Validate local Clipper environment.")
     doctor.add_argument("--check-llm", action="store_true", help="Also check LLM connectivity.")
@@ -620,7 +655,10 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     pipeline.add_argument("--name", help="Optional slug-safe video name.")
     pipeline.add_argument("--directive", default="Find expressive, visually interesting, or emotionally engaging moments.", help="Scoring directive.")
     pipeline.add_argument("--min-score", type=float, default=6, help="Minimum score to cut (default: 6).")
+    pipeline.add_argument("--min-duration", type=float, help="Require a minimum montage duration in seconds.")
     pipeline.add_argument("--max-duration", type=float, help="Limit montage duration in seconds.")
+    pipeline.add_argument("--silent", action="store_true", help="Strip audio from clips and montage.")
+    pipeline.add_argument("--proxy", help="Proxy URL for remote downloads.")
     add_reuse_force(pipeline)
     pipeline.set_defaults(handler=handlers["pipeline"])
 

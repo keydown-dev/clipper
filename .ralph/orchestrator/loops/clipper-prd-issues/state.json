@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 12,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:45:53.776Z",
+  "updatedAt": "2026-05-28T18:49:15.916Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -65,7 +65,7 @@
     {
       "id": 10,
       "title": "Iteration 10: Complete plans/issues/010-pipeline-orchestrator.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": 11,
@@ -569,10 +569,50 @@
     },
     {
       "number": 12,
-      "status": "running",
+      "status": "accepted",
       "todoId": 10,
       "beforeRef": "ralph/clipper-prd-issues/iter-012-before",
-      "startedAt": "2026-05-28T18:45:53.615Z"
+      "startedAt": "2026-05-28T18:45:53.615Z",
+      "diff": {
+        "filesChanged": 5,
+        "insertions": 333,
+        "deletions": 12
+      },
+      "usage": {
+        "input": 58353,
+        "output": 8645,
+        "cacheRead": 796672,
+        "cacheWrite": 0,
+        "totalTokens": 863670,
+        "cost": 0.949451,
+        "contextWindow": 272000,
+        "contextTokens": 51133
+      },
+      "summary": "Implemented the end-to-end importable pipeline and wired `clipper pipeline`.",
+      "changedFiles": [
+        "clipper/pipeline.py",
+        "Orchestrates source preparation, transcription, scoring, cutting, and montage.",
+        "Propagates name, directive, min score, min/max duration, silent, proxy, reuse, and force options.",
+        "Returns a structured result with source, metadata, transcript, scores, clips, montage, counts, durations, runtime, and reuse flags.",
+        "clipper/cli.py",
+        "Replaced pipeline placeholder with real CLI handler.",
+        "tests/test_cli.py",
+        "Removed pipeline from placeholder-command expectations.",
+        "tests/test_issue010.py",
+        "Added pipeline acceptance coverage for generated local video with mocked transcription/scoring, fail/reuse/force behavior, no-clips stop behavior, programmatic result contract, and CLI output modes."
+      ],
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "Status: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_cli.py tests/test_issue010.py\n```\n\nResult: passed — 18 passed, 1 skipped.\n\n```bash\nuv run pytest\n```\n\nResult: passed — 72 passed, 3 skipped."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-prd-issues/iter-012-after",
+      "completedAt": "2026-05-28T18:49:15.837Z"
     }
   ]
 }
