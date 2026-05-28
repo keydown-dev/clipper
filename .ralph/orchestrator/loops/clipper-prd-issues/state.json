@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 11,
+  "currentIteration": 12,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:45:53.179Z",
+  "updatedAt": "2026-05-28T18:45:53.776Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -65,7 +65,7 @@
     {
       "id": 10,
       "title": "Iteration 10: Complete plans/issues/010-pipeline-orchestrator.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 11,
@@ -566,6 +566,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-011-after",
       "completedAt": "2026-05-28T18:45:53.099Z"
+    },
+    {
+      "number": 12,
+      "status": "running",
+      "todoId": 10,
+      "beforeRef": "ralph/clipper-prd-issues/iter-012-before",
+      "startedAt": "2026-05-28T18:45:53.615Z"
     }
   ]
 }
