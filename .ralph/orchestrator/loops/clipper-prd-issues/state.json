@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 9,
+  "currentIteration": 10,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:39:05.962Z",
+  "updatedAt": "2026-05-28T18:39:06.525Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -55,7 +55,7 @@
     {
       "id": 8,
       "title": "Iteration 8: Complete plans/issues/008-cut-clips.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 9,
@@ -480,6 +480,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-009-after",
       "completedAt": "2026-05-28T18:35:43.574Z"
+    },
+    {
+      "number": 10,
+      "status": "running",
+      "todoId": 8,
+      "beforeRef": "ralph/clipper-prd-issues/iter-010-before",
+      "startedAt": "2026-05-28T18:39:06.352Z"
     }
   ]
 }

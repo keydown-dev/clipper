@@ -13,7 +13,7 @@ Control: active
 - [x] 6. Iteration 6: Complete plans/issues/006-llm-scoring.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [x] 7. Iteration 7: Complete plans/issues/007-generated-video-fixtures.md only, preserving prior behavior; verify acceptance criteria. (complete)
 - [x] 14. Iteration 6.1: Complete plans/issues/006.1-scoring-verbose-progress.md only, preserving prior behavior; verify acceptance criteria. (complete)
-- [ ] 8. Iteration 8: Complete plans/issues/008-cut-clips.md only, preserving prior behavior; verify acceptance criteria. (queued)
+- [ ] 8. Iteration 8: Complete plans/issues/008-cut-clips.md only, preserving prior behavior; verify acceptance criteria. (running)
 - [ ] 9. Iteration 9: Complete plans/issues/009-montage-assembly.md only, preserving prior behavior; verify acceptance criteria. (queued)
 - [ ] 10. Iteration 10: Complete plans/issues/010-pipeline-orchestrator.md only, preserving prior behavior; verify acceptance criteria. (queued)
 - [ ] 11. Iteration 11: Complete plans/issues/011-cli-polish-and-docs.md only, preserving prior behavior; verify acceptance criteria. (queued)
