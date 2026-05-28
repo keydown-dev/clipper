@@ -2,9 +2,9 @@
   "name": "clipper-prd-issues",
   "control": "active",
   "branch": "orchestrator/clipper-prd-issues",
-  "currentIteration": 6,
+  "currentIteration": 7,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T15:02:13.396Z",
+  "updatedAt": "2026-05-28T15:02:13.963Z",
   "maxIterations": 13,
   "todos": [
     {
@@ -40,7 +40,7 @@
     {
       "id": 6,
       "title": "Iteration 6: Complete plans/issues/006-llm-scoring.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": 7,
@@ -340,6 +340,13 @@
       },
       "afterRef": "ralph/clipper-prd-issues/iter-006-after",
       "completedAt": "2026-05-28T13:57:04.939Z"
+    },
+    {
+      "number": 7,
+      "status": "running",
+      "todoId": 6,
+      "beforeRef": "ralph/clipper-prd-issues/iter-007-before",
+      "startedAt": "2026-05-28T15:02:13.799Z"
     }
   ]
 }
