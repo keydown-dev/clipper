@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-prd-issues",
   "currentIteration": 11,
   "createdAt": "2026-05-28T00:04:17.517Z",
-  "updatedAt": "2026-05-28T18:42:51.866Z",
+  "updatedAt": "2026-05-28T18:45:53.179Z",
   "maxIterations": 14,
   "todos": [
     {
@@ -60,7 +60,7 @@
     {
       "id": 9,
       "title": "Iteration 9: Complete plans/issues/009-montage-assembly.md only, preserving prior behavior; verify acceptance criteria.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": 10,
@@ -526,10 +526,46 @@
     },
     {
       "number": 11,
-      "status": "running",
+      "status": "accepted",
       "todoId": 9,
       "beforeRef": "ralph/clipper-prd-issues/iter-011-before",
-      "startedAt": "2026-05-28T18:42:51.712Z"
+      "startedAt": "2026-05-28T18:42:51.712Z",
+      "diff": {
+        "filesChanged": 4,
+        "insertions": 359,
+        "deletions": 1
+      },
+      "usage": {
+        "input": 46394,
+        "output": 7446,
+        "cacheRead": 633856,
+        "cacheWrite": 0,
+        "totalTokens": 687696,
+        "cost": 0.7722779999999998,
+        "contextWindow": 272000,
+        "contextTokens": 36202
+      },
+      "summary": "Completed Issue 009 montage assembly. Added an importable montage implementation and wired `clipper montage` to assemble `work/clips.json` into `output/montage.mp4` plus `output/montage.json`.",
+      "changedFiles": [
+        ".ralph/orchestrator/loops/clipper-prd-issues/iterations/011/verification.md",
+        "clipper/cli.py",
+        "tests/test_cli.py",
+        ".ralph/orchestrator/loops/clipper-prd-issues/iterations/011/handoff-out.md",
+        "clipper/montage.py",
+        "tests/test_issue009.py"
+      ],
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue009.py tests/test_cli.py\n```\n\nResult: passed — 21 passed in 0.72s.\n\n```bash\nuv run pytest\n```\n\nResult: passed — 69 passed, 2 skipped in 1.62s."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-prd-issues/iter-011-after",
+      "completedAt": "2026-05-28T18:45:53.099Z"
     }
   ]
 }

@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 from .artifacts import ArtifactError, ArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
 from .config import load_config
 from .cutting import CutOptions, cut_video
+from .montage import MontageOptions, montage_video
 from .progress import CliProgress
 from .scoring import score_video
 from .transcription import TranscriptionOptions, transcribe_video
@@ -353,6 +354,46 @@ def run_cut(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def run_montage(args: argparse.Namespace) -> int:
+    """Assemble clip files into a normalized montage."""
+
+    command_config = config_from_args(args)
+    app_config = load_config(store_override=command_config.store)
+    video, montage_path, montage, reused = montage_video(
+        store=command_config.store,
+        video=args.video,
+        options=MontageOptions(
+            min_duration=args.min_duration,
+            max_duration=args.max_duration,
+            width=app_config.default_width,
+            height=app_config.default_height,
+            silent=args.silent,
+        ),
+        reuse=args.reuse,
+        force=args.force,
+        json_output=command_config.json_output,
+        progress=CliProgress(enabled=command_config.verbose > 0),
+    )
+    result = {
+        "montage_json": str(montage_path),
+        "montage_path": montage["montage_path"],
+        "clip_count": len(montage["clips"]),
+        "duration": montage["duration"],
+        "width": montage["width"],
+        "height": montage["height"],
+        "silent": montage["silent"],
+        "reused": reused,
+    }
+    if command_config.json_output:
+        print_json(success_envelope(video=video, artifact_path=str(montage_path), result=result))
+    else:
+        action = "Reused" if reused else "Assembled"
+        print(f"{action} montage for video {video}")
+        print(f"Montage: {montage_path}")
+        print(f"Clip count: {result['clip_count']}")
+    return EXIT_SUCCESS
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -527,6 +568,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["transcribe"] = run_transcribe
     handlers["score"] = run_score
     handlers["cut"] = run_cut
+    handlers["montage"] = run_montage
 
     doctor = subparsers.add_parser("doctor", parents=[common], help="Validate local Clipper environment.")
     doctor.add_argument("--check-llm", action="store_true", help="Also check LLM connectivity.")
