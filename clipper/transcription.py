@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .artifacts import ArtifactError, ArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
+from .progress import CliProgress
 from .schemas import SCHEMA_VERSION
 
 
@@ -50,18 +51,28 @@ def _segment_to_json(index: int, segment: Any) -> dict[str, Any]:
     return {"id": index, "start": start, "end": end, "text": text}
 
 
-def build_transcript(*, source_file: str, duration: float, segments: Iterable[Any], info: Any) -> dict[str, Any]:
+def build_transcript(*, source_file: str, duration: float, segments: Iterable[Any], info: Any, progress: CliProgress | None = None) -> dict[str, Any]:
     """Convert faster-whisper output to the shared transcript schema."""
 
     language = getattr(info, "language", None)
     if language is not None:
         language = str(language)
+    transcript_duration = float(getattr(info, "duration", duration) or duration)
+    progress_tracker = progress.transcription(duration=transcript_duration) if progress else None
+    transcript_segments = []
+    for index, segment in enumerate(segments):
+        segment_json = _segment_to_json(index, segment)
+        transcript_segments.append(segment_json)
+        if progress_tracker:
+            progress_tracker.update(segment_json["end"])
+    if progress_tracker:
+        progress_tracker.finish()
     return {
         "schema_version": SCHEMA_VERSION,
         "source_file": source_file,
         "language": language,
-        "duration": float(getattr(info, "duration", duration) or duration),
-        "segments": [_segment_to_json(index, segment) for index, segment in enumerate(segments)],
+        "duration": transcript_duration,
+        "segments": transcript_segments,
     }
 
 
@@ -73,6 +84,7 @@ def transcribe_video(
     reuse: bool = False,
     force: bool = False,
     json_output: bool = False,
+    progress: CliProgress | None = None,
 ) -> tuple[str, Path, dict[str, Any], bool]:
     """Transcribe a video workspace and persist work/transcript.json."""
 
@@ -81,6 +93,8 @@ def transcribe_video(
     metadata = read_validated_json(layout.metadata, "metadata")
     policy = output_policy([layout.transcript], reuse=reuse, force=force, schema="transcript")
     if policy == "reuse":
+        if progress:
+            progress.log(f"reusing existing transcript for video {layout.video}: {layout.transcript}")
         return layout.video, layout.transcript, read_validated_json(layout.transcript, "transcript"), True
 
     source_file = str(metadata["source_path"])
@@ -88,12 +102,26 @@ def transcribe_video(
     if not source_path.exists():
         raise ArtifactError(f"source file missing for {layout.video}: {source_file}")
 
+    if progress:
+        language_mode = options.language or "auto-detect"
+        progress.log(f"video {layout.video}: source={source_path}")
+        progress.log(f"Whisper model={options.model} device={options.device} compute_type={options.compute_type} language={language_mode}")
+        progress.log("loading Whisper model")
+        progress.log("first use of this model may download files from Hugging Face and may be slow")
     model = _load_model(options)
     try:
+        if progress:
+            progress.log("starting transcription")
         segments, info = model.transcribe(str(source_path), language=options.language)
     except Exception as exc:
         raise ArtifactError(f"Whisper transcription failed for {source_file}: {exc}") from exc
 
-    transcript = build_transcript(source_file=source_file, duration=float(metadata["duration"]), segments=segments, info=info)
+    transcript = build_transcript(source_file=source_file, duration=float(metadata["duration"]), segments=segments, info=info, progress=progress)
     write_json(layout.transcript, transcript)
+    if progress:
+        progress.log(
+            "completed transcription: "
+            f"segments={len(transcript['segments'])} detected_language={transcript['language']} "
+            f"duration={transcript['duration']} transcript={layout.transcript}"
+        )
     return layout.video, layout.transcript, transcript, False

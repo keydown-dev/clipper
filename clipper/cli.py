@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 
 from .artifacts import ArtifactError, ArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
 from .config import load_config
+from .progress import CliProgress
 from .transcription import TranscriptionOptions, transcribe_video
 
 EXIT_SUCCESS = 0
@@ -263,6 +264,7 @@ def run_transcribe(args: argparse.Namespace) -> int:
         reuse=args.reuse,
         force=args.force,
         json_output=command_config.json_output,
+        progress=CliProgress(enabled=command_config.verbose > 0),
     )
     result = {
         "transcript_path": str(transcript_path),

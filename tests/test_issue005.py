@@ -72,7 +72,9 @@ def test_transcribe_writes_schema_with_mocked_whisper(monkeypatch: pytest.Monkey
     assert main(["transcribe", "video", "--store", str(store), "--model", "tiny", "--device", "cpu", "--compute-type", "int8", "--language", "en", "--json"]) == EXIT_SUCCESS
 
     assert seen == {"model": "tiny", "device": "cpu", "compute_type": "int8", "path": str(root / "source" / "source.mp4"), "language": "en"}
-    payload = json.loads(capsys.readouterr().out)
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    payload = json.loads(captured.out)
     assert payload["ok"] is True
     assert payload["video"] == "video"
     assert payload["result"]["segments"] == 2
@@ -104,6 +106,78 @@ def test_transcript_schema_checks_segment_id_start_end_and_text(field: str, valu
     segment[field] = value
     with pytest.raises(SchemaError, match=message):
         validate_transcript({"schema_version": 1, "source_file": "source/source.mp4", "language": None, "duration": 1, "segments": [segment]})
+
+
+def test_transcribe_verbose_logs_to_stderr_and_keeps_json_stdout_parseable(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    store, _ = make_workspace(tmp_path)
+    install_fake_whisper(monkeypatch, {})
+
+    assert main(["transcribe", "video", "--store", str(store), "--json", "--verbose"]) == EXIT_SUCCESS
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["ok"] is True
+    assert payload["result"]["segments"] == 2
+    assert "loading Whisper model" in captured.err
+    assert "first use of this model may download files from Hugging Face" in captured.err
+    assert "starting transcription" in captured.err
+    assert "completed transcription" in captured.err
+
+
+def test_transcribe_verbose_progress_uses_segment_end_times_and_plain_non_tty_stderr(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    store, _ = make_workspace(tmp_path)
+
+    class Info:
+        language = "en"
+        duration = 10.0
+
+    class FakeWhisperModel:
+        def __init__(self, model: str, *, device: str, compute_type: str) -> None:
+            pass
+
+        def transcribe(self, path: str, *, language: str | None = None):
+            def yielded_segments():
+                yield FakeSegment(0.0, 1.0, "one")
+                yield FakeSegment(1.0, 3.5, "two")
+                yield FakeSegment(3.5, 10.0, "three")
+
+            return yielded_segments(), Info()
+
+    monkeypatch.setitem(sys.modules, "faster_whisper", types.SimpleNamespace(WhisperModel=FakeWhisperModel))
+
+    assert main(["transcribe", "video", "--store", str(store), "--verbose"]) == EXIT_SUCCESS
+
+    stderr = capsys.readouterr().err
+    assert "transcription progress: 10%" in stderr
+    assert "transcription progress: 35%" in stderr
+    assert "transcription progress: 100%" in stderr
+    assert "\r" not in stderr
+
+
+def test_transcribe_reuse_verbose_does_not_load_model_or_show_progress(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    store, root = make_workspace(tmp_path)
+    transcript = {
+        "schema_version": 1,
+        "source_file": "source/source.mp4",
+        "language": "en",
+        "duration": 1.0,
+        "segments": [{"id": 0, "start": 0.0, "end": 1.0, "text": "cached"}],
+    }
+    (root / "work" / "transcript.json").write_text(json.dumps(transcript), encoding="utf-8")
+
+    class ExplodingWhisperModel:
+        def __init__(self, model: str, *, device: str, compute_type: str) -> None:
+            raise AssertionError("model should not load when reusing transcript")
+
+    monkeypatch.setitem(sys.modules, "faster_whisper", types.SimpleNamespace(WhisperModel=ExplodingWhisperModel))
+
+    assert main(["transcribe", "video", "--store", str(store), "--reuse", "--verbose", "--json"]) == EXIT_SUCCESS
+
+    captured = capsys.readouterr()
+    assert json.loads(captured.out)["result"]["reused"] is True
+    assert "reusing existing transcript" in captured.err
+    assert "loading Whisper model" not in captured.err
+    assert "transcription progress" not in captured.err
 
 
 def test_transcribe_output_policy_reuse_and_fail(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

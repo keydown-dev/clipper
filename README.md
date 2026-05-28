@@ -257,6 +257,8 @@ Defaults:
 
 It should support `--language` to force a language, otherwise auto-detect. Transcript `language` may be `null` if faster-whisper does not provide a detected language.
 
+Use `--verbose` to observe long-running transcription without changing stdout output. Verbose lifecycle messages and approximate transcription progress are written to stderr, including model loading, transcription start, progress, detected language, segment count, and transcript path. When combined with `--json`, stdout remains a single parseable JSON envelope and all diagnostics stay on stderr. The first use of a Whisper model may download model files from Hugging Face and can be slow.
+
 Transcript JSON shape:
 
 ```json
