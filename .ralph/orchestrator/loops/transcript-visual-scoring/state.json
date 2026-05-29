@@ -2,9 +2,9 @@
   "name": "transcript-visual-scoring",
   "control": "active",
   "branch": "orchestrator/transcript-visual-scoring",
-  "currentIteration": 4,
+  "currentIteration": 5,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T14:35:28.326Z",
+  "updatedAt": "2026-05-29T14:35:28.903Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -30,7 +30,7 @@
     {
       "id": "005-implement-issue-017-visual-frame-analysis",
       "title": "Implement Issue 017 — Visual Frame Analysis",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "006-implement-issue-018-explicit-context-scoring",
@@ -220,6 +220,13 @@
       },
       "afterRef": "ralph/transcript-visual-scoring/iter-004-after",
       "completedAt": "2026-05-29T12:03:14.447Z"
+    },
+    {
+      "number": 5,
+      "status": "running",
+      "todoId": "005-implement-issue-017-visual-frame-analysis",
+      "beforeRef": "ralph/transcript-visual-scoring/iter-005-before",
+      "startedAt": "2026-05-29T14:35:28.759Z"
     }
   ]
 }
