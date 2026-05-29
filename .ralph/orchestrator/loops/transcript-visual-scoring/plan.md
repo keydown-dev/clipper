@@ -4,7 +4,7 @@ Control: active
 
 ## Todo
 
-- [ ] 001-implement-issue-013-word-timestamp-transcription. Implement Issue 013 — Word Timestamp Transcription (queued)
+- [ ] 001-implement-issue-013-word-timestamp-transcription. Implement Issue 013 — Word Timestamp Transcription (running)
 - [ ] 002-implement-issue-014-sentence-transcript-artifact. Implement Issue 014 — Sentence Transcript Artifact (deferred)
 - [ ] 003-implement-issue-015-score-dialogue-enrichment. Implement Issue 015 — Score Dialogue Enrichment (deferred)
 - [ ] 004-implement-issue-016-shot-detection-and-represent. Implement Issue 016 — Shot Detection and Representative Frames (deferred)

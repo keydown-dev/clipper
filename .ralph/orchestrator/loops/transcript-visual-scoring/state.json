@@ -2,15 +2,15 @@
   "name": "transcript-visual-scoring",
   "control": "active",
   "branch": "orchestrator/transcript-visual-scoring",
-  "currentIteration": 0,
+  "currentIteration": 1,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T11:13:38.744Z",
+  "updatedAt": "2026-05-29T11:13:39.290Z",
   "maxIterations": 6,
   "todos": [
     {
       "id": "001-implement-issue-013-word-timestamp-transcription",
       "title": "Implement Issue 013 — Word Timestamp Transcription",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "002-implement-issue-014-sentence-transcript-artifact",
@@ -38,5 +38,13 @@
       "status": "deferred"
     }
   ],
-  "iterations": []
+  "iterations": [
+    {
+      "number": 1,
+      "status": "running",
+      "todoId": "001-implement-issue-013-word-timestamp-transcription",
+      "beforeRef": "ralph/transcript-visual-scoring/iter-001-before",
+      "startedAt": "2026-05-29T11:13:39.151Z"
+    }
+  ]
 }
