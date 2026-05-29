@@ -2,9 +2,9 @@
   "name": "transcript-visual-scoring",
   "control": "active",
   "branch": "orchestrator/transcript-visual-scoring",
-  "currentIteration": 3,
+  "currentIteration": 4,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T11:57:39.192Z",
+  "updatedAt": "2026-05-29T11:57:39.766Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -25,7 +25,7 @@
     {
       "id": "004-implement-issue-016-shot-detection-and-represent",
       "title": "Implement Issue 016 — Shot Detection and Representative Frames",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "005-implement-issue-017-visual-frame-analysis",
@@ -172,6 +172,13 @@
       },
       "afterRef": "ralph/transcript-visual-scoring/iter-003-after",
       "completedAt": "2026-05-29T11:57:39.122Z"
+    },
+    {
+      "number": 4,
+      "status": "running",
+      "todoId": "004-implement-issue-016-shot-detection-and-represent",
+      "beforeRef": "ralph/transcript-visual-scoring/iter-004-before",
+      "startedAt": "2026-05-29T11:57:39.629Z"
     }
   ]
 }
