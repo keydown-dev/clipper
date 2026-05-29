@@ -97,6 +97,17 @@ def chunk_transcript(transcript: dict[str, Any], *, window_seconds: float = WIND
     return windows
 
 
+def sentence_transcript_as_context(transcript: dict[str, Any], sentence_transcript: dict[str, Any] | None) -> dict[str, Any]:
+    """Return a transcript-shaped scoring context, preferring sentence artifacts when available."""
+
+    if sentence_transcript is None:
+        return transcript
+    context = dict(transcript)
+    context["duration"] = sentence_transcript.get("duration", transcript.get("duration", 0.0))
+    context["segments"] = list(sentence_transcript.get("sentences", []))
+    return context
+
+
 def format_timestamped_transcript(segments: Iterable[dict[str, Any]]) -> str:
     return "\n".join(f"[{float(seg['start']):.2f}-{float(seg['end']):.2f}] {str(seg.get('text', '')).strip()}" for seg in segments)
 
@@ -201,6 +212,28 @@ def merge_overlapping_segments(segments: Iterable[dict[str, Any]]) -> list[dict[
     return merged
 
 
+def _sentence_overlaps_segment(sentence: dict[str, Any], segment: dict[str, Any]) -> bool:
+    return float(sentence["end"]) >= float(segment["start"]) and float(sentence["start"]) <= float(segment["end"])
+
+
+def enrich_segments_with_dialogue(segments: Iterable[dict[str, Any]], sentence_transcript: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Attach overlapping sentence artifacts and joined dialogue to scored segments."""
+
+    if sentence_transcript is None:
+        return [dict(segment) for segment in segments]
+    sentences = list(sentence_transcript.get("sentences", []))
+    enriched: list[dict[str, Any]] = []
+    for segment in segments:
+        current = dict(segment)
+        overlapping = [dict(sentence) for sentence in sentences if _sentence_overlaps_segment(sentence, current)]
+        current["sentences"] = overlapping
+        dialogue = " ".join(str(sentence.get("text", "")).strip() for sentence in overlapping if str(sentence.get("text", "")).strip())
+        if dialogue:
+            current["dialogue"] = dialogue
+        enriched.append(current)
+    return enriched
+
+
 def _message_content(response: Any) -> str:
     try:
         return str(response.choices[0].message.content)
@@ -255,11 +288,13 @@ def score_transcript(
     options: ScoringOptions,
     progress: CliProgress | None = None,
     token_usage: TokenUsageTotals | None = None,
+    sentence_transcript: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     lower, upper = transcript_bounds(transcript)
     all_segments: list[dict[str, Any]] = []
     warnings: list[str] = []
-    windows = chunk_transcript(transcript)
+    scoring_context = sentence_transcript_as_context(transcript, sentence_transcript)
+    windows = chunk_transcript(scoring_context)
     total_windows = len(windows)
     for index, window in enumerate(windows, start=1):
         if progress:
@@ -286,7 +321,7 @@ def score_transcript(
         all_segments.extend(valid)
         warnings.extend(segment_warnings)
         _log_window_progress(progress, index=index, total=total_windows, window=window)
-    merged = merge_overlapping_segments(all_segments)
+    merged = enrich_segments_with_dialogue(merge_overlapping_segments(all_segments), sentence_transcript)
     if not merged:
         warnings.append("no valid candidate segments remained after validation")
     if progress and warnings:
@@ -324,13 +359,14 @@ def score_video(
     root = resolve_video(store, video, json_output=json_output)
     layout = ArtifactLayout.for_video(root.parent, root.name)
     transcript = read_validated_json(layout.transcript, "transcript")
+    sentence_transcript = read_validated_json(layout.sentence_transcript, "sentence_transcript") if layout.sentence_transcript.exists() else None
     policy = output_policy([layout.scores], reuse=reuse, force=force, schema="scores")
     if policy == "reuse":
         if progress:
             progress.log(f"reusing existing scores for video {layout.video}: {layout.scores}")
         return layout.video, layout.scores, read_validated_json(layout.scores, "scores"), True
     options = ScoringOptions(directive=directive, model=config.llm_model, temperature=config.llm_temperature, timeout_seconds=config.llm_timeout_seconds)
-    windows = chunk_transcript(transcript)
+    windows = chunk_transcript(sentence_transcript_as_context(transcript, sentence_transcript))
     if progress:
         progress.log(f"video {layout.video}: transcript={layout.transcript}")
         progress.log(f"scoring directive: {directive}")
@@ -340,11 +376,13 @@ def score_video(
             f"temperature={options.temperature} timeout={options.timeout_seconds}"
         )
         progress.log(f"transcript duration={float(transcript.get('duration') or 0.0)} segments={len(transcript.get('segments', []))}")
+        if sentence_transcript is not None:
+            progress.log(f"sentence transcript={layout.sentence_transcript} sentences={len(sentence_transcript.get('sentences', []))}")
         progress.log(f"scoring windows={len(windows)}")
         progress.log(f"scores output={layout.scores}")
     client = client or make_openai_client(config)
     token_usage = TokenUsageTotals()
-    segments, warnings = score_transcript(transcript, client=client, options=options, progress=progress, token_usage=token_usage)
+    segments, warnings = score_transcript(transcript, client=client, options=options, progress=progress, token_usage=token_usage, sentence_transcript=sentence_transcript)
     scores: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "source_file": transcript["source_file"],

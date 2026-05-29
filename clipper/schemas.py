@@ -74,6 +74,8 @@ class ScoreSegment(TypedDict, total=False):
     end: float
     score: float
     reason: str
+    sentences: NotRequired[list[SentenceTranscriptSentence]]
+    dialogue: NotRequired[str]
 
 
 class Scores(TypedDict, total=False):
@@ -239,6 +241,30 @@ def validate_sentence_transcript(data: Any) -> dict[str, Any]:
     return data
 
 
+def _validate_score_sentence(sentence: Any) -> None:
+    if not isinstance(sentence, dict):
+        raise SchemaError("segment.sentences[] must be an object")
+    _require(sentence, ["id", "start", "end", "text", "source_segments", "word_ranges"])
+    _integer(sentence["id"], "segment.sentences[].id")
+    _number(sentence["start"], "segment.sentences[].start")
+    _number(sentence["end"], "segment.sentences[].end")
+    if not isinstance(sentence["text"], str):
+        raise SchemaError("segment.sentences[].text must be a string")
+    if not isinstance(sentence["source_segments"], list):
+        raise SchemaError("segment.sentences[].source_segments must be a list")
+    for segment_id in sentence["source_segments"]:
+        _integer(segment_id, "segment.sentences[].source_segments[]")
+    if not isinstance(sentence["word_ranges"], list):
+        raise SchemaError("segment.sentences[].word_ranges must be a list")
+    for word_range in sentence["word_ranges"]:
+        if not isinstance(word_range, dict):
+            raise SchemaError("segment.sentences[].word_ranges[] must be an object")
+        _require(word_range, ["segment_id", "start_word_index", "end_word_index"])
+        _integer(word_range["segment_id"], "segment.sentences[].word_ranges[].segment_id")
+        _integer(word_range["start_word_index"], "segment.sentences[].word_ranges[].start_word_index")
+        _integer(word_range["end_word_index"], "segment.sentences[].word_ranges[].end_word_index")
+
+
 def validate_scores(data: Any) -> dict[str, Any]:
     data = _require_mapping(data)
     _require(data, ["source_file", "directive", "segments"])
@@ -256,6 +282,13 @@ def validate_scores(data: Any) -> dict[str, Any]:
         _number(seg["score"], "segment.score")
         if not isinstance(seg["reason"], str):
             raise SchemaError("segment.reason must be a string")
+        if "dialogue" in seg and not isinstance(seg["dialogue"], str):
+            raise SchemaError("segment.dialogue must be a string")
+        if "sentences" in seg:
+            if not isinstance(seg["sentences"], list):
+                raise SchemaError("segment.sentences must be a list")
+            for sentence in seg["sentences"]:
+                _validate_score_sentence(sentence)
     return data
 
 

@@ -356,6 +356,7 @@ Return ONLY a JSON array of objects. No markdown, no explanation, no code fences
 ### Robust Scoring Requirements
 
 - Include timestamps in the transcript prompt.
+- Use `work/sentences.json` as the transcript prompt context when available, so the LLM sees complete sentence-level dialogue instead of raw faster-whisper segments.
 - Chunk long transcripts into overlapping windows of about 10 minutes with about 30 seconds of overlap.
 - Score each window independently.
 - Parse valid JSON arrays, including extracting the first JSON array from common markdown/code-fence wrappers.
@@ -365,6 +366,7 @@ Return ONLY a JSON array of objects. No markdown, no explanation, no code fences
 - Clamp segment times to transcript bounds when safe, and drop segments with `end <= start` or unusable times.
 - Normalize segment values where safe.
 - Merge or deduplicate overlapping segments, preferring higher scores.
+- After validation and merging, deterministically attach overlapping sentence objects from `work/sentences.json` to each scored segment and add a joined `dialogue` string when overlapping sentence text exists. The LLM should not rewrite or restate dialogue for this field.
 
 If scoring produces zero valid candidate segments, `clipper score` should still write `scores.json` with an empty `segments` array and a warning; `clipper cut` is responsible for failing clearly when no clips pass the threshold.
 
@@ -380,7 +382,18 @@ Score JSON shape:
       "start": 120.5,
       "end": 135.2,
       "score": 8,
-      "reason": "Hosts laugh loudly and gesture expressively"
+      "reason": "Hosts laugh loudly and gesture expressively",
+      "dialogue": "That was unbelievable.",
+      "sentences": [
+        {
+          "id": 12,
+          "start": 121.0,
+          "end": 123.5,
+          "text": "That was unbelievable.",
+          "source_segments": [7],
+          "word_ranges": [{"segment_id": 7, "start_word_index": 3, "end_word_index": 5}]
+        }
+      ]
     }
   ]
 }
