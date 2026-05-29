@@ -200,7 +200,7 @@ Core artifact schema examples:
 ```
 
 ```json
-{"schema_version":1,"source_file":"source/source.mp4","language":"en","duration":123.4,"segments":[{"id":0,"start":0.0,"end":5.2,"text":"Welcome"}]}
+{"schema_version":1,"source_file":"source/source.mp4","language":"en","duration":123.4,"segments":[{"id":0,"start":0.0,"end":5.2,"text":"Welcome","words":[{"word":"Welcome","start":0.0,"end":0.6}]}]}
 ```
 
 ```json
@@ -306,11 +306,17 @@ Transcript JSON shape:
       "id": 0,
       "start": 0.0,
       "end": 5.2,
-      "text": "Welcome to the show everyone"
+      "text": "Welcome to the show everyone",
+      "words": [
+        {"word": "Welcome", "start": 0.0, "end": 0.5},
+        {"word": "to", "start": 0.5, "end": 0.7}
+      ]
     }
   ]
 }
 ```
+
+New transcripts enable faster-whisper `word_timestamps` by default and require each generated segment to include word-level timing in `words`. Older transcript artifacts without `words` remain schema-compatible for reuse, but rerun transcription with `--force` to produce word timestamp data for downstream sentence-level processing.
 
 ## Scoring
 

@@ -21,11 +21,18 @@ class Metadata(TypedDict, total=False):
     created_at: str
 
 
+class TranscriptWord(TypedDict, total=False):
+    word: str
+    start: float
+    end: float
+
+
 class TranscriptSegment(TypedDict, total=False):
     id: int
     start: float
     end: float
     text: str
+    words: NotRequired[list[TranscriptWord]]
 
 
 class Transcript(TypedDict, total=False):
@@ -153,6 +160,17 @@ def validate_transcript(data: Any) -> dict[str, Any]:
         _number(seg["end"], "segment.end")
         if not isinstance(seg["text"], str):
             raise SchemaError("segment.text must be a string")
+        if "words" in seg:
+            if not isinstance(seg["words"], list):
+                raise SchemaError("segment.words must be a list when present")
+            for word in seg["words"]:
+                if not isinstance(word, dict):
+                    raise SchemaError("segment.words[] must be an object")
+                _require(word, ["word", "start", "end"])
+                if not isinstance(word["word"], str):
+                    raise SchemaError("segment.words[].word must be a string")
+                _number(word["start"], "segment.words[].start")
+                _number(word["end"], "segment.words[].end")
     return data
 
 

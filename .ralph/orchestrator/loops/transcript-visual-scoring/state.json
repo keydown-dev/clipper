@@ -4,13 +4,13 @@
   "branch": "orchestrator/transcript-visual-scoring",
   "currentIteration": 1,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T11:13:39.290Z",
+  "updatedAt": "2026-05-29T11:16:09.693Z",
   "maxIterations": 6,
   "todos": [
     {
       "id": "001-implement-issue-013-word-timestamp-transcription",
       "title": "Implement Issue 013 — Word Timestamp Transcription",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "002-implement-issue-014-sentence-transcript-artifact",
@@ -41,10 +41,45 @@
   "iterations": [
     {
       "number": 1,
-      "status": "running",
+      "status": "accepted",
       "todoId": "001-implement-issue-013-word-timestamp-transcription",
       "beforeRef": "ralph/transcript-visual-scoring/iter-001-before",
-      "startedAt": "2026-05-29T11:13:39.151Z"
+      "startedAt": "2026-05-29T11:13:39.151Z",
+      "diff": {
+        "filesChanged": 4,
+        "insertions": 107,
+        "deletions": 14
+      },
+      "usage": {
+        "input": 44558,
+        "output": 5473,
+        "cacheRead": 641024,
+        "cacheWrite": 0,
+        "totalTokens": 691055,
+        "cost": 0.7074919999999999,
+        "contextWindow": 272000,
+        "contextTokens": 36213
+      },
+      "summary": "Implemented Issue 013 word timestamp transcription. New faster-whisper transcriptions now pass `word_timestamps=True`, generated transcript segments include a `words` array, and transcription fails clearly if word timestamp data is missing. Transcript schema validation remains backward-compatible with older artifacts without `words` while validating word entries when present. README transcript examples now document word timestamp output.",
+      "changedFiles": [
+        "clipper/transcription.py",
+        "clipper/schemas.py",
+        "tests/test_issue005.py",
+        "README.md"
+      ],
+      "commitSubject": "Add word timestamps to transcripts",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue005.py\n```\n\nResult: 14 passed, 1 skipped.\n\n```bash\nuv run pytest\n```\n\nResult: 78 passed, 3 skipped."
+          }
+        ]
+      },
+      "afterRef": "ralph/transcript-visual-scoring/iter-001-after",
+      "completedAt": "2026-05-29T11:16:09.622Z"
     }
   ]
 }

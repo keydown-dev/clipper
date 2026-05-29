@@ -41,6 +41,16 @@ def _load_model(options: TranscriptionOptions) -> Any:
         ) from exc
 
 
+def _word_to_json(segment_index: int, word_index: int, word: Any) -> dict[str, Any]:
+    try:
+        start = float(word.start)
+        end = float(word.end)
+        text = str(word.word).strip()
+    except AttributeError as exc:
+        raise ArtifactError(f"Whisper returned a malformed word timestamp at segment {segment_index}, word {word_index}: missing {exc.name}") from exc
+    return {"word": text, "start": start, "end": end}
+
+
 def _segment_to_json(index: int, segment: Any) -> dict[str, Any]:
     try:
         start = float(segment.start)
@@ -48,7 +58,17 @@ def _segment_to_json(index: int, segment: Any) -> dict[str, Any]:
         text = str(segment.text).strip()
     except AttributeError as exc:
         raise ArtifactError(f"Whisper returned a malformed segment at index {index}: missing {exc.name}") from exc
-    return {"id": index, "start": start, "end": end, "text": text}
+
+    raw_words = getattr(segment, "words", None)
+    if raw_words is None:
+        raise ArtifactError(
+            f"Whisper did not return word timestamps for segment {index}; "
+            "rerun transcription with a faster-whisper build that supports word_timestamps=True"
+        )
+    words = [_word_to_json(index, word_index, word) for word_index, word in enumerate(raw_words)]
+    if text and not words:
+        raise ArtifactError(f"Whisper returned no word timestamps for non-empty segment {index}")
+    return {"id": index, "start": start, "end": end, "text": text, "words": words}
 
 
 def build_transcript(*, source_file: str, duration: float, segments: Iterable[Any], info: Any, progress: CliProgress | None = None) -> dict[str, Any]:
@@ -112,7 +132,7 @@ def transcribe_video(
     try:
         if progress:
             progress.log("starting transcription")
-        segments, info = model.transcribe(str(source_path), language=options.language)
+        segments, info = model.transcribe(str(source_path), language=options.language, word_timestamps=True)
     except Exception as exc:
         raise ArtifactError(f"Whisper transcription failed for {source_file}: {exc}") from exc
 
