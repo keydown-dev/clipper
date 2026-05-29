@@ -33,6 +33,7 @@ class ArtifactLayout:
     output_dir: Path
     metadata: Path
     transcript: Path
+    sentence_transcript: Path
     scores: Path
     clips_manifest: Path
     pipeline: Path
@@ -52,6 +53,7 @@ class ArtifactLayout:
             output_dir=root / "output",
             metadata=root / "work" / "metadata.json",
             transcript=root / "work" / "transcript.json",
+            sentence_transcript=root / "work" / "sentences.json",
             scores=root / "work" / "scores.json",
             clips_manifest=root / "work" / "clips.json",
             pipeline=root / "work" / "pipeline.json",
@@ -69,6 +71,7 @@ class ArtifactLayout:
             "source": f"source/source{ext}",
             "metadata": "work/metadata.json",
             "transcript": "work/transcript.json",
+            "sentence_transcript": "work/sentences.json",
             "scores": "work/scores.json",
             "clips": "work/clips.json",
             "pipeline": "work/pipeline.json",

@@ -44,6 +44,31 @@ class Transcript(TypedDict, total=False):
     segments: list[TranscriptSegment]
 
 
+class SentenceWordRange(TypedDict, total=False):
+    segment_id: int
+    start_word_index: int
+    end_word_index: int
+
+
+class SentenceTranscriptSentence(TypedDict, total=False):
+    id: int
+    start: float
+    end: float
+    text: str
+    source_segments: list[int]
+    word_ranges: list[SentenceWordRange]
+
+
+class SentenceTranscript(TypedDict, total=False):
+    schema_version: Literal[1]
+    warnings: NotRequired[list[str]]
+    source_file: str
+    language: str | None
+    duration: float
+    source_transcript_path: str
+    sentences: list[SentenceTranscriptSentence]
+
+
 class ScoreSegment(TypedDict, total=False):
     start: float
     end: float
@@ -174,6 +199,46 @@ def validate_transcript(data: Any) -> dict[str, Any]:
     return data
 
 
+def _integer(value: Any, name: str) -> None:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise SchemaError(f"{name} must be an integer")
+
+
+def validate_sentence_transcript(data: Any) -> dict[str, Any]:
+    data = _require_mapping(data)
+    _require(data, ["source_file", "language", "duration", "source_transcript_path", "sentences"])
+    _relative_path(data["source_file"], "source_file")
+    _relative_path(data["source_transcript_path"], "source_transcript_path")
+    _number(data["duration"], "duration")
+    if data["language"] is not None and not isinstance(data["language"], str):
+        raise SchemaError("language must be a string or null")
+    if not isinstance(data["sentences"], list):
+        raise SchemaError("sentences must be a list")
+    for sentence in data["sentences"]:
+        if not isinstance(sentence, dict):
+            raise SchemaError("sentence must be an object")
+        _require(sentence, ["id", "start", "end", "text", "source_segments", "word_ranges"])
+        _integer(sentence["id"], "sentence.id")
+        _number(sentence["start"], "sentence.start")
+        _number(sentence["end"], "sentence.end")
+        if not isinstance(sentence["text"], str):
+            raise SchemaError("sentence.text must be a string")
+        if not isinstance(sentence["source_segments"], list):
+            raise SchemaError("sentence.source_segments must be a list")
+        for segment_id in sentence["source_segments"]:
+            _integer(segment_id, "sentence.source_segments[]")
+        if not isinstance(sentence["word_ranges"], list):
+            raise SchemaError("sentence.word_ranges must be a list")
+        for word_range in sentence["word_ranges"]:
+            if not isinstance(word_range, dict):
+                raise SchemaError("sentence.word_ranges[] must be an object")
+            _require(word_range, ["segment_id", "start_word_index", "end_word_index"])
+            _integer(word_range["segment_id"], "sentence.word_ranges[].segment_id")
+            _integer(word_range["start_word_index"], "sentence.word_ranges[].start_word_index")
+            _integer(word_range["end_word_index"], "sentence.word_ranges[].end_word_index")
+    return data
+
+
 def validate_scores(data: Any) -> dict[str, Any]:
     data = _require_mapping(data)
     _require(data, ["source_file", "directive", "segments"])
@@ -226,6 +291,7 @@ def validate_pipeline(data: Any) -> dict[str, Any]:
 VALIDATORS = {
     "metadata": validate_metadata,
     "transcript": validate_transcript,
+    "sentence_transcript": validate_sentence_transcript,
     "scores": validate_scores,
     "clips": validate_clips,
     "montage": validate_montage,

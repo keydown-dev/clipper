@@ -58,6 +58,7 @@ def test_artifact_layout_and_names(tmp_path: Path, monkeypatch: pytest.MonkeyPat
         "source": "source/source.mov",
         "metadata": "work/metadata.json",
         "transcript": "work/transcript.json",
+        "sentence_transcript": "work/sentences.json",
         "scores": "work/scores.json",
         "clips": "work/clips.json",
         "pipeline": "work/pipeline.json",

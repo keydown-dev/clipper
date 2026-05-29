@@ -4,7 +4,7 @@
   "branch": "orchestrator/transcript-visual-scoring",
   "currentIteration": 2,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T11:19:51.226Z",
+  "updatedAt": "2026-05-29T11:23:21.331Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -15,7 +15,7 @@
     {
       "id": "002-implement-issue-014-sentence-transcript-artifact",
       "title": "Implement Issue 014 — Sentence Transcript Artifact",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "003-implement-issue-015-score-dialogue-enrichment",
@@ -83,10 +83,53 @@
     },
     {
       "number": 2,
-      "status": "running",
+      "status": "accepted",
       "todoId": "002-implement-issue-014-sentence-transcript-artifact",
       "beforeRef": "ralph/transcript-visual-scoring/iter-002-before",
-      "startedAt": "2026-05-29T11:19:51.085Z"
+      "startedAt": "2026-05-29T11:19:51.085Z",
+      "diff": {
+        "filesChanged": 10,
+        "insertions": 319,
+        "deletions": 6
+      },
+      "usage": {
+        "input": 56494,
+        "output": 8862,
+        "cacheRead": 845312,
+        "cacheWrite": 0,
+        "totalTokens": 910668,
+        "cost": 0.970986,
+        "contextWindow": 272000,
+        "contextTokens": 46773
+      },
+      "summary": "Implemented Issue 014 — Sentence Transcript Artifact. `clipper transcribe` now writes `work/transcript.json` and `work/sentences.json`, derives sentence timings from first/last word timestamps, preserves source segment and inclusive word-range traceability, and reports sentence path/counts in CLI output.",
+      "changedFiles": [
+        ".ralph/orchestrator/loops/transcript-visual-scoring/iterations/002/verification.md",
+        "README.md",
+        "clipper/artifacts.py",
+        "clipper/cli.py",
+        "clipper/schemas.py",
+        "clipper/transcription.py",
+        "tests/__pycache__/test_cli.cpython-313-pytest-9.0.3.pyc",
+        "tests/__pycache__/test_issue002.cpython-313-pytest-9.0.3.pyc",
+        "tests/test_issue002.py",
+        "tests/test_issue005.py",
+        ".ralph/orchestrator/loops/transcript-visual-scoring/iterations/002/handoff-out.md",
+        "tests/test_issue014.py"
+      ],
+      "commitSubject": "feat: Add sentence transcript artifact.",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands\n\n- `uv run pytest tests/test_issue014.py tests/test_issue005.py tests/test_issue002.py`\n  - Result: passed — 26 passed, 1 skipped.\n- `uv run pytest`\n  - Result: passed — 83 passed, 3 skipped.\n\n## Notes\n\nFull test suite passes after implementing Issue 014."
+          }
+        ]
+      },
+      "afterRef": "ralph/transcript-visual-scoring/iter-002-after",
+      "completedAt": "2026-05-29T11:23:21.258Z"
     }
   ]
 }

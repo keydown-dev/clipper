@@ -268,12 +268,16 @@ def run_transcribe(args: argparse.Namespace) -> int:
         json_output=command_config.json_output,
         progress=CliProgress(enabled=command_config.verbose > 0),
     )
+    sentence_transcript_path = transcript_path.parent / "sentences.json"
+    sentence_transcript = read_validated_json(sentence_transcript_path, "sentence_transcript")
     result = {
         "transcript_path": str(transcript_path),
+        "sentence_transcript_path": str(sentence_transcript_path),
         "source_file": transcript["source_file"],
         "language": transcript["language"],
         "duration": transcript["duration"],
         "segments": len(transcript["segments"]),
+        "sentences": len(sentence_transcript["sentences"]),
         "reused": reused,
     }
     if command_config.json_output:
@@ -282,7 +286,9 @@ def run_transcribe(args: argparse.Namespace) -> int:
         action = "Reused" if reused else "Transcribed"
         print(f"{action} video {video}")
         print(f"Transcript: {transcript_path}")
+        print(f"Sentence transcript: {sentence_transcript_path}")
         print(f"Segments: {result['segments']}")
+        print(f"Sentences: {result['sentences']}")
     return EXIT_SUCCESS
 
 

@@ -186,6 +186,7 @@ Standard artifact filenames within a video should be fixed so commands and agent
   source/source.{ext}
   work/metadata.json
   work/transcript.json
+  work/sentences.json
   work/scores.json
   work/clips.json
   work/pipeline.json
@@ -201,6 +202,10 @@ Core artifact schema examples:
 
 ```json
 {"schema_version":1,"source_file":"source/source.mp4","language":"en","duration":123.4,"segments":[{"id":0,"start":0.0,"end":5.2,"text":"Welcome","words":[{"word":"Welcome","start":0.0,"end":0.6}]}]}
+```
+
+```json
+{"schema_version":1,"source_file":"source/source.mp4","language":"en","duration":123.4,"source_transcript_path":"work/transcript.json","sentences":[{"id":0,"start":0.0,"end":0.6,"text":"Welcome.","source_segments":[0],"word_ranges":[{"segment_id":0,"start_word_index":0,"end_word_index":0}]}]}
 ```
 
 ```json
@@ -316,7 +321,7 @@ Transcript JSON shape:
 }
 ```
 
-New transcripts enable faster-whisper `word_timestamps` by default and require each generated segment to include word-level timing in `words`. Older transcript artifacts without `words` remain schema-compatible for reuse, but rerun transcription with `--force` to produce word timestamp data for downstream sentence-level processing.
+New transcripts enable faster-whisper `word_timestamps` by default and require each generated segment to include word-level timing in `words`. `clipper transcribe` also writes `work/sentences.json`, a readable sentence-grouped transcript derived from those word timestamps. Sentence `start`/`end` values come from the first and last word in each sentence, and `source_segments` plus inclusive `word_ranges` preserve traceability back to `work/transcript.json`. Older transcript artifacts without `words` remain schema-compatible for raw transcript reuse, but sentence transcript generation requires word timings; rerun transcription with `--force` to regenerate both artifacts.
 
 ## Scoring
 

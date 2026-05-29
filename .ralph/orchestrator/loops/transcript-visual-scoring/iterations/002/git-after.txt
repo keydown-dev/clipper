@@ -1,0 +1,13 @@
+## orchestrator/transcript-visual-scoring
+ M .ralph/orchestrator/loops/transcript-visual-scoring/iterations/002/verification.md
+ M README.md
+ M clipper/artifacts.py
+ M clipper/cli.py
+ M clipper/schemas.py
+ M clipper/transcription.py
+ M tests/__pycache__/test_cli.cpython-313-pytest-9.0.3.pyc
+ M tests/__pycache__/test_issue002.cpython-313-pytest-9.0.3.pyc
+ M tests/test_issue002.py
+ M tests/test_issue005.py
+?? .ralph/orchestrator/loops/transcript-visual-scoring/iterations/002/handoff-out.md
+?? tests/test_issue014.py

@@ -210,9 +210,27 @@ def test_transcribe_reuse_verbose_does_not_load_model_or_show_progress(monkeypat
         "source_file": "source/source.mp4",
         "language": "en",
         "duration": 1.0,
-        "segments": [{"id": 0, "start": 0.0, "end": 1.0, "text": "cached"}],
+        "segments": [{"id": 0, "start": 0.0, "end": 1.0, "text": "cached", "words": [{"word": "cached", "start": 0.0, "end": 1.0}]}],
+    }
+    sentence_transcript = {
+        "schema_version": 1,
+        "source_file": "source/source.mp4",
+        "language": "en",
+        "duration": 1.0,
+        "source_transcript_path": "work/transcript.json",
+        "sentences": [
+            {
+                "id": 0,
+                "start": 0.0,
+                "end": 1.0,
+                "text": "cached",
+                "source_segments": [0],
+                "word_ranges": [{"segment_id": 0, "start_word_index": 0, "end_word_index": 0}],
+            }
+        ],
     }
     (root / "work" / "transcript.json").write_text(json.dumps(transcript), encoding="utf-8")
+    (root / "work" / "sentences.json").write_text(json.dumps(sentence_transcript), encoding="utf-8")
 
     class ExplodingWhisperModel:
         def __init__(self, model: str, *, device: str, compute_type: str) -> None:
