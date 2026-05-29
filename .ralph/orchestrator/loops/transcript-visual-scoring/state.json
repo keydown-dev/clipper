@@ -4,7 +4,7 @@
   "branch": "orchestrator/transcript-visual-scoring",
   "currentIteration": 4,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T12:03:14.518Z",
+  "updatedAt": "2026-05-29T14:35:28.326Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -30,7 +30,7 @@
     {
       "id": "005-implement-issue-017-visual-frame-analysis",
       "title": "Implement Issue 017 — Visual Frame Analysis",
-      "status": "deferred"
+      "status": "queued"
     },
     {
       "id": "006-implement-issue-018-explicit-context-scoring",

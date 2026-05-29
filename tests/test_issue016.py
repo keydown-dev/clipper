@@ -7,7 +7,7 @@ import pytest
 
 from clipper.cli import EXIT_FAILURE, EXIT_SUCCESS, main
 from clipper.schemas import validate_shots
-from clipper.shots import ShotOptions, candidate_times, score_frame_quality, shots_video
+from clipper.shots import ShotOptions, _read_ppm, candidate_times, score_frame_quality, shots_video
 
 
 def make_workspace(tmp_path: Path) -> tuple[Path, Path]:
@@ -54,6 +54,18 @@ def test_shots_persists_manifest_and_representative_frames(monkeypatch: pytest.M
     assert (root / "work" / "frames" / "shot-0001.jpg").exists()
     assert json.loads(manifest_path.read_text()) == manifest
     assert validate_shots(manifest) == manifest
+
+
+def test_read_ppm_preserves_whitespace_pixel_bytes_after_header() -> None:
+    # PPM headers are separated from binary pixels by one whitespace byte. Pixel
+    # data itself may also start with bytes such as spaces/newlines, so the
+    # parser must not skip all whitespace after the max-value field.
+    pixels = bytes([32, 10, 13, 255, 0, 128])
+
+    width, height, parsed = _read_ppm(b"P6\n2 1\n255\n" + pixels)
+
+    assert (width, height) == (2, 1)
+    assert parsed == pixels
 
 
 def test_frame_quality_prefers_clear_exposed_contrast_over_flat_black() -> None:

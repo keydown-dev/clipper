@@ -103,7 +103,7 @@ def _read_ppm(data: bytes) -> tuple[int, int, bytes]:
         parts.append(data[start:index])
     if parts[0] != b"P6" or parts[3] != b"255":
         raise ArtifactError("ffmpeg produced an unsupported frame format")
-    while index < len(data) and data[index:index + 1].isspace():
+    if index < len(data) and data[index:index + 1].isspace():
         index += 1
     width, height = int(parts[1]), int(parts[2])
     pixels = data[index:]
