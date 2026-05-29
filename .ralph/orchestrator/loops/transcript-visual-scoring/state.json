@@ -4,7 +4,7 @@
   "branch": "orchestrator/transcript-visual-scoring",
   "currentIteration": 2,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T11:23:21.331Z",
+  "updatedAt": "2026-05-29T11:54:39.836Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -20,12 +20,12 @@
     {
       "id": "003-implement-issue-015-score-dialogue-enrichment",
       "title": "Implement Issue 015 — Score Dialogue Enrichment",
-      "status": "deferred"
+      "status": "queued"
     },
     {
       "id": "004-implement-issue-016-shot-detection-and-represent",
       "title": "Implement Issue 016 — Shot Detection and Representative Frames",
-      "status": "deferred"
+      "status": "queued"
     },
     {
       "id": "005-implement-issue-017-visual-frame-analysis",
