@@ -62,14 +62,59 @@ def test_cut_filters_merges_names_and_invokes_ffmpeg(monkeypatch: pytest.MonkeyP
         "score": 9.0,
         "reason": "first; overlap",
     }
-    assert seen[0] == ["ffmpeg", "-y", "-ss", "3", "-to", "8", "-i", str(root / "source" / "source.mp4"), "-c", "copy", str(root / "clips" / "clip-0001.mp4")]
+    assert seen[0] == [
+        "ffmpeg",
+        "-y",
+        "-ss",
+        "3",
+        "-i",
+        str(root / "source" / "source.mp4"),
+        "-t",
+        "5",
+        "-map",
+        "0:v:0",
+        "-map",
+        "0:a?",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-c:a",
+        "aac",
+        "-movflags",
+        "+faststart",
+        str(root / "clips" / "clip-0001.mp4"),
+    ]
     assert json.loads((root / "work" / "clips.json").read_text()) == manifest
 
 
 def test_silent_ffmpeg_command_adds_audio_strip() -> None:
     command = ffmpeg_cut_command(source=Path("source.mp4"), output=Path("out.mp4"), start=1.5, end=3.0, silent=True)
 
-    assert command == ["ffmpeg", "-y", "-ss", "1.5", "-to", "3", "-i", "source.mp4", "-c", "copy", "-an", "out.mp4"]
+    assert command == [
+        "ffmpeg",
+        "-y",
+        "-ss",
+        "1.5",
+        "-i",
+        "source.mp4",
+        "-t",
+        "1.5",
+        "-map",
+        "0:v:0",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-movflags",
+        "+faststart",
+        "out.mp4",
+    ]
 
 
 def test_no_passing_segments_fails_without_manifest_or_clips(tmp_path: Path) -> None:

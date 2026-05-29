@@ -73,12 +73,29 @@ def build_clip_entries(segments: Iterable[dict[str, Any]], layout: ArtifactLayou
 
 
 def ffmpeg_cut_command(*, source: Path, output: Path, start: float, end: float, silent: bool) -> list[str]:
-    """Build the fast stream-copy FFmpeg cut command."""
+    """Build an accurate re-encoding FFmpeg cut command."""
 
-    command = ["ffmpeg", "-y", "-ss", f"{start:g}", "-to", f"{end:g}", "-i", str(source), "-c", "copy"]
+    duration = end - start
+    command = [
+        "ffmpeg",
+        "-y",
+        "-ss",
+        f"{start:g}",
+        "-i",
+        str(source),
+        "-t",
+        f"{duration:g}",
+        "-map",
+        "0:v:0",
+    ]
     if silent:
         command.append("-an")
-    command.append(str(output))
+    else:
+        command.extend(["-map", "0:a?"])
+    command.extend(["-c:v", "libx264", "-preset", "veryfast", "-crf", "18"])
+    if not silent:
+        command.extend(["-c:a", "aac"])
+    command.extend(["-movflags", "+faststart", str(output)])
     return command
 
 

@@ -409,16 +409,19 @@ Important behavior:
 - Default `--min-score` is `6`.
 - Merge segments that overlap at all before cutting; merged clips use the earliest start, latest end, maximum score, and combined reasons.
 - Sort merged passing segments chronologically and name clip files/IDs sequentially as `clip-0001`, `clip-0002`, etc.
-- Fast stream-copy cutting is the default.
+- Accurate re-encoding is the default so clip audio/video stays aligned even when source keyframes do not match scored start times.
 - Do not add padding by default; cut exactly the scored/merged start and end times.
-- Audio is preserved by default.
+- Audio is preserved by default and encoded as AAC.
 - `--silent` strips audio.
 - If no segments pass the threshold, fail clearly and do not create or update `work/clips.json`, clip files, or an empty montage.
 
-Example fast FFmpeg shape:
+Example FFmpeg shape:
 
 ```bash
-ffmpeg -ss START -to END -i source.mp4 -c copy output_clip.mp4
+ffmpeg -ss START -i source.mp4 -t DURATION \
+  -map 0:v:0 -map 0:a? \
+  -c:v libx264 -preset veryfast -crf 18 \
+  -c:a aac -movflags +faststart output_clip.mp4
 ```
 
 Silent mode should add audio stripping behavior, e.g. `-an`.

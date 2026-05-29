@@ -41,7 +41,7 @@ The first version builds the deterministic core pipeline. Stage 2 narrative edit
 14. As a user, I want directive-based LLM scoring, so that I can ask for different kinds of clips.
 15. As a user, I want robust scoring, so that long transcripts and imperfect JSON responses do not break easily.
 16. As a user, I want a default minimum score of 6, so that low-quality clips are filtered out.
-17. As a user, I want fast clip cutting by default, so that long videos are practical to process.
+17. As a user, I want accurate clip cutting by default, so that generated clips preserve audio/video sync.
 18. As a user, I want audio preserved by default, so that generated clips are normal highlights.
 19. As a user, I want `--silent`, so that I can create silent background footage when needed.
 20. As a user, I want chronological montage assembly, so that the first version preserves source order.
@@ -60,7 +60,7 @@ The first version builds the deterministic core pipeline. Stage 2 narrative edit
 - Use per-video artifact directories.
 - Existing outputs fail by default; `--reuse` validates and reuses step outputs; `--force` overwrites step outputs.
 - Preserve audio by default; `--silent` strips audio.
-- Use fast FFmpeg stream-copy clipping by default.
+- Use FFmpeg re-encoding for clipping by default to avoid keyframe-related audio/video sync drift.
 - Default `--min-score` is 6.
 - Montage v1 is chronological and can constrain duration.
 - Robust LLM scoring includes chunking, retry, validation, and overlap handling.
