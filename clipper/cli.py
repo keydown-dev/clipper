@@ -26,6 +26,7 @@ from .progress import CliProgress
 from .scoring import score_video
 from .shots import ShotOptions, shots_video
 from .transcription import TranscriptionOptions, transcribe_video
+from .visual import visual_video
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
@@ -367,6 +368,41 @@ def run_shots(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def run_visual(args: argparse.Namespace) -> int:
+    """Analyze representative shot frames with a multimodal model."""
+
+    command_config = config_from_args(args)
+    app_config = load_config(store_override=command_config.store)
+    video, visual_path, visual_index, reused = visual_video(
+        store=command_config.store,
+        video=args.video,
+        config=app_config,
+        reuse=args.reuse,
+        force=args.force,
+        json_output=command_config.json_output,
+        progress=CliProgress(enabled=command_config.verbose > 0),
+    )
+    result = {
+        "visual_index_path": str(visual_path),
+        "source_file": visual_index["source_file"],
+        "shots_path": visual_index["shots_path"],
+        "observations": len(visual_index["observations"]),
+        "provider": visual_index["provider"],
+        "warnings": visual_index.get("warnings", []),
+        "reused": reused,
+    }
+    if command_config.json_output:
+        print_json(success_envelope(video=video, artifact_path=str(visual_path), result=result))
+    else:
+        action = "Reused" if reused else "Analyzed"
+        print(f"{action} visual frames for video {video}")
+        print(f"Visual index: {visual_path}")
+        print(f"Observations: {result['observations']}")
+        for warning in result["warnings"]:
+            print(f"warning: {warning}", file=sys.stderr)
+    return EXIT_SUCCESS
+
+
 def run_cut(args: argparse.Namespace) -> int:
     """Cut scored segments into individual clip files."""
 
@@ -648,6 +684,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["transcribe"] = run_transcribe
     handlers["score"] = run_score
     handlers["shots"] = run_shots
+    handlers["visual"] = run_visual
     handlers["cut"] = run_cut
     handlers["montage"] = run_montage
     handlers["pipeline"] = run_pipeline_cli
@@ -690,6 +727,16 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     shots.add_argument("--contact-sheet", action="store_true", help="Also generate output/shot-contact-sheet.jpg for review.")
     add_reuse_force(shots)
     shots.set_defaults(handler=handlers["shots"])
+
+    visual = subparsers.add_parser(
+        "visual",
+        parents=[common],
+        help="Analyze representative shot frames with a multimodal model.",
+        description="Analyze representative shot frames with a multimodal model.",
+    )
+    visual.add_argument("video", nargs="?", metavar="VIDEO", help="Video name or video directory path.")
+    add_reuse_force(visual)
+    visual.set_defaults(handler=handlers["visual"])
 
     cut = subparsers.add_parser("cut", parents=[common], help="Cut scored segments into clip files.")
     cut.add_argument("video", nargs="?", metavar="VIDEO", help="Video name or video directory path.")

@@ -4,7 +4,7 @@
   "branch": "orchestrator/transcript-visual-scoring",
   "currentIteration": 5,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T14:35:28.903Z",
+  "updatedAt": "2026-05-29T14:39:40.958Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -30,7 +30,7 @@
     {
       "id": "005-implement-issue-017-visual-frame-analysis",
       "title": "Implement Issue 017 — Visual Frame Analysis",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "006-implement-issue-018-explicit-context-scoring",
@@ -223,10 +223,48 @@
     },
     {
       "number": 5,
-      "status": "running",
+      "status": "accepted",
       "todoId": "005-implement-issue-017-visual-frame-analysis",
       "beforeRef": "ralph/transcript-visual-scoring/iter-005-before",
-      "startedAt": "2026-05-29T14:35:28.759Z"
+      "startedAt": "2026-05-29T14:35:28.759Z",
+      "diff": {
+        "filesChanged": 7,
+        "insertions": 533,
+        "deletions": 0
+      },
+      "usage": {
+        "input": 57045,
+        "output": 10273,
+        "cacheRead": 1027584,
+        "cacheWrite": 0,
+        "totalTokens": 1094902,
+        "cost": 1.1072069999999994,
+        "contextWindow": 272000,
+        "contextTokens": 47234
+      },
+      "summary": "Implemented Issue 017 visual frame analysis:\n\n- Added `clipper visual` command.\n- Added `clipper.visual` module to read `work/shots.json`, send representative JPEG frames to an OpenAI-compatible multimodal chat endpoint, validate/normalize structured observations, and write `work/visual-index.json`.\n- Added `VISION_*` configuration overrides with fallback to existing `LLM_*` settings.\n- Added visual index artifact schema validation and artifact-store visibility.\n- Added mocked tests for structured output, validation repairs/errors, missing artifacts, output policy, and CLI routing.",
+      "changedFiles": [
+        ".env.example",
+        "clipper/artifacts.py",
+        "clipper/cli.py",
+        "clipper/config.py",
+        "clipper/schemas.py",
+        "clipper/visual.py",
+        "tests/test_issue017.py"
+      ],
+      "commitSubject": "feat: Add visual frame analysis",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue017.py\nuv run pytest\n```\n\nResults:\n\n- `uv run pytest tests/test_issue017.py`: 8 passed.\n- `uv run pytest`: 101 passed, 3 skipped."
+          }
+        ]
+      },
+      "afterRef": "ralph/transcript-visual-scoring/iter-005-after",
+      "completedAt": "2026-05-29T14:39:40.887Z"
     }
   ]
 }

@@ -133,6 +133,30 @@ class ShotManifest(TypedDict, total=False):
     contact_sheet_path: NotRequired[str]
 
 
+class VisualObservation(TypedDict, total=False):
+    shot_id: str
+    start: float
+    end: float
+    representative_time: float
+    frame_path: str
+    description: str
+    visible_people: list[str]
+    actions: list[str]
+    objects: list[str]
+    mood: str
+    setting: str
+    visible_text: list[str]
+
+
+class VisualIndex(TypedDict, total=False):
+    schema_version: Literal[1]
+    warnings: NotRequired[list[str]]
+    source_file: str
+    shots_path: str
+    provider: dict[str, Any]
+    observations: list[VisualObservation]
+
+
 class PipelineResult(TypedDict, total=False):
     schema_version: Literal[1]
     warnings: NotRequired[list[str]]
@@ -359,6 +383,37 @@ def validate_shots(data: Any) -> dict[str, Any]:
     return data
 
 
+def validate_visual_index(data: Any) -> dict[str, Any]:
+    data = _require_mapping(data)
+    _require(data, ["source_file", "shots_path", "provider", "observations"])
+    _relative_path(data["source_file"], "source_file")
+    _relative_path(data["shots_path"], "shots_path")
+    if not isinstance(data["provider"], dict):
+        raise SchemaError("provider must be an object")
+    for field in ["base_url", "model"]:
+        if not isinstance(data["provider"].get(field), str):
+            raise SchemaError(f"provider.{field} must be a string")
+    if not isinstance(data["observations"], list):
+        raise SchemaError("observations must be a list")
+    for observation in data["observations"]:
+        if not isinstance(observation, dict):
+            raise SchemaError("observation must be an object")
+        _require(observation, ["shot_id", "start", "end", "representative_time", "frame_path", "description", "visible_people", "actions", "objects", "mood", "setting", "visible_text"])
+        if not isinstance(observation["shot_id"], str):
+            raise SchemaError("observation.shot_id must be a string")
+        _number(observation["start"], "observation.start")
+        _number(observation["end"], "observation.end")
+        _number(observation["representative_time"], "observation.representative_time")
+        _relative_path(observation["frame_path"], "observation.frame_path")
+        for field in ["description", "mood", "setting"]:
+            if not isinstance(observation[field], str):
+                raise SchemaError(f"observation.{field} must be a string")
+        for field in ["visible_people", "actions", "objects", "visible_text"]:
+            if not isinstance(observation[field], list) or not all(isinstance(item, str) for item in observation[field]):
+                raise SchemaError(f"observation.{field} must be a list of strings")
+    return data
+
+
 def validate_pipeline(data: Any) -> dict[str, Any]:
     data = _require_mapping(data)
     _require(data, ["metadata_path", "transcript_path", "scores_path", "clips_path", "montage_path", "clip_count", "runtime_seconds"])
@@ -376,5 +431,6 @@ VALIDATORS = {
     "clips": validate_clips,
     "montage": validate_montage,
     "shots": validate_shots,
+    "visual_index": validate_visual_index,
     "pipeline": validate_pipeline,
 }

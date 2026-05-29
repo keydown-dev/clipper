@@ -37,6 +37,7 @@ class ArtifactLayout:
     scores: Path
     shots_manifest: Path
     shot_frames_dir: Path
+    visual_index: Path
     clips_manifest: Path
     pipeline: Path
     montage_video: Path
@@ -60,6 +61,7 @@ class ArtifactLayout:
             scores=root / "work" / "scores.json",
             shots_manifest=root / "work" / "shots.json",
             shot_frames_dir=root / "work" / "frames",
+            visual_index=root / "work" / "visual-index.json",
             clips_manifest=root / "work" / "clips.json",
             pipeline=root / "work" / "pipeline.json",
             montage_video=root / "output" / "montage.mp4",
@@ -184,6 +186,7 @@ def list_videos(store: Path) -> list[dict[str, Any]]:
                     "transcript": layout.transcript.exists(),
                     "scores": layout.scores.exists(),
                     "shots": layout.shots_manifest.exists(),
+                    "visual_index": layout.visual_index.exists(),
                     "clips": layout.clips_manifest.exists(),
                     "montage": layout.montage_video.exists() and layout.montage_json.exists(),
                 },
