@@ -24,6 +24,7 @@ from .cutting import CutOptions, cut_video
 from .montage import MontageOptions, montage_video
 from .progress import CliProgress
 from .scoring import score_video
+from .shots import ShotOptions, shots_video
 from .transcription import TranscriptionOptions, transcribe_video
 
 EXIT_SUCCESS = 0
@@ -208,6 +209,7 @@ def build_doctor_checks(config: CommandConfig, *, check_llm: bool = False, check
         _check_python_dependency("openai"),
         _check_python_dependency("dotenv", "python-dotenv"),
         _check_python_dependency("questionary"),
+        _check_python_dependency("scenedetect", "PySceneDetect"),
         _check_artifact_store_writable(config.store),
         _check_llm_config(check_connectivity=check_llm),
         _check_whisper(load_model=check_whisper),
@@ -324,6 +326,44 @@ def run_score(args: argparse.Namespace) -> int:
         print(f"Segments: {result['segments']}")
         for warning in result["warnings"]:
             print(f"warning: {warning}", file=sys.stderr)
+    return EXIT_SUCCESS
+
+
+def run_shots(args: argparse.Namespace) -> int:
+    """Detect visual shots and extract representative frames."""
+
+    command_config = config_from_args(args)
+    video, shots_path, manifest, reused = shots_video(
+        store=command_config.store,
+        video=args.video,
+        options=ShotOptions(
+            threshold=args.threshold,
+            min_duration=args.min_duration,
+            samples_per_shot=args.samples_per_shot,
+            contact_sheet=args.contact_sheet,
+        ),
+        reuse=args.reuse,
+        force=args.force,
+        json_output=command_config.json_output,
+        progress=CliProgress(enabled=command_config.verbose > 0),
+    )
+    result = {
+        "shots_path": str(shots_path),
+        "source_file": manifest["source_file"],
+        "shot_count": len(manifest["shots"]),
+        "shots": manifest["shots"],
+        "contact_sheet_path": manifest.get("contact_sheet_path"),
+        "reused": reused,
+    }
+    if command_config.json_output:
+        print_json(success_envelope(video=video, artifact_path=str(shots_path), result=result))
+    else:
+        action = "Reused" if reused else "Detected"
+        print(f"{action} shots for video {video}")
+        print(f"Shots: {shots_path}")
+        print(f"Shot count: {result['shot_count']}")
+        if result["contact_sheet_path"]:
+            print(f"Contact sheet: {result['contact_sheet_path']}")
     return EXIT_SUCCESS
 
 
@@ -607,6 +647,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["list"] = run_list
     handlers["transcribe"] = run_transcribe
     handlers["score"] = run_score
+    handlers["shots"] = run_shots
     handlers["cut"] = run_cut
     handlers["montage"] = run_montage
     handlers["pipeline"] = run_pipeline_cli
@@ -640,6 +681,15 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     score.add_argument("--directive", default="Find expressive, visually interesting, or emotionally engaging moments.", help="Scoring directive.")
     add_reuse_force(score)
     score.set_defaults(handler=handlers["score"])
+
+    shots = subparsers.add_parser("shots", parents=[common], help="Detect shots and extract representative frames.")
+    shots.add_argument("video", nargs="?", metavar="VIDEO", help="Video name or video directory path.")
+    shots.add_argument("--threshold", type=float, default=27.0, help="PySceneDetect content threshold (default: 27).")
+    shots.add_argument("--min-duration", type=float, default=0.5, help="Minimum shot duration in seconds (default: 0.5).")
+    shots.add_argument("--samples-per-shot", type=int, default=5, help="Candidate frames sampled per shot (default: 5).")
+    shots.add_argument("--contact-sheet", action="store_true", help="Also generate output/shot-contact-sheet.jpg for review.")
+    add_reuse_force(shots)
+    shots.set_defaults(handler=handlers["shots"])
 
     cut = subparsers.add_parser("cut", parents=[common], help="Cut scored segments into clip files.")
     cut.add_argument("video", nargs="?", metavar="VIDEO", help="Video name or video directory path.")

@@ -1,0 +1,11 @@
+## orchestrator/transcript-visual-scoring
+ M .ralph/orchestrator/loops/transcript-visual-scoring/iterations/004/verification.md
+ M README.md
+ M clipper/artifacts.py
+ M clipper/cli.py
+ M clipper/schemas.py
+ M pyproject.toml
+ M uv.lock
+?? .ralph/orchestrator/loops/transcript-visual-scoring/iterations/004/handoff-out.md
+?? clipper/shots.py
+?? tests/test_issue016.py

@@ -4,7 +4,7 @@
   "branch": "orchestrator/transcript-visual-scoring",
   "currentIteration": 4,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T11:57:39.766Z",
+  "updatedAt": "2026-05-29T12:03:14.518Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -25,7 +25,7 @@
     {
       "id": "004-implement-issue-016-shot-detection-and-represent",
       "title": "Implement Issue 016 — Shot Detection and Representative Frames",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "005-implement-issue-017-visual-frame-analysis",
@@ -175,10 +175,51 @@
     },
     {
       "number": 4,
-      "status": "running",
+      "status": "accepted",
       "todoId": "004-implement-issue-016-shot-detection-and-represent",
       "beforeRef": "ralph/transcript-visual-scoring/iter-004-before",
-      "startedAt": "2026-05-29T11:57:39.629Z"
+      "startedAt": "2026-05-29T11:57:39.629Z",
+      "diff": {
+        "filesChanged": 8,
+        "insertions": 593,
+        "deletions": 0
+      },
+      "usage": {
+        "input": 61754,
+        "output": 12771,
+        "cacheRead": 1386496,
+        "cacheWrite": 0,
+        "totalTokens": 1461021,
+        "cost": 1.3851479999999998,
+        "contextWindow": 272000,
+        "contextTokens": 50174
+      },
+      "summary": "Implemented Issue 016: added `clipper shots` to detect PySceneDetect shots, choose deterministic representative frames via sharpness/exposure/contrast metrics, write `work/shots.json`, emit `work/frames/shot-000N.jpg`, and optionally create `output/shot-contact-sheet.jpg`.",
+      "changedFiles": [
+        ".ralph/orchestrator/loops/transcript-visual-scoring/iterations/004/verification.md",
+        "README.md",
+        "clipper/artifacts.py",
+        "clipper/cli.py",
+        "clipper/schemas.py",
+        "pyproject.toml",
+        "uv.lock",
+        ".ralph/orchestrator/loops/transcript-visual-scoring/iterations/004/handoff-out.md",
+        "clipper/shots.py",
+        "tests/test_issue016.py"
+      ],
+      "commitSubject": "feat: Add shot detection and representative frames",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue016.py tests/test_issue002.py -q\n```\n\nResult: passed (`12 passed`).\n\n```bash\nuv run pytest -q\n```\n\nResult: passed (`92 passed, 3 skipped`).\n\n```bash\nuv run clipper shots --help >/tmp/clipper-shots-help.txt\n```\n\nResult: passed (exit 0; help routed for `clipper shots`).\n\n```bash\ntmpdir=$(mktemp -d); ffmpeg -hide_banner -loglevel error -y -f lavfi -i testsrc=size=160x90:rate=10:duration=1 -pix_fmt yuv420p \"$tmpdir/source.mp4\" && uv run clipper start \"$tmpdir/source.mp4\" --name shot-smoke --store \"$tmpdir/store\" --json >/tmp/clipper-start.json && uv run clipper shots shot-smoke --store \"$tmpdir/store\" --json >/tmp/clipper-shots.json && uv run python -m json.tool /tmp/clipper-shots.json >/tmp/clipper-shots.pretty.json; status=$?; rm -rf \"$tmpdir\"; exit $status\n```\n\nResult: passed (exit 0). PySceneDetect/OpenCV emitted macOS duplicate AVFoundation class warnings to stderr; stdout JSON remained parseable."
+          }
+        ]
+      },
+      "afterRef": "ralph/transcript-visual-scoring/iter-004-after",
+      "completedAt": "2026-05-29T12:03:14.447Z"
     }
   ]
 }

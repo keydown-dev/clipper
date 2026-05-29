@@ -10,6 +10,7 @@ dependencies = [
     "openai",
     "python-dotenv",
     "questionary",
+    "scenedetect",
 ]
 
 [project.scripts]

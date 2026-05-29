@@ -35,10 +35,13 @@ class ArtifactLayout:
     transcript: Path
     sentence_transcript: Path
     scores: Path
+    shots_manifest: Path
+    shot_frames_dir: Path
     clips_manifest: Path
     pipeline: Path
     montage_video: Path
     montage_json: Path
+    shot_contact_sheet: Path
 
     @classmethod
     def for_video(cls, store: Path, video: str) -> "ArtifactLayout":
@@ -55,10 +58,13 @@ class ArtifactLayout:
             transcript=root / "work" / "transcript.json",
             sentence_transcript=root / "work" / "sentences.json",
             scores=root / "work" / "scores.json",
+            shots_manifest=root / "work" / "shots.json",
+            shot_frames_dir=root / "work" / "frames",
             clips_manifest=root / "work" / "clips.json",
             pipeline=root / "work" / "pipeline.json",
             montage_video=root / "output" / "montage.mp4",
             montage_json=root / "output" / "montage.json",
+            shot_contact_sheet=root / "output" / "shot-contact-sheet.jpg",
         )
 
     def create_dirs(self) -> None:
@@ -177,6 +183,7 @@ def list_videos(store: Path) -> list[dict[str, Any]]:
                     "metadata": layout.metadata.exists(),
                     "transcript": layout.transcript.exists(),
                     "scores": layout.scores.exists(),
+                    "shots": layout.shots_manifest.exists(),
                     "clips": layout.clips_manifest.exists(),
                     "montage": layout.montage_video.exists() and layout.montage_json.exists(),
                 },

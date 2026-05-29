@@ -114,6 +114,25 @@ class MontageResult(TypedDict, total=False):
     silent: bool
 
 
+class ShotEntry(TypedDict, total=False):
+    id: str
+    start: float
+    end: float
+    duration: float
+    representative_frame_path: str
+    representative_time: float
+    quality: dict[str, float]
+
+
+class ShotManifest(TypedDict, total=False):
+    schema_version: Literal[1]
+    warnings: NotRequired[list[str]]
+    source_file: str
+    shots: list[ShotEntry]
+    detection: dict[str, Any]
+    contact_sheet_path: NotRequired[str]
+
+
 class PipelineResult(TypedDict, total=False):
     schema_version: Literal[1]
     warnings: NotRequired[list[str]]
@@ -312,6 +331,34 @@ def validate_montage(data: Any) -> dict[str, Any]:
     return data
 
 
+def validate_shots(data: Any) -> dict[str, Any]:
+    data = _require_mapping(data)
+    _require(data, ["source_file", "shots", "detection"])
+    _relative_path(data["source_file"], "source_file")
+    if not isinstance(data["shots"], list):
+        raise SchemaError("shots must be a list")
+    if not isinstance(data["detection"], dict):
+        raise SchemaError("detection must be an object")
+    if "contact_sheet_path" in data:
+        _relative_path(data["contact_sheet_path"], "contact_sheet_path")
+    for shot in data["shots"]:
+        if not isinstance(shot, dict):
+            raise SchemaError("shot must be an object")
+        _require(shot, ["id", "start", "end", "duration", "representative_frame_path", "representative_time", "quality"])
+        if not isinstance(shot["id"], str):
+            raise SchemaError("shot.id must be a string")
+        _number(shot["start"], "shot.start")
+        _number(shot["end"], "shot.end")
+        _number(shot["duration"], "shot.duration")
+        _relative_path(shot["representative_frame_path"], "shot.representative_frame_path")
+        _number(shot["representative_time"], "shot.representative_time")
+        if not isinstance(shot["quality"], dict):
+            raise SchemaError("shot.quality must be an object")
+        for key, value in shot["quality"].items():
+            _number(value, f"shot.quality.{key}")
+    return data
+
+
 def validate_pipeline(data: Any) -> dict[str, Any]:
     data = _require_mapping(data)
     _require(data, ["metadata_path", "transcript_path", "scores_path", "clips_path", "montage_path", "clip_count", "runtime_seconds"])
@@ -328,5 +375,6 @@ VALIDATORS = {
     "scores": validate_scores,
     "clips": validate_clips,
     "montage": validate_montage,
+    "shots": validate_shots,
     "pipeline": validate_pipeline,
 }

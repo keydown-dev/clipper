@@ -42,6 +42,7 @@ Python dependencies should be declared in `pyproject.toml` and installed with `u
 - `openai`
 - `python-dotenv`
 - `questionary`
+- `scenedetect`
 
 Expected test dependency:
 
@@ -97,6 +98,7 @@ uv run clipper start URL_OR_VIDEO_PATH --name optional-video-name
 uv run clipper list
 uv run clipper transcribe [VIDEO]
 uv run clipper score [VIDEO] --directive "Find expressive moments"
+uv run clipper shots [VIDEO] --contact-sheet
 uv run clipper cut [VIDEO] --min-score 6
 uv run clipper montage [VIDEO]
 uv run clipper pipeline URL_OR_VIDEO_PATH --name optional-video-name --directive "Find expressive moments"
@@ -149,6 +151,7 @@ uv run clipper transcribe my-video --store .clipper --verbose
 | `list` | Show known video workspaces and artifact flags. | `uv run clipper list --json` |
 | `transcribe [VIDEO]` | Produce `work/transcript.json` with faster-whisper. | `uv run clipper transcribe --help` |
 | `score [VIDEO]` | Produce `work/scores.json` with an OpenAI-compatible LLM. | `uv run clipper score --help` |
+| `shots [VIDEO]` | Detect visual shots and produce `work/shots.json` plus representative frames. | `uv run clipper shots --help` |
 | `cut [VIDEO]` | Cut passing scored segments into `clips/` and `work/clips.json`. | `uv run clipper cut --help` |
 | `montage [VIDEO]` | Assemble clips into `output/montage.mp4` and `output/montage.json`. | `uv run clipper montage --help` |
 | `pipeline INPUT` | Run start, transcribe, score, cut, and montage. | `uv run clipper pipeline --help` |
@@ -188,6 +191,8 @@ Standard artifact filenames within a video should be fixed so commands and agent
   work/transcript.json
   work/sentences.json
   work/scores.json
+  work/shots.json
+  work/frames/shot-0001.jpg
   work/clips.json
   work/pipeline.json
   output/montage.mp4
@@ -214,6 +219,10 @@ Core artifact schema examples:
 
 ```json
 {"schema_version":1,"source_file":"source/source.mp4","clips":[{"id":"clip-0001","path":"clips/clip-0001.mp4","start":12.5,"end":22.0,"duration":9.5,"score":8,"reason":"Strong reaction"}]}
+```
+
+```json
+{"schema_version":1,"source_file":"source/source.mp4","shots":[{"id":"shot-0001","start":0.0,"end":4.2,"duration":4.2,"representative_frame_path":"work/frames/shot-0001.jpg","representative_time":2.1,"quality":{"score":0.82,"sharpness":0.9,"contrast":0.7,"exposure":0.8}}],"detection":{"tool":"pyscenedetect","threshold":27.0,"min_duration":0.5,"samples_per_shot":5}}
 ```
 
 ```json
