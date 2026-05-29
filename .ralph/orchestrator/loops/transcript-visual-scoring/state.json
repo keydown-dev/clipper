@@ -2,9 +2,9 @@
   "name": "transcript-visual-scoring",
   "control": "active",
   "branch": "orchestrator/transcript-visual-scoring",
-  "currentIteration": 2,
+  "currentIteration": 3,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T11:54:39.836Z",
+  "updatedAt": "2026-05-29T11:54:40.400Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -20,7 +20,7 @@
     {
       "id": "003-implement-issue-015-score-dialogue-enrichment",
       "title": "Implement Issue 015 — Score Dialogue Enrichment",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "004-implement-issue-016-shot-detection-and-represent",
@@ -130,6 +130,13 @@
       },
       "afterRef": "ralph/transcript-visual-scoring/iter-002-after",
       "completedAt": "2026-05-29T11:23:21.258Z"
+    },
+    {
+      "number": 3,
+      "status": "running",
+      "todoId": "003-implement-issue-015-score-dialogue-enrichment",
+      "beforeRef": "ralph/transcript-visual-scoring/iter-003-before",
+      "startedAt": "2026-05-29T11:54:40.261Z"
     }
   ]
 }
