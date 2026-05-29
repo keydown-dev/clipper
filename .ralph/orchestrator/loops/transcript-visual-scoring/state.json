@@ -4,7 +4,7 @@
   "branch": "orchestrator/transcript-visual-scoring",
   "currentIteration": 0,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T11:13:20.138Z",
+  "updatedAt": "2026-05-29T11:13:38.744Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -15,27 +15,27 @@
     {
       "id": "002-implement-issue-014-sentence-transcript-artifact",
       "title": "Implement Issue 014 — Sentence Transcript Artifact",
-      "status": "queued"
+      "status": "deferred"
     },
     {
       "id": "003-implement-issue-015-score-dialogue-enrichment",
       "title": "Implement Issue 015 — Score Dialogue Enrichment",
-      "status": "queued"
+      "status": "deferred"
     },
     {
       "id": "004-implement-issue-016-shot-detection-and-represent",
       "title": "Implement Issue 016 — Shot Detection and Representative Frames",
-      "status": "queued"
+      "status": "deferred"
     },
     {
       "id": "005-implement-issue-017-visual-frame-analysis",
       "title": "Implement Issue 017 — Visual Frame Analysis",
-      "status": "queued"
+      "status": "deferred"
     },
     {
       "id": "006-implement-issue-018-explicit-context-scoring",
       "title": "Implement Issue 018 — Explicit Context Scoring",
-      "status": "queued"
+      "status": "deferred"
     }
   ],
   "iterations": []
