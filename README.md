@@ -99,6 +99,7 @@ uv run clipper list
 uv run clipper transcribe [VIDEO]
 uv run clipper score [VIDEO] --directive "Find expressive moments"
 uv run clipper shots [VIDEO] --contact-sheet
+uv run clipper visual [VIDEO]
 uv run clipper cut [VIDEO] --min-score 6
 uv run clipper montage [VIDEO]
 uv run clipper pipeline URL_OR_VIDEO_PATH --name optional-video-name --directive "Find expressive moments"
@@ -152,6 +153,7 @@ uv run clipper transcribe my-video --store .clipper --verbose
 | `transcribe [VIDEO]` | Produce `work/transcript.json` with faster-whisper. | `uv run clipper transcribe --help` |
 | `score [VIDEO]` | Produce `work/scores.json` with an OpenAI-compatible LLM. | `uv run clipper score --help` |
 | `shots [VIDEO]` | Detect visual shots and produce `work/shots.json` plus representative frames. | `uv run clipper shots --help` |
+| `visual [VIDEO]` | Analyze representative shot frames with a multimodal OpenAI-compatible model. | `uv run clipper visual --help` |
 | `cut [VIDEO]` | Cut passing scored segments into `clips/` and `work/clips.json`. | `uv run clipper cut --help` |
 | `montage [VIDEO]` | Assemble clips into `output/montage.mp4` and `output/montage.json`. | `uv run clipper montage --help` |
 | `pipeline INPUT` | Run start, transcribe, score, cut, and montage. | `uv run clipper pipeline --help` |
@@ -193,6 +195,7 @@ Standard artifact filenames within a video should be fixed so commands and agent
   work/scores.json
   work/shots.json
   work/frames/shot-0001.jpg
+  work/visual-index.json
   work/clips.json
   work/pipeline.json
   output/montage.mp4

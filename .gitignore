@@ -1,3 +1,12 @@
 .clipper
 .env
-**/__pycache__
+
+# Python bytecode/cache files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local virtual environments
+.venv/
