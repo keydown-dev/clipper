@@ -112,13 +112,13 @@ def format_timestamped_transcript(segments: Iterable[dict[str, Any]]) -> str:
     return "\n".join(f"[{float(seg['start']):.2f}-{float(seg['end']):.2f}] {str(seg.get('text', '')).strip()}" for seg in segments)
 
 
-def build_messages(*, directive: str, window: TranscriptWindow, retry: bool = False) -> list[dict[str, str]]:
+def build_messages(*, directive: str, window: TranscriptWindow, retry: bool = False, context_label: str = "Transcript") -> list[dict[str, str]]:
     system = BASELINE_SYSTEM_PROMPT + (STRICT_RETRY_SUFFIX if retry else "")
     user = (
         f"Directive: {directive}\n\n"
-        f"Transcript window: {window.start:.2f}-{window.end:.2f} seconds\n"
+        f"{context_label} window: {window.start:.2f}-{window.end:.2f} seconds\n"
         "Choose candidate clips that best match the directive. Prefer 5-15 second segments where possible.\n\n"
-        f"Transcript:\n{format_timestamped_transcript(window.segments)}"
+        f"{context_label}:\n{format_timestamped_transcript(window.segments)}"
     )
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
@@ -290,17 +290,38 @@ def score_transcript(
     token_usage: TokenUsageTotals | None = None,
     sentence_transcript: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
-    lower, upper = transcript_bounds(transcript)
+    scoring_context = sentence_transcript_as_context(transcript, sentence_transcript)
+    return score_context(
+        scoring_context,
+        client=client,
+        options=options,
+        progress=progress,
+        token_usage=token_usage,
+        sentence_transcript=sentence_transcript,
+        context_label="Transcript",
+    )
+
+
+def score_context(
+    context: dict[str, Any],
+    *,
+    client: Any,
+    options: ScoringOptions,
+    progress: CliProgress | None = None,
+    token_usage: TokenUsageTotals | None = None,
+    sentence_transcript: dict[str, Any] | None = None,
+    context_label: str = "Context",
+) -> tuple[list[dict[str, Any]], list[str]]:
+    lower, upper = transcript_bounds(context)
     all_segments: list[dict[str, Any]] = []
     warnings: list[str] = []
-    scoring_context = sentence_transcript_as_context(transcript, sentence_transcript)
-    windows = chunk_transcript(scoring_context)
+    windows = chunk_transcript(context)
     total_windows = len(windows)
     for index, window in enumerate(windows, start=1):
         if progress:
             progress.log(f"scoring window {index}/{total_windows}: range={window.start:.2f}-{window.end:.2f}s segments={len(window.segments)}")
         try:
-            content, usage = _call_llm(client, options=options, messages=build_messages(directive=options.directive, window=window))
+            content, usage = _call_llm(client, options=options, messages=build_messages(directive=options.directive, window=window, context_label=context_label))
             if token_usage:
                 token_usage.add(usage)
             raw = parse_segments_response(content)
@@ -308,7 +329,7 @@ def score_transcript(
             if progress:
                 progress.log(f"retrying invalid JSON for window {window.start:.2f}-{window.end:.2f}s")
             try:
-                content, usage = _call_llm(client, options=options, messages=build_messages(directive=options.directive, window=window, retry=True))
+                content, usage = _call_llm(client, options=options, messages=build_messages(directive=options.directive, window=window, retry=True, context_label=context_label))
                 if token_usage:
                     token_usage.add(usage)
                 raw = parse_segments_response(content)
@@ -327,6 +348,62 @@ def score_transcript(
     if progress and warnings:
         progress.log(_summarize_warnings(warnings))
     return merged, warnings
+
+
+def _require_artifact(path: Path, context_flag: str, artifact_name: str, hint: str) -> None:
+    if not path.exists():
+        raise ArtifactError(f"{context_flag} requires {artifact_name} artifact: {path}; {hint}")
+
+
+def _join_values(values: Iterable[Any]) -> str:
+    return ", ".join(str(value) for value in values if str(value).strip())
+
+
+def _visual_observation_text(observation: dict[str, Any], shot: dict[str, Any] | None) -> str:
+    parts = [f"Visual shot {observation['shot_id']}"]
+    if shot is not None:
+        parts.append(f"shot duration {float(shot['duration']):.2f}s")
+        parts.append(f"frame {shot['representative_frame_path']}")
+    parts.append(str(observation.get("description", "")).strip())
+    for label, field in [("people", "visible_people"), ("actions", "actions"), ("objects", "objects"), ("text", "visible_text")]:
+        joined = _join_values(observation.get(field, []))
+        if joined:
+            parts.append(f"{label}: {joined}")
+    for label, field in [("mood", "mood"), ("setting", "setting")]:
+        value = str(observation.get(field, "")).strip()
+        if value:
+            parts.append(f"{label}: {value}")
+    return "; ".join(parts)
+
+
+def build_explicit_scoring_context(
+    *,
+    sentence_transcript: dict[str, Any] | None = None,
+    shots_manifest: dict[str, Any] | None = None,
+    visual_index: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    segments: list[dict[str, Any]] = []
+    source_file = "source/source.mp4"
+    duration = 0.0
+    if sentence_transcript is not None:
+        source_file = str(sentence_transcript["source_file"])
+        duration = max(duration, float(sentence_transcript.get("duration") or 0.0))
+        for sentence in sentence_transcript.get("sentences", []):
+            segments.append({"start": sentence["start"], "end": sentence["end"], "text": f"Transcript: {sentence['text']}"})
+    if visual_index is not None:
+        source_file = str(visual_index["source_file"])
+        shots_by_id = {shot["id"]: shot for shot in (shots_manifest or {}).get("shots", [])}
+        for observation in visual_index.get("observations", []):
+            segments.append(
+                {
+                    "start": observation["start"],
+                    "end": observation["end"],
+                    "text": _visual_observation_text(observation, shots_by_id.get(observation["shot_id"])),
+                }
+            )
+            duration = max(duration, float(observation.get("end") or 0.0))
+    segments.sort(key=lambda segment: (float(segment["start"]), float(segment["end"]), str(segment.get("text", ""))))
+    return {"schema_version": SCHEMA_VERSION, "source_file": source_file, "duration": duration, "segments": segments}
 
 
 def make_openai_client(config: ClipperConfig) -> Any:
@@ -355,37 +432,68 @@ def score_video(
     json_output: bool = False,
     client: Any | None = None,
     progress: CliProgress | None = None,
+    with_transcript: bool = False,
+    with_visuals: bool = False,
 ) -> tuple[str, Path, dict[str, Any], bool]:
     root = resolve_video(store, video, json_output=json_output)
     layout = ArtifactLayout.for_video(root.parent, root.name)
-    transcript = read_validated_json(layout.transcript, "transcript")
-    sentence_transcript = read_validated_json(layout.sentence_transcript, "sentence_transcript") if layout.sentence_transcript.exists() else None
+    if not with_transcript and not with_visuals:
+        raise ArtifactError("clipper score requires at least one scoring context: add --with-transcript, --with-visuals, or both")
     policy = output_policy([layout.scores], reuse=reuse, force=force, schema="scores")
     if policy == "reuse":
         if progress:
             progress.log(f"reusing existing scores for video {layout.video}: {layout.scores}")
         return layout.video, layout.scores, read_validated_json(layout.scores, "scores"), True
+    sentence_transcript = None
+    shots_manifest = None
+    visual_index = None
+    if with_transcript:
+        _require_artifact(layout.sentence_transcript, "--with-transcript", "sentence transcript", "run `clipper transcribe` first")
+        sentence_transcript = read_validated_json(layout.sentence_transcript, "sentence_transcript")
+    if with_visuals:
+        _require_artifact(layout.shots_manifest, "--with-visuals", "shot manifest", "run `clipper shots` first")
+        _require_artifact(layout.visual_index, "--with-visuals", "visual index", "run `clipper visual` first")
+        shots_manifest = read_validated_json(layout.shots_manifest, "shots")
+        visual_index = read_validated_json(layout.visual_index, "visual_index")
+    scoring_context = build_explicit_scoring_context(sentence_transcript=sentence_transcript, shots_manifest=shots_manifest, visual_index=visual_index)
     options = ScoringOptions(directive=directive, model=config.llm_model, temperature=config.llm_temperature, timeout_seconds=config.llm_timeout_seconds)
-    windows = chunk_transcript(sentence_transcript_as_context(transcript, sentence_transcript))
+    windows = chunk_transcript(scoring_context)
     if progress:
-        progress.log(f"video {layout.video}: transcript={layout.transcript}")
+        selected = ",".join(name for name, enabled in [("transcript", with_transcript), ("visuals", with_visuals)] if enabled)
+        progress.log(f"video {layout.video}: scoring_context={selected}")
         progress.log(f"scoring directive: {directive}")
         progress.log(
             "LLM "
             f"base_url={_base_url_origin(config.llm_base_url)} model={options.model} "
             f"temperature={options.temperature} timeout={options.timeout_seconds}"
         )
-        progress.log(f"transcript duration={float(transcript.get('duration') or 0.0)} segments={len(transcript.get('segments', []))}")
         if sentence_transcript is not None:
+            progress.log(f"video {layout.video}: transcript={layout.sentence_transcript}")
+            progress.log(f"transcript duration={float(sentence_transcript.get('duration') or 0.0)} segments={len(sentence_transcript.get('sentences', []))}")
             progress.log(f"sentence transcript={layout.sentence_transcript} sentences={len(sentence_transcript.get('sentences', []))}")
+        if visual_index is not None:
+            progress.log(
+                f"visual index={layout.visual_index} observations={len(visual_index.get('observations', []))} "
+                f"shots={len((shots_manifest or {}).get('shots', []))}"
+            )
+        progress.log(f"scoring evidence items={len(scoring_context.get('segments', []))}")
         progress.log(f"scoring windows={len(windows)}")
         progress.log(f"scores output={layout.scores}")
     client = client or make_openai_client(config)
     token_usage = TokenUsageTotals()
-    segments, warnings = score_transcript(transcript, client=client, options=options, progress=progress, token_usage=token_usage, sentence_transcript=sentence_transcript)
+    context_label = "Transcript and visual context" if with_transcript and with_visuals else "Transcript" if with_transcript else "Visual context"
+    segments, warnings = score_context(
+        scoring_context,
+        client=client,
+        options=options,
+        progress=progress,
+        token_usage=token_usage,
+        sentence_transcript=sentence_transcript,
+        context_label=context_label,
+    )
     scores: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
-        "source_file": transcript["source_file"],
+        "source_file": scoring_context["source_file"],
         "directive": directive,
         "segments": segments,
     }

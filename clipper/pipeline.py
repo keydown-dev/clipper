@@ -163,6 +163,7 @@ def run_pipeline(
         json_output=json_output,
         client=scoring_client,
         progress=progress,
+        with_transcript=True,
     )
     _, _, clips, clips_reused = cut_video(
         store=store_path,

@@ -90,6 +90,19 @@ def make_workspace(tmp_path: Path) -> tuple[Path, Path]:
         ],
     }
     (root / "work" / "transcript.json").write_text(json.dumps(transcript), encoding="utf-8")
+    sentence_transcript = {
+        "schema_version": 1,
+        "source_file": "source/source.mp4",
+        "language": "en",
+        "duration": 20.0,
+        "source_transcript_path": "work/transcript.json",
+        "sentences": [
+            {"id": 0, "start": 0.0, "end": 5.0, "text": "calm intro", "source_segments": [0], "word_ranges": []},
+            {"id": 1, "start": 5.0, "end": 12.0, "text": "hosts laugh loudly", "source_segments": [1], "word_ranges": []},
+            {"id": 2, "start": 12.0, "end": 20.0, "text": "wrap up", "source_segments": [2], "word_ranges": []},
+        ],
+    }
+    (root / "work" / "sentences.json").write_text(json.dumps(sentence_transcript), encoding="utf-8")
     return store, root
 
 
@@ -183,7 +196,7 @@ def test_score_cli_writes_scores_without_real_llm(monkeypatch: pytest.MonkeyPatc
 
     monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=FakeOpenAI))
 
-    assert main(["score", "video", "--store", str(store), "--directive", "Find laughter", "--json"]) == EXIT_SUCCESS
+    assert main(["score", "video", "--store", str(store), "--directive", "Find laughter", "--with-transcript", "--json"]) == EXIT_SUCCESS
 
     payload = json.loads(capsys.readouterr().out)
     assert payload["ok"] is True
@@ -193,7 +206,11 @@ def test_score_cli_writes_scores_without_real_llm(monkeypatch: pytest.MonkeyPatc
     assert seen[0]["timeout"] == 60.0
     scores = json.loads((root / "work" / "scores.json").read_text())
     assert scores["directive"] == "Find laughter"
-    assert scores["segments"] == [{"start": 5.0, "end": 15.0, "score": 8.0, "reason": "hosts laugh"}]
+    assert scores["segments"][0]["start"] == 5.0
+    assert scores["segments"][0]["end"] == 15.0
+    assert scores["segments"][0]["score"] == 8.0
+    assert scores["segments"][0]["reason"] == "hosts laugh"
+    assert scores["segments"][0]["dialogue"] == "calm intro hosts laugh loudly wrap up"
     assert validate_scores(scores) == scores
 
 
@@ -206,7 +223,7 @@ def test_score_cli_empty_valid_segments_writes_warning(monkeypatch: pytest.Monke
 
     monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=FakeOpenAI))
 
-    assert main(["score", "video", "--store", str(store), "--json"]) == EXIT_SUCCESS
+    assert main(["score", "video", "--store", str(store), "--with-transcript", "--json"]) == EXIT_SUCCESS
 
     assert json.loads(capsys.readouterr().out)["result"]["segments"] == 0
     scores = json.loads((root / "work" / "scores.json").read_text())
@@ -229,7 +246,7 @@ def test_non_verbose_scoring_stderr_remains_quiet(monkeypatch: pytest.MonkeyPatc
 
     monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=FakeOpenAI))
 
-    assert main(["score", "video", "--store", str(store), "--directive", "Find laughter", "--json"]) == EXIT_SUCCESS
+    assert main(["score", "video", "--store", str(store), "--directive", "Find laughter", "--with-transcript", "--json"]) == EXIT_SUCCESS
 
     captured = capsys.readouterr()
     assert json.loads(captured.out)["ok"] is True
@@ -246,7 +263,7 @@ def test_score_cli_verbose_logs_to_stderr_and_json_stdout(monkeypatch: pytest.Mo
 
     monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=FakeOpenAI))
 
-    assert main(["score", "video", "--store", str(store), "--directive", "Find laughter", "--json", "--verbose"]) == EXIT_SUCCESS
+    assert main(["score", "video", "--store", str(store), "--directive", "Find laughter", "--with-transcript", "--json", "--verbose"]) == EXIT_SUCCESS
 
     captured = capsys.readouterr()
     assert json.loads(captured.out)["result"]["segments"] == 1
@@ -298,7 +315,7 @@ def test_verbose_reports_unavailable_token_usage(monkeypatch: pytest.MonkeyPatch
 
     monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=FakeOpenAI))
 
-    assert main(["score", "video", "--store", str(store), "--json", "--verbose"]) == EXIT_SUCCESS
+    assert main(["score", "video", "--store", str(store), "--with-transcript", "--json", "--verbose"]) == EXIT_SUCCESS
 
     assert "token usage unavailable: API did not provide usage metadata" in capsys.readouterr().err
 
@@ -316,7 +333,7 @@ def test_retry_usage_is_included_in_verbose_totals(monkeypatch: pytest.MonkeyPat
 
     monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=FakeOpenAI))
 
-    assert main(["score", "video", "--store", str(store), "--json", "--verbose"]) == EXIT_SUCCESS
+    assert main(["score", "video", "--store", str(store), "--with-transcript", "--json", "--verbose"]) == EXIT_SUCCESS
 
     err = capsys.readouterr().err
     assert "retrying invalid JSON" in err
@@ -337,7 +354,7 @@ def test_reuse_verbose_does_not_call_llm_or_show_progress(monkeypatch: pytest.Mo
 
     monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=FakeOpenAI))
 
-    assert main(["score", "video", "--store", str(store), "--reuse", "--json", "--verbose"]) == EXIT_SUCCESS
+    assert main(["score", "video", "--store", str(store), "--with-transcript", "--reuse", "--json", "--verbose"]) == EXIT_SUCCESS
 
     captured = capsys.readouterr()
     assert json.loads(captured.out)["result"]["reused"] is True

@@ -4,7 +4,7 @@
   "branch": "orchestrator/transcript-visual-scoring",
   "currentIteration": 6,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-06-01T12:36:49.086Z",
+  "updatedAt": "2026-06-01T12:42:21.835Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -35,7 +35,7 @@
     {
       "id": "006-implement-issue-018-explicit-context-scoring",
       "title": "Implement Issue 018 — Explicit Context Scoring",
-      "status": "running"
+      "status": "complete"
     }
   ],
   "iterations": [
@@ -268,10 +268,53 @@
     },
     {
       "number": 6,
-      "status": "running",
+      "status": "accepted",
       "todoId": "006-implement-issue-018-explicit-context-scoring",
       "beforeRef": "ralph/transcript-visual-scoring/iter-006-before",
-      "startedAt": "2026-06-01T12:36:48.944Z"
+      "startedAt": "2026-06-01T12:36:48.944Z",
+      "diff": {
+        "filesChanged": 6,
+        "insertions": 343,
+        "deletions": 29
+      },
+      "usage": {
+        "input": 84014,
+        "output": 13313,
+        "cacheRead": 1856000,
+        "cacheWrite": 0,
+        "totalTokens": 1953327,
+        "cost": 1.7474599999999993,
+        "contextWindow": 272000,
+        "contextTokens": 62517
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Implemented Issue 018 explicit context scoring:\n\n- `clipper score` now requires at least one explicit context flag: `--with-transcript`, `--with-visuals`, or both.\n- Transcript scoring now requires and consumes `work/sentences.json` rather than silently falling back to raw transcript artifacts.\n- Visual scoring consumes cached `work/shots.json` and `work/visual-index.json` without requiring transcript artifacts.\n- Combined scoring builds a single timestamped prompt context containing requested transcript and visual evidence only.\n- Existing scoring validation, retry, warning, token usage, output policy, JSON output, and verbose behavior are preserved.\n- Pipeline scoring opts into transcript context explicitly.\n- README examples document sound-bite, silent visual montage, and combined multimodal scoring.",
+      "changedFiles": [
+        "README.md",
+        "clipper/cli.py",
+        "clipper/pipeline.py",
+        "clipper/scoring.py",
+        "tests/test_issue006.py",
+        "tests/test_issue018.py",
+        ".ralph/orchestrator/loops/transcript-visual-scoring/iterations/006/verification.md",
+        ".ralph/orchestrator/loops/transcript-visual-scoring/iterations/006/handoff-out.md"
+      ],
+      "commitSubject": "feat: Require explicit scoring context",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands\n\n```bash\nuv run pytest tests/test_issue006.py tests/test_issue018.py\nuv run pytest\n```\n\n## Results\n\n- `uv run pytest tests/test_issue006.py tests/test_issue018.py`: 22 passed, 1 skipped.\n- `uv run pytest`: 108 passed, 3 skipped."
+          }
+        ]
+      },
+      "afterRef": "ralph/transcript-visual-scoring/iter-006-after",
+      "completedAt": "2026-06-01T12:42:21.761Z"
     }
   ],
   "runBudget": {

@@ -9,4 +9,4 @@ Control: active
 - [x] 003-implement-issue-015-score-dialogue-enrichment. Implement Issue 015 — Score Dialogue Enrichment (complete)
 - [x] 004-implement-issue-016-shot-detection-and-represent. Implement Issue 016 — Shot Detection and Representative Frames (complete)
 - [x] 005-implement-issue-017-visual-frame-analysis. Implement Issue 017 — Visual Frame Analysis (complete)
-- [ ] 006-implement-issue-018-explicit-context-scoring. Implement Issue 018 — Explicit Context Scoring (running)
+- [x] 006-implement-issue-018-explicit-context-scoring. Implement Issue 018 — Explicit Context Scoring (complete)

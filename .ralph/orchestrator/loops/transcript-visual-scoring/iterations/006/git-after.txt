@@ -1,0 +1,9 @@
+## orchestrator/transcript-visual-scoring...origin/orchestrator/transcript-visual-scoring [ahead 6]
+ M .ralph/orchestrator/loops/transcript-visual-scoring/iterations/006/verification.md
+ M README.md
+ M clipper/cli.py
+ M clipper/pipeline.py
+ M clipper/scoring.py
+ M tests/test_issue006.py
+?? .ralph/orchestrator/loops/transcript-visual-scoring/iterations/006/handoff-out.md
+?? tests/test_issue018.py

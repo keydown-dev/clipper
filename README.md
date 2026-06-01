@@ -97,7 +97,7 @@ uv run clipper doctor
 uv run clipper start URL_OR_VIDEO_PATH --name optional-video-name
 uv run clipper list
 uv run clipper transcribe [VIDEO]
-uv run clipper score [VIDEO] --directive "Find expressive moments"
+uv run clipper score [VIDEO] --with-transcript --directive "Find expressive moments"
 uv run clipper shots [VIDEO] --contact-sheet
 uv run clipper visual [VIDEO]
 uv run clipper cut [VIDEO] --min-score 6
@@ -337,13 +337,25 @@ New transcripts enable faster-whisper `word_timestamps` by default and require e
 
 ## Scoring
 
-`clipper score [VIDEO]` takes a video workspace transcript and asks an OpenAI-compatible LLM to identify candidate segments using the chat completions API shape (`client.chat.completions.create`). Default generation settings are temperature `0` and timeout `60` seconds.
+`clipper score [VIDEO]` asks an OpenAI-compatible LLM to identify candidate segments using explicitly selected evidence from the workspace. Callers must choose at least one context flag: `--with-transcript`, `--with-visuals`, or both. Default generation settings are temperature `0` and timeout `60` seconds.
 
-The directive is critical:
+Examples:
 
 ```bash
+# Sound-bite scoring from sentence-level dialogue.
 uv run clipper score my-video \
+  --with-transcript \
   --directive "Find moments where hosts laugh, react strongly, or discuss surprising topics"
+
+# Silent visual montage scoring from cached shot/vision artifacts.
+uv run clipper score my-video \
+  --with-visuals \
+  --directive "Find scenic, kinetic, or visually striking silent shots"
+
+# Combined multimodal scoring.
+uv run clipper score my-video \
+  --with-transcript --with-visuals \
+  --directive "Find moments where strong dialogue is reinforced by expressive visuals"
 ```
 
 Default directive should look for visually interesting or engaging moments: expressive reactions, laughter, surprise, disagreement, animated discussion, or strong emotional beats.
@@ -425,13 +437,13 @@ Find any segment where someone says something controversial or surprising
 Use `--verbose` to observe long-running scoring runs:
 
 ```bash
-uv run clipper score VIDEO --directive "Find compelling clips" --verbose
+uv run clipper score VIDEO --with-transcript --directive "Find compelling clips" --verbose
 ```
 
 Verbose scoring writes lifecycle diagnostics, model/config details, window progress, warnings, and token usage summaries to stderr. Stdout remains reserved for the normal human result, or for a single parseable JSON envelope when combined with `--json`:
 
 ```bash
-uv run clipper score VIDEO --directive "Find compelling clips" --json --verbose
+uv run clipper score VIDEO --with-transcript --directive "Find compelling clips" --json --verbose
 ```
 
 Token usage is shown only when the configured OpenAI-compatible endpoint returns usage metadata; Clipper does not estimate tokens locally when usage is absent.
@@ -541,7 +553,7 @@ Stage 2 narrative edit planning is intentionally deferred. Its extension point i
 uv run clipper doctor
 uv run clipper start ./source/example.mp4 --name local-example
 uv run clipper transcribe local-example --verbose
-uv run clipper score local-example --directive "Find expressive reactions" --json
+uv run clipper score local-example --with-transcript --directive "Find expressive reactions" --json
 uv run clipper cut local-example --min-score 6
 uv run clipper montage local-example --max-duration 60
 ```

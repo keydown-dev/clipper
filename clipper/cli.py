@@ -309,6 +309,8 @@ def run_score(args: argparse.Namespace) -> int:
         force=args.force,
         json_output=command_config.json_output,
         progress=CliProgress(enabled=command_config.verbose > 0),
+        with_transcript=args.with_transcript,
+        with_visuals=args.with_visuals,
     )
     result = {
         "scores_path": str(scores_path),
@@ -716,6 +718,8 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     score = subparsers.add_parser("score", parents=[common], help="Score transcript segments with an LLM.")
     score.add_argument("video", nargs="?", metavar="VIDEO", help="Video name or video directory path.")
     score.add_argument("--directive", default="Find expressive, visually interesting, or emotionally engaging moments.", help="Scoring directive.")
+    score.add_argument("--with-transcript", action="store_true", help="Use work/sentences.json as scoring evidence.")
+    score.add_argument("--with-visuals", action="store_true", help="Use cached work/shots.json and work/visual-index.json as scoring evidence.")
     add_reuse_force(score)
     score.set_defaults(handler=handlers["score"])
 
