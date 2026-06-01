@@ -4,7 +4,7 @@
   "branch": "orchestrator/transcript-visual-scoring",
   "currentIteration": 5,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-05-29T14:39:40.958Z",
+  "updatedAt": "2026-06-01T12:36:48.518Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -35,7 +35,7 @@
     {
       "id": "006-implement-issue-018-explicit-context-scoring",
       "title": "Implement Issue 018 — Explicit Context Scoring",
-      "status": "deferred"
+      "status": "queued"
     }
   ],
   "iterations": [
@@ -266,5 +266,10 @@
       "afterRef": "ralph/transcript-visual-scoring/iter-005-after",
       "completedAt": "2026-05-29T14:39:40.887Z"
     }
-  ]
+  ],
+  "runBudget": {
+    "remaining": 1,
+    "updatedAt": "2026-06-01T12:36:48.518Z",
+    "updatedBy": "orchestrator"
+  }
 }

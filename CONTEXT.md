@@ -20,12 +20,31 @@ _Avoid_: URL input, download input
 A user-provided local video file that Clipper copies into a Video before processing.
 _Avoid_: file input, source file
 
+**Clipper Core**:
+The Python CLI and importable Python package that own Clipper's media processing behavior, artifact schemas, and command semantics.
+_Avoid_: backend, engine when referring to the whole product
+
+**Surface**:
+A consumer of Clipper Core, such as a Pi skill package, documentation site, script, or future desktop app.
+_Avoid_: frontend when the surface may not have a UI
+
+**CLI Contract**:
+The public compatibility boundary made up of Clipper commands, flags, exit codes, JSON stdout envelopes, stderr diagnostics, and Artifact Store schemas.
+_Avoid_: internal API contract
+
+**Workflow Skill**:
+Agent instructions that explain how to compose primitive Clipper commands for a user goal without adding a bespoke Clipper command for that goal.
+_Avoid_: workflow command, custom command
+
 ## Relationships
 
 - An **Artifact Store** contains one or more **Videos**.
 - A **Video** contains the source, work, clips, and output artifacts for one canonical input reference.
 - A **Remote Input** and a **Local Input** both produce a source artifact inside a **Video**.
 - A **Local Input** is copied into its **Video** by default so the video workspace remains self-contained.
+- **Clipper Core** owns behavior; a **Surface** invokes, documents, visualizes, or orchestrates it.
+- The **CLI Contract** is the stable boundary that external **Surfaces** should rely on.
+- A **Workflow Skill** composes primitive commands such as `start`, `transcribe`, `shots`, `visual`, `score`, `cut`, and `montage` for a specific user goal.
 
 ## Example dialogue
 
@@ -40,3 +59,5 @@ _Avoid_: file input, source file
 - "source identity" could mean URL/path, provider metadata ID, or file contents; resolved: source identity means the canonical input reference — normalized URL for remote inputs, resolved absolute path for local inputs.
 - "input type" could use `url`/`local_file`, `download`/`local`, or provider names; resolved: core metadata uses `remote` and `local`.
 - "remote" could include many URI schemes; resolved: v1 **Remote Input** means only `http` and `https` URLs.
+- "app" could mean the Python CLI, Pi package, docs site, or future desktop UI; resolved: user-facing product surfaces are **Surfaces**, and the Python CLI/package is **Clipper Core**.
+- "workflow command" could mean adding bespoke commands such as hero montage or topic clips; resolved: prefer **Workflow Skills** that compose primitive commands, with `score --directive` and explicit scoring context carrying user intent.

@@ -12,6 +12,7 @@ Make scoring context explicit so callers choose transcript context, visual conte
 ## Tasks
 
 - Update `clipper score` so callers must provide at least one context flag.
+- Do not preserve an implicit transcript-only default: `clipper score VIDEO --directive "..."` must fail clearly until the caller adds `--with-transcript`, `--with-visuals`, or both.
 - Add `--with-transcript` to score using the sentence transcript artifact.
 - Add `--with-visuals` to score using the cached visual index artifact and its underlying shot metadata.
 - Fail clearly when no scoring context is selected.
@@ -24,7 +25,7 @@ Make scoring context explicit so callers choose transcript context, visual conte
 
 ## Acceptance Criteria
 
-- Tests verify `clipper score` fails when neither `--with-transcript` nor `--with-visuals` is supplied.
+- Tests verify `clipper score` fails when neither `--with-transcript` nor `--with-visuals` is supplied, including the legacy-looking `clipper score VIDEO --directive "..."` form.
 - Tests verify transcript-only scoring consumes sentence transcript context and enriches scores with dialogue.
 - Tests verify visual-only scoring consumes visual index and shot metadata without requiring transcript artifacts.
 - Tests verify combined scoring includes both transcript and visual context.
