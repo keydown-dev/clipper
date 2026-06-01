@@ -2,9 +2,9 @@
   "name": "transcript-visual-scoring",
   "control": "active",
   "branch": "orchestrator/transcript-visual-scoring",
-  "currentIteration": 5,
+  "currentIteration": 6,
   "createdAt": "2026-05-29T11:13:20.136Z",
-  "updatedAt": "2026-06-01T12:36:48.518Z",
+  "updatedAt": "2026-06-01T12:36:49.086Z",
   "maxIterations": 6,
   "todos": [
     {
@@ -35,7 +35,7 @@
     {
       "id": "006-implement-issue-018-explicit-context-scoring",
       "title": "Implement Issue 018 — Explicit Context Scoring",
-      "status": "queued"
+      "status": "running"
     }
   ],
   "iterations": [
@@ -265,11 +265,18 @@
       },
       "afterRef": "ralph/transcript-visual-scoring/iter-005-after",
       "completedAt": "2026-05-29T14:39:40.887Z"
+    },
+    {
+      "number": 6,
+      "status": "running",
+      "todoId": "006-implement-issue-018-explicit-context-scoring",
+      "beforeRef": "ralph/transcript-visual-scoring/iter-006-before",
+      "startedAt": "2026-06-01T12:36:48.944Z"
     }
   ],
   "runBudget": {
-    "remaining": 1,
-    "updatedAt": "2026-06-01T12:36:48.518Z",
+    "remaining": 0,
+    "updatedAt": "2026-06-01T12:36:48.872Z",
     "updatedBy": "orchestrator"
   }
 }
