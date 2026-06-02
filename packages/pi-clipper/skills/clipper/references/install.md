@@ -35,20 +35,20 @@ uv run clipper doctor --json
 
 ## Installed CLI usage
 
+The first supported non-development install path is `uv tool install` from the Clipper git repository:
+
+```bash
+uv tool install git+https://github.com/keydown-dev/clipper.git
+clipper doctor --json
+```
+
 Use this form when `clipper` is already installed and available on `PATH`:
 
 ```bash
 clipper doctor --json
 ```
 
-The first supported non-development install path is expected to be `uv tool install` from the project git repository after Issue 026 verifies the exact command. Do not claim PyPI installation or bundled native dependency installation for the first distribution docs. Until Issue 026 is complete, prefer the local checkout commands above for copy/paste setup.
-
-Expected future shape:
-
-```bash
-uv tool install git+https://github.com/keydown-dev/clipper.git
-clipper doctor --json
-```
+Do not claim PyPI installation or bundled native dependency installation. Python packaging installs the `clipper` command and declared Python runtime dependencies only; FFmpeg/ffprobe, model weights, and LLM services remain external requirements.
 
 ## Configuration
 

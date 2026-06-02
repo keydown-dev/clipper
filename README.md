@@ -48,7 +48,22 @@ Expected test dependency:
 
 - `pytest`
 
-## Setup
+## Install
+
+The first supported non-development install path is a uv tool install from the Clipper git repository:
+
+```bash
+uv tool install git+https://github.com/keydown-dev/clipper.git
+clipper doctor --json
+```
+
+This installs the `clipper` command and Python runtime dependencies declared in `pyproject.toml`. It does not install native system dependencies, model weights, or LLM services. Install FFmpeg/ffprobe separately, for example with `brew install ffmpeg`; faster-whisper downloads model files when a model is first loaded; transcript and visual scoring require OpenAI-compatible LLM configuration in `.env` or the process environment.
+
+PyPI installation is not supported yet.
+
+## Local development setup
+
+Use these commands when working from a Clipper source checkout:
 
 ```bash
 uv sync
@@ -56,7 +71,7 @@ cp .env.example .env
 uv run clipper doctor
 ```
 
-`uv sync` creates the project virtual environment and installs the CLI entry point used by `uv run clipper ...`. `clipper doctor` is the first command to run from a clean checkout; it checks Python, FFmpeg/ffprobe, Python dependencies, artifact-store write access, `.env`/LLM configuration, and faster-whisper import readiness without contacting external services by default.
+`uv sync` creates the project virtual environment and installs the CLI entry point used by `uv run clipper ...`. `clipper doctor` is the first command to run from a clean checkout or installed CLI; it checks Python, FFmpeg/ffprobe, Python dependencies, artifact-store write access, `.env`/LLM configuration, and faster-whisper import readiness without contacting external services by default.
 
 Example `.env` values:
 
@@ -85,6 +100,8 @@ uv run clipper start /tmp/clipper-smoke.mp4 --name smoke-demo
 uv run clipper list
 uv run clipper list --json
 ```
+
+For an installed CLI, replace `uv run clipper` with `clipper` and run from any project directory where you want the default `.clipper/` Artifact Store to be created.
 
 The `start` command copies the local file into `.clipper/smoke-demo/source/` and writes `.clipper/smoke-demo/work/metadata.json`. Re-run the same `start` command with `--reuse` to validate reuse behavior, or `--force` to replace the workspace.
 

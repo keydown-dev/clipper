@@ -6,13 +6,18 @@ This first package is intentionally **skills-only**. It does not register Pi ext
 
 ## Requirements
 
-This package teaches Pi how to operate Clipper through the CLI contract. It does **not** install Clipper Core or its Python dependencies.
+This package teaches Pi how to operate Clipper through the CLI contract. It does **not** install Clipper Core, Python dependencies, FFmpeg/ffprobe, model weights, or LLM services.
 
-Install Clipper separately, then verify one of these works before using the skill:
+Install Clipper Core separately with the supported uv tool path, then verify the command before using the skill:
 
 ```bash
+uv tool install git+https://github.com/keydown-dev/clipper.git
 clipper doctor --json
-# or, from a Clipper source checkout:
+```
+
+Or, from a Clipper source checkout:
+
+```bash
 uv run clipper doctor --json
 ```
 

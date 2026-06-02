@@ -1,0 +1,8 @@
+## orchestrator/clipper-issues-019-026
+ M .ralph/orchestrator/loops/clipper-issues-019-026/iterations/008/verification.md
+ M README.md
+ M packages/pi-clipper/README.md
+ M packages/pi-clipper/skills/clipper/references/install.md
+ M plans/issues/026-supported-cli-install-path.md
+ M skills/clipper/references/install.md
+?? .ralph/orchestrator/loops/clipper-issues-019-026/iterations/008/handoff-out.md

@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-issues-019-026",
   "currentIteration": 8,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:48:34.512Z",
+  "updatedAt": "2026-06-02T10:51:50.592Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -48,7 +48,7 @@
     {
       "id": "008-complete-plans-issues-026-supported-cli-install",
       "title": "Complete plans/issues/026-supported-cli-install-path.md",
-      "status": "running"
+      "status": "complete"
     }
   ],
   "iterations": [
@@ -385,10 +385,52 @@
     },
     {
       "number": 8,
-      "status": "running",
+      "status": "accepted",
       "todoId": "008-complete-plans-issues-026-supported-cli-install",
       "beforeRef": "ralph/clipper-issues-019-026/iter-008-before",
-      "startedAt": "2026-06-02T10:48:34.334Z"
+      "startedAt": "2026-06-02T10:48:34.334Z",
+      "diff": {
+        "filesChanged": 5,
+        "insertions": 50,
+        "deletions": 15
+      },
+      "usage": {
+        "input": 40169,
+        "output": 6582,
+        "cacheRead": 756224,
+        "cacheWrite": 0,
+        "totalTokens": 802975,
+        "cost": 0.776417,
+        "contextWindow": 272000,
+        "contextTokens": 37373
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed Issue 026 by documenting the first supported non-development CLI install path as `uv tool install git+https://github.com/keydown-dev/clipper.git`, preserving PyPI as out of scope, and recording the verified git-tool install behavior in the issue plan.",
+      "changedFiles": [
+        ".ralph/orchestrator/loops/clipper-issues-019-026/iterations/008/verification.md",
+        "README.md",
+        "packages/pi-clipper/README.md",
+        "packages/pi-clipper/skills/clipper/references/install.md",
+        "plans/issues/026-supported-cli-install-path.md",
+        "skills/clipper/references/install.md",
+        ".ralph/orchestrator/loops/clipper-issues-019-026/iterations/008/handoff-out.md"
+      ],
+      "commitSubject": "docs: Document supported CLI install path",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands\n\n- `uv run pytest`\n  - Result: passed\n  - Summary: 108 passed, 3 skipped in 3.64s.\n\n- `tmp_home=$(mktemp -d ...); UV_TOOL_DIR=... UV_TOOL_BIN_DIR=... uv tool install \"git+file://$PWD\"; cd /tmp; CLIPPER_STORE_PATH=... PATH=... clipper doctor --json`\n  - Result: passed\n  - Summary: installed `clipper` from the local git repository into an isolated uv tool directory, ran `clipper doctor --json` from `/tmp`, and received `ok=True` with summary `{'pass': 11, 'warn': 0, 'fail': 0}`.\n  - Note: this verifies the supported git install mechanism without depending on remote network/auth for `github.com`.\n\n- `cmp -s skills/clipper/references/install.md packages/pi-clipper/skills/clipper/references/install.md && echo install_refs_match`\n  - Result: passed\n  - Summary: packaged skill install reference matches the canonical root skill install reference.\n\n- `git diff --stat && git status --short`\n  - Result: passed\n  - Summary: confirmed only bounded Issue 026 files are modified.\n\n## Notes\n\nA first helper command for summarizing the doctor JSON used `python` after `clipper doctor` had already succeeded; this environment exposes `python3`, so the isolated install/doctor smoke was rerun with `python3` and passed."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-issues-019-026/iter-008-after",
+      "completedAt": "2026-06-02T10:51:50.499Z"
     }
   ],
   "runBudget": {

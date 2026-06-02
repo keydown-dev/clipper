@@ -27,3 +27,16 @@ This issue is separate from documentation because it may require packaging metad
 - `clipper doctor` works from an arbitrary consuming project after installation, assuming system dependencies are present.
 - The install path does not depend on Pi.
 - Limitations around heavy native/model dependencies are clear.
+
+## Implementation Note
+
+The first supported non-development install target is:
+
+```bash
+uv tool install git+https://github.com/keydown-dev/clipper.git
+clipper doctor --json
+```
+
+This path installs the `clipper` console script and the Python runtime dependencies declared in `pyproject.toml`. It deliberately does not publish to PyPI and does not bundle native/system dependencies. Users must install FFmpeg/ffprobe separately, and model weights plus OpenAI-compatible LLM services/configuration remain external runtime requirements.
+
+Manual verification installed the CLI through `uv tool install` from a git URL into an isolated uv tool directory, then ran `clipper doctor --json` from `/tmp` with a temporary `CLIPPER_STORE_PATH`. The doctor check passed with FFmpeg/ffprobe present and all declared Python runtime dependencies importable.
