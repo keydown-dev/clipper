@@ -2,9 +2,9 @@
   "name": "clipper-issues-019-026",
   "control": "active",
   "branch": "orchestrator/clipper-issues-019-026",
-  "currentIteration": 1,
+  "currentIteration": 2,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:36:39.522Z",
+  "updatedAt": "2026-06-02T10:36:40.160Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -18,7 +18,7 @@
     {
       "id": "002-complete-plans-issues-020-pi-package-for-clipper",
       "title": "Complete plans/issues/020-pi-package-for-clipper-skill.md",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "003-complete-plans-issues-021-install-distribution-d",
@@ -104,11 +104,18 @@
       },
       "afterRef": "ralph/clipper-issues-019-026/iter-001-after",
       "completedAt": "2026-06-02T10:36:39.440Z"
+    },
+    {
+      "number": 2,
+      "status": "running",
+      "todoId": "002-complete-plans-issues-020-pi-package-for-clipper",
+      "beforeRef": "ralph/clipper-issues-019-026/iter-002-before",
+      "startedAt": "2026-06-02T10:36:40.014Z"
     }
   ],
   "runBudget": {
-    "remaining": 7,
-    "updatedAt": "2026-06-02T10:34:02.130Z",
+    "remaining": 6,
+    "updatedAt": "2026-06-02T10:36:39.928Z",
     "updatedBy": "orchestrator"
   }
 }
