@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-issues-019-026",
   "currentIteration": 1,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:34:02.363Z",
+  "updatedAt": "2026-06-02T10:36:39.522Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -13,7 +13,7 @@
     {
       "id": "001-complete-plans-issues-019-reusable-clipper-agent",
       "title": "Complete plans/issues/019-reusable-clipper-agent-skill.md",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "002-complete-plans-issues-020-pi-package-for-clipper",
@@ -54,10 +54,56 @@
   "iterations": [
     {
       "number": 1,
-      "status": "running",
+      "status": "accepted",
       "todoId": "001-complete-plans-issues-019-reusable-clipper-agent",
       "beforeRef": "ralph/clipper-issues-019-026/iter-001-before",
-      "startedAt": "2026-06-02T10:34:02.209Z"
+      "startedAt": "2026-06-02T10:34:02.209Z",
+      "diff": {
+        "filesChanged": 11,
+        "insertions": 554,
+        "deletions": 0
+      },
+      "usage": {
+        "input": 42623,
+        "output": 6990,
+        "cacheRead": 320000,
+        "cacheWrite": 0,
+        "totalTokens": 369613,
+        "cost": 0.5828149999999999,
+        "contextWindow": 272000,
+        "contextTokens": 29346
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed Issue 019 by adding a reusable, agent-agnostic Clipper skill at `skills/clipper/`. The root skill explains Clipper, routes agents through doctor/readiness checks, describes the project-local `.clipper/` Artifact Store, and points to focused reference docs instead of embedding all workflow details.\n\nAdded reference documentation with copy/pasteable CLI examples for install/readiness, doctor, Artifact Store, start, transcribe, transcript scoring, visual scoring prerequisites, cut, montage, and troubleshooting.",
+      "changedFiles": [
+        "skills/clipper/SKILL.md",
+        "skills/clipper/references/install.md",
+        "skills/clipper/references/doctor.md",
+        "skills/clipper/references/store.md",
+        "skills/clipper/references/start.md",
+        "skills/clipper/references/transcribe.md",
+        "skills/clipper/references/transcript-scoring.md",
+        "skills/clipper/references/visual-scoring.md",
+        "skills/clipper/references/cut.md",
+        "skills/clipper/references/montage.md",
+        "skills/clipper/references/troubleshooting.md"
+      ],
+      "commitSubject": "feat: Add reusable Clipper agent skill",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands\n\n```bash\npython - <<'PY'\n# basic skill doc checks\nPY\n```\n\nResult: failed because `python` is not available on PATH in this environment (`/bin/bash: line 1: python: command not found`). Re-ran with `uv run python`.\n\n```bash\nuv run python - <<'PY'\nfrom pathlib import Path\nroot=Path('skills/clipper')\nrequired=[root/'SKILL.md']+[root/'references'/name for name in ['install.md','doctor.md','store.md','start.md','transcribe.md','transcript-scoring.md','visual-scoring.md','cut.md','montage.md','troubleshooting.md']]\nmissing=[str(p) for p in required if not p.exists()]\nassert not missing, missing\ntext=(root/'SKILL.md').read_text()\nassert text.startswith('---\\n'), 'missing frontmatter'\nassert 'name: clipper' in text\nassert 'description:' in text\nfor p in required:\n    s=p.read_text()\n    assert '```bash' in s or p.name=='SKILL.md', f'no bash examples in {p}'\nprint('skill docs present and frontmatter/basic examples verified')\nPY\nuv run clipper --help >/tmp/clipper-help.txt\nuv run clipper score --help >/tmp/clipper-score-help.txt\ngrep -q -- '--with-transcript' /tmp/clipper-score-help.txt\ngrep -q -- '--with-visuals' /tmp/clipper-score-help.txt\nprintf 'cli help verified\\n'\n```\n\nResult: passed.\n\nOutput:\n\n```text\nskill docs present and frontmatter/basic examples verified\ncli help verified\n```"
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-issues-019-026/iter-001-after",
+      "completedAt": "2026-06-02T10:36:39.440Z"
     }
   ],
   "runBudget": {
