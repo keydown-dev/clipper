@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-issues-019-026",
   "currentIteration": 0,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:33:59.622Z",
+  "updatedAt": "2026-06-02T10:34:01.745Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -51,5 +51,10 @@
       "status": "queued"
     }
   ],
-  "iterations": []
+  "iterations": [],
+  "runBudget": {
+    "remaining": 8,
+    "updatedAt": "2026-06-02T10:34:01.745Z",
+    "updatedBy": "orchestrator"
+  }
 }
