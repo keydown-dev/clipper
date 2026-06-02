@@ -2,9 +2,9 @@
   "name": "clipper-issues-019-026",
   "control": "active",
   "branch": "orchestrator/clipper-issues-019-026",
-  "currentIteration": 4,
+  "currentIteration": 5,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:43:55.873Z",
+  "updatedAt": "2026-06-02T10:43:56.550Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -33,7 +33,7 @@
     {
       "id": "005-complete-plans-issues-023-multi-video-hero-backg",
       "title": "Complete plans/issues/023-multi-video-hero-background-workflow-docs.md",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "006-complete-plans-issues-024-future-pi-extension-ex",
@@ -245,11 +245,18 @@
       },
       "afterRef": "ralph/clipper-issues-019-026/iter-004-after",
       "completedAt": "2026-06-02T10:43:55.797Z"
+    },
+    {
+      "number": 5,
+      "status": "running",
+      "todoId": "005-complete-plans-issues-023-multi-video-hero-backg",
+      "beforeRef": "ralph/clipper-issues-019-026/iter-005-before",
+      "startedAt": "2026-06-02T10:43:56.378Z"
     }
   ],
   "runBudget": {
-    "remaining": 4,
-    "updatedAt": "2026-06-02T10:41:56.408Z",
+    "remaining": 3,
+    "updatedAt": "2026-06-02T10:43:56.281Z",
     "updatedBy": "orchestrator"
   }
 }
