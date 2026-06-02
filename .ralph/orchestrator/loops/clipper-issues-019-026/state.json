@@ -2,9 +2,9 @@
   "name": "clipper-issues-019-026",
   "control": "active",
   "branch": "orchestrator/clipper-issues-019-026",
-  "currentIteration": 5,
+  "currentIteration": 6,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:45:49.740Z",
+  "updatedAt": "2026-06-02T10:45:50.367Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -38,7 +38,7 @@
     {
       "id": "006-complete-plans-issues-024-future-pi-extension-ex",
       "title": "Complete plans/issues/024-future-pi-extension-exploration.md",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "007-complete-plans-issues-025-future-docs-and-deskto",
@@ -292,11 +292,18 @@
       },
       "afterRef": "ralph/clipper-issues-019-026/iter-005-after",
       "completedAt": "2026-06-02T10:45:49.666Z"
+    },
+    {
+      "number": 6,
+      "status": "running",
+      "todoId": "006-complete-plans-issues-024-future-pi-extension-ex",
+      "beforeRef": "ralph/clipper-issues-019-026/iter-006-before",
+      "startedAt": "2026-06-02T10:45:50.220Z"
     }
   ],
   "runBudget": {
-    "remaining": 3,
-    "updatedAt": "2026-06-02T10:43:56.281Z",
+    "remaining": 2,
+    "updatedAt": "2026-06-02T10:45:50.143Z",
     "updatedBy": "orchestrator"
   }
 }
