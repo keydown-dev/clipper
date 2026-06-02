@@ -4,7 +4,7 @@ Control: active
 
 ## Todo
 
-- [ ] 001-complete-plans-issues-019-reusable-clipper-agent. Complete plans/issues/019-reusable-clipper-agent-skill.md (queued)
+- [ ] 001-complete-plans-issues-019-reusable-clipper-agent. Complete plans/issues/019-reusable-clipper-agent-skill.md (running)
 - [ ] 002-complete-plans-issues-020-pi-package-for-clipper. Complete plans/issues/020-pi-package-for-clipper-skill.md (queued)
 - [ ] 003-complete-plans-issues-021-install-distribution-d. Complete plans/issues/021-install-distribution-documentation.md (queued)
 - [ ] 004-complete-plans-issues-022-transcript-qa-summariz. Complete plans/issues/022-transcript-qa-summarization-workflow-docs.md (queued)
