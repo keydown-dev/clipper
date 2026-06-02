@@ -1,0 +1,55 @@
+{
+  "name": "clipper-issues-019-026",
+  "control": "active",
+  "branch": "orchestrator/clipper-issues-019-026",
+  "currentIteration": 0,
+  "createdAt": "2026-06-02T10:33:59.620Z",
+  "updatedAt": "2026-06-02T10:33:59.622Z",
+  "maxIterations": 8,
+  "workerDefaults": {
+    "contextWindow": 272000
+  },
+  "todos": [
+    {
+      "id": "001-complete-plans-issues-019-reusable-clipper-agent",
+      "title": "Complete plans/issues/019-reusable-clipper-agent-skill.md",
+      "status": "queued"
+    },
+    {
+      "id": "002-complete-plans-issues-020-pi-package-for-clipper",
+      "title": "Complete plans/issues/020-pi-package-for-clipper-skill.md",
+      "status": "queued"
+    },
+    {
+      "id": "003-complete-plans-issues-021-install-distribution-d",
+      "title": "Complete plans/issues/021-install-distribution-documentation.md",
+      "status": "queued"
+    },
+    {
+      "id": "004-complete-plans-issues-022-transcript-qa-summariz",
+      "title": "Complete plans/issues/022-transcript-qa-summarization-workflow-docs.md",
+      "status": "queued"
+    },
+    {
+      "id": "005-complete-plans-issues-023-multi-video-hero-backg",
+      "title": "Complete plans/issues/023-multi-video-hero-background-workflow-docs.md",
+      "status": "queued"
+    },
+    {
+      "id": "006-complete-plans-issues-024-future-pi-extension-ex",
+      "title": "Complete plans/issues/024-future-pi-extension-exploration.md",
+      "status": "queued"
+    },
+    {
+      "id": "007-complete-plans-issues-025-future-docs-and-deskto",
+      "title": "Complete plans/issues/025-future-docs-and-desktop-surfaces.md",
+      "status": "queued"
+    },
+    {
+      "id": "008-complete-plans-issues-026-supported-cli-install",
+      "title": "Complete plans/issues/026-supported-cli-install-path.md",
+      "status": "queued"
+    }
+  ],
+  "iterations": []
+}
