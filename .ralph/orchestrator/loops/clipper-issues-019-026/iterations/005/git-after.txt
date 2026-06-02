@@ -1,0 +1,6 @@
+## orchestrator/clipper-issues-019-026
+ M .ralph/orchestrator/loops/clipper-issues-019-026/iterations/005/verification.md
+ M skills/clipper/SKILL.md
+ M skills/clipper/references/visual-scoring.md
+?? .ralph/orchestrator/loops/clipper-issues-019-026/iterations/005/handoff-out.md
+?? skills/clipper/references/hero-background.md
