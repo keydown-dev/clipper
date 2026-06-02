@@ -10,5 +10,5 @@ Control: active
 - [x] 004-complete-plans-issues-022-transcript-qa-summariz. Complete plans/issues/022-transcript-qa-summarization-workflow-docs.md (complete)
 - [x] 005-complete-plans-issues-023-multi-video-hero-backg. Complete plans/issues/023-multi-video-hero-background-workflow-docs.md (complete)
 - [x] 006-complete-plans-issues-024-future-pi-extension-ex. Complete plans/issues/024-future-pi-extension-exploration.md (complete)
-- [ ] 007-complete-plans-issues-025-future-docs-and-deskto. Complete plans/issues/025-future-docs-and-desktop-surfaces.md (running)
+- [x] 007-complete-plans-issues-025-future-docs-and-deskto. Complete plans/issues/025-future-docs-and-desktop-surfaces.md (complete)
 - [ ] 008-complete-plans-issues-026-supported-cli-install. Complete plans/issues/026-supported-cli-install-path.md (queued)

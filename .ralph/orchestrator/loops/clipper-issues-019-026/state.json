@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-issues-019-026",
   "currentIteration": 7,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:47:23.259Z",
+  "updatedAt": "2026-06-02T10:48:33.806Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -43,7 +43,7 @@
     {
       "id": "007-complete-plans-issues-025-future-docs-and-deskto",
       "title": "Complete plans/issues/025-future-docs-and-desktop-surfaces.md",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "008-complete-plans-issues-026-supported-cli-install",
@@ -340,10 +340,48 @@
     },
     {
       "number": 7,
-      "status": "running",
+      "status": "accepted",
       "todoId": "007-complete-plans-issues-025-future-docs-and-deskto",
       "beforeRef": "ralph/clipper-issues-019-026/iter-007-before",
-      "startedAt": "2026-06-02T10:47:23.117Z"
+      "startedAt": "2026-06-02T10:47:23.117Z",
+      "diff": {
+        "filesChanged": 1,
+        "insertions": 65,
+        "deletions": 0
+      },
+      "usage": {
+        "input": 20973,
+        "output": 2369,
+        "cacheRead": 96256,
+        "cacheWrite": 0,
+        "totalTokens": 119598,
+        "cost": 0.224063,
+        "contextWindow": 272000,
+        "contextTokens": 13885
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed iteration 7 / todo `#007-complete-plans-issues-025-future-docs-and-deskto` by expanding `plans/issues/025-future-docs-and-desktop-surfaces.md` with a bounded roadmap note for future Astro docs and Tauri desktop surfaces.",
+      "changedFiles": [
+        "plans/issues/025-future-docs-and-desktop-surfaces.md",
+        ".ralph/orchestrator/loops/clipper-issues-019-026/iterations/007/verification.md",
+        ".ralph/orchestrator/loops/clipper-issues-019-026/iterations/007/handoff-out.md"
+      ],
+      "commitSubject": "Document future docs and desktop surfaces",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands\n\n- Read `plans/issues/025-future-docs-and-desktop-surfaces.md` after editing to verify the roadmap note is present and acceptance criteria are addressed.\n- `git diff -- plans/issues/025-future-docs-and-desktop-surfaces.md`\n\n## Results\n\n- The issue now documents the intended `apps/docs-site/` and `apps/desktop/` layout.\n- The Astro docs scope covers human docs, examples, install instructions, command reference, and workflow recipes.\n- The Tauri scope is explicitly read-only Artifact Store visualization first.\n- Interactive desktop editing/orchestration is explicitly deferred.\n- Additional future CLI/artifact contracts are identified, including progress events, cancellation, artifact indexes, summaries, thumbnails, and contract tests.\n- Placeholder folders are explicitly deferred until real implementation begins."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-issues-019-026/iter-007-after",
+      "completedAt": "2026-06-02T10:48:33.720Z"
     }
   ],
   "runBudget": {

@@ -1,0 +1,4 @@
+## orchestrator/clipper-issues-019-026
+ M .ralph/orchestrator/loops/clipper-issues-019-026/iterations/007/verification.md
+ M plans/issues/025-future-docs-and-desktop-surfaces.md
+?? .ralph/orchestrator/loops/clipper-issues-019-026/iterations/007/handoff-out.md
