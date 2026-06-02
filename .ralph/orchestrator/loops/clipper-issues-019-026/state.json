@@ -2,9 +2,9 @@
   "name": "clipper-issues-019-026",
   "control": "active",
   "branch": "orchestrator/clipper-issues-019-026",
-  "currentIteration": 3,
+  "currentIteration": 4,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:41:56.021Z",
+  "updatedAt": "2026-06-02T10:41:56.638Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -28,7 +28,7 @@
     {
       "id": "004-complete-plans-issues-022-transcript-qa-summariz",
       "title": "Complete plans/issues/022-transcript-qa-summarization-workflow-docs.md",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "005-complete-plans-issues-023-multi-video-hero-backg",
@@ -197,11 +197,18 @@
       },
       "afterRef": "ralph/clipper-issues-019-026/iter-003-after",
       "completedAt": "2026-06-02T10:41:55.945Z"
+    },
+    {
+      "number": 4,
+      "status": "running",
+      "todoId": "004-complete-plans-issues-022-transcript-qa-summariz",
+      "beforeRef": "ralph/clipper-issues-019-026/iter-004-before",
+      "startedAt": "2026-06-02T10:41:56.489Z"
     }
   ],
   "runBudget": {
-    "remaining": 5,
-    "updatedAt": "2026-06-02T10:39:05.006Z",
+    "remaining": 4,
+    "updatedAt": "2026-06-02T10:41:56.408Z",
     "updatedBy": "orchestrator"
   }
 }
