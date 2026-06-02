@@ -1,0 +1,34 @@
+{
+  "name": "pi-clipper",
+  "version": "0.1.0",
+  "description": "Pi skills package for operating the local-first Clipper CLI.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "pi-skill",
+    "clipper",
+    "video",
+    "transcription"
+  ],
+  "scripts": {
+    "sync:skill": "node ./scripts/sync-clipper-skill.mjs",
+    "prepare": "node ./scripts/sync-clipper-skill.mjs",
+    "prepack": "node ./scripts/sync-clipper-skill.mjs"
+  },
+  "files": [
+    "README.md",
+    "skills",
+    "scripts"
+  ],
+  "pi": {
+    "skills": [
+      "./skills"
+    ]
+  },
+  "clipper": {
+    "requiresCli": true,
+    "requiresCoreInstall": true,
+    "installSeparately": true
+  }
+}
