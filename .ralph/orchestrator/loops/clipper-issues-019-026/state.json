@@ -2,9 +2,9 @@
   "name": "clipper-issues-019-026",
   "control": "active",
   "branch": "orchestrator/clipper-issues-019-026",
-  "currentIteration": 6,
+  "currentIteration": 7,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:47:22.663Z",
+  "updatedAt": "2026-06-02T10:47:23.259Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -43,7 +43,7 @@
     {
       "id": "007-complete-plans-issues-025-future-docs-and-deskto",
       "title": "Complete plans/issues/025-future-docs-and-desktop-surfaces.md",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "008-complete-plans-issues-026-supported-cli-install",
@@ -337,11 +337,18 @@
       },
       "afterRef": "ralph/clipper-issues-019-026/iter-006-after",
       "completedAt": "2026-06-02T10:47:22.587Z"
+    },
+    {
+      "number": 7,
+      "status": "running",
+      "todoId": "007-complete-plans-issues-025-future-docs-and-deskto",
+      "beforeRef": "ralph/clipper-issues-019-026/iter-007-before",
+      "startedAt": "2026-06-02T10:47:23.117Z"
     }
   ],
   "runBudget": {
-    "remaining": 2,
-    "updatedAt": "2026-06-02T10:45:50.143Z",
+    "remaining": 1,
+    "updatedAt": "2026-06-02T10:47:23.038Z",
     "updatedBy": "orchestrator"
   }
 }
