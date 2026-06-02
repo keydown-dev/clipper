@@ -2,9 +2,9 @@
   "name": "clipper-issues-019-026",
   "control": "active",
   "branch": "orchestrator/clipper-issues-019-026",
-  "currentIteration": 7,
+  "currentIteration": 8,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:48:33.806Z",
+  "updatedAt": "2026-06-02T10:48:34.512Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -48,7 +48,7 @@
     {
       "id": "008-complete-plans-issues-026-supported-cli-install",
       "title": "Complete plans/issues/026-supported-cli-install-path.md",
-      "status": "queued"
+      "status": "running"
     }
   ],
   "iterations": [
@@ -382,11 +382,18 @@
       },
       "afterRef": "ralph/clipper-issues-019-026/iter-007-after",
       "completedAt": "2026-06-02T10:48:33.720Z"
+    },
+    {
+      "number": 8,
+      "status": "running",
+      "todoId": "008-complete-plans-issues-026-supported-cli-install",
+      "beforeRef": "ralph/clipper-issues-019-026/iter-008-before",
+      "startedAt": "2026-06-02T10:48:34.334Z"
     }
   ],
   "runBudget": {
-    "remaining": 1,
-    "updatedAt": "2026-06-02T10:47:23.038Z",
+    "remaining": 0,
+    "updatedAt": "2026-06-02T10:48:34.240Z",
     "updatedBy": "orchestrator"
   }
 }
