@@ -1,0 +1,4 @@
+## orchestrator/clipper-issues-019-026
+ M .ralph/orchestrator/loops/clipper-issues-019-026/iterations/006/verification.md
+ M plans/issues/024-future-pi-extension-exploration.md
+?? .ralph/orchestrator/loops/clipper-issues-019-026/iterations/006/handoff-out.md
