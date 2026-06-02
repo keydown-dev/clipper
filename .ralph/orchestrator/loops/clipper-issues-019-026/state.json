@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-issues-019-026",
   "currentIteration": 3,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:39:05.238Z",
+  "updatedAt": "2026-06-02T10:41:56.021Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -23,7 +23,7 @@
     {
       "id": "003-complete-plans-issues-021-install-distribution-d",
       "title": "Complete plans/issues/021-install-distribution-documentation.md",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "004-complete-plans-issues-022-transcript-qa-summariz",
@@ -154,10 +154,49 @@
     },
     {
       "number": 3,
-      "status": "running",
+      "status": "accepted",
       "todoId": "003-complete-plans-issues-021-install-distribution-d",
       "beforeRef": "ralph/clipper-issues-019-026/iter-003-before",
-      "startedAt": "2026-06-02T10:39:05.091Z"
+      "startedAt": "2026-06-02T10:39:05.091Z",
+      "diff": {
+        "filesChanged": 4,
+        "insertions": 230,
+        "deletions": 22
+      },
+      "usage": {
+        "input": 60908,
+        "output": 6841,
+        "cacheRead": 484864,
+        "cacheWrite": 0,
+        "totalTokens": 552613,
+        "cost": 0.7522020000000003,
+        "contextWindow": 272000,
+        "contextTokens": 30806
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed Issue 021's install/distribution documentation slice by expanding the Clipper skill install and troubleshooting references. The docs now distinguish source-checkout usage from installed CLI usage, keep PyPI and bundled native dependency installation out of scope, describe the expected future `uv tool install` git path pending Issue 026 verification, document system/Python/media/model/LLM requirements, explain `--store` and `CLIPPER_STORE_PATH`, and add troubleshooting for missing CLI, FFmpeg/ffprobe, Python dependency imports, Whisper, LLM/vision config, yt-dlp downloads, and artifact-store path confusion.\n\nSynced the root skill changes into the packaged Pi skill copy using the existing sync script.",
+      "changedFiles": [
+        "skills/clipper/references/install.md",
+        "skills/clipper/references/troubleshooting.md",
+        "packages/pi-clipper/skills/clipper/references/install.md",
+        "packages/pi-clipper/skills/clipper/references/troubleshooting.md"
+      ],
+      "commitSubject": "feat: Document Clipper install readiness",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands run\n\n- `node packages/pi-clipper/scripts/sync-clipper-skill.mjs && git diff -- skills/clipper/references/install.md skills/clipper/references/troubleshooting.md packages/pi-clipper/skills/clipper/references/install.md packages/pi-clipper/skills/clipper/references/troubleshooting.md`\n  - Result: passed; synced the packaged Clipper skill copy from the root source of truth and reviewed the documentation diff.\n- `uv run clipper doctor --json`\n  - Result: passed; returned `ok: true` with 11 passing checks, including Python, FFmpeg, ffprobe, declared Python dependencies, artifact store writability, LLM config readiness, and Whisper import readiness.\n- `python - <<'PY' ...`\n  - Result: failed; local shell has no `python` executable (`code 127`). Re-run with `uv run python` below.\n- `uv run python - <<'PY' ...`\n  - Result: passed; asserted install/troubleshooting docs include required install path caveat, root skill reference, system dependencies, store options, model/LLM/vision notes, and troubleshooting topics.\n- `git status --short`\n  - Result: passed; showed only the four intended documentation files modified."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-issues-019-026/iter-003-after",
+      "completedAt": "2026-06-02T10:41:55.945Z"
     }
   ],
   "runBudget": {
