@@ -4,7 +4,7 @@
   "branch": "orchestrator/clipper-issues-019-026",
   "currentIteration": 4,
   "createdAt": "2026-06-02T10:33:59.620Z",
-  "updatedAt": "2026-06-02T10:41:56.638Z",
+  "updatedAt": "2026-06-02T10:43:55.873Z",
   "maxIterations": 8,
   "workerDefaults": {
     "contextWindow": 272000
@@ -28,7 +28,7 @@
     {
       "id": "004-complete-plans-issues-022-transcript-qa-summariz",
       "title": "Complete plans/issues/022-transcript-qa-summarization-workflow-docs.md",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "005-complete-plans-issues-023-multi-video-hero-backg",
@@ -200,10 +200,51 @@
     },
     {
       "number": 4,
-      "status": "running",
+      "status": "accepted",
       "todoId": "004-complete-plans-issues-022-transcript-qa-summariz",
       "beforeRef": "ralph/clipper-issues-019-026/iter-004-before",
-      "startedAt": "2026-06-02T10:41:56.489Z"
+      "startedAt": "2026-06-02T10:41:56.489Z",
+      "diff": {
+        "filesChanged": 4,
+        "insertions": 132,
+        "deletions": 3
+      },
+      "usage": {
+        "input": 58219,
+        "output": 4112,
+        "cacheRead": 242176,
+        "cacheWrite": 0,
+        "totalTokens": 304507,
+        "cost": 0.5355429999999999,
+        "contextWindow": 272000,
+        "contextTokens": 20809
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed Issue 022 documentation for transcript-only QA and summarization workflows.\n\nAdded a dedicated Clipper skill reference that explains:\n\n- Minimal `doctor` + `start` + `transcribe` workflow for local and YouTube/remote inputs.\n- When to stop after transcription instead of running scoring/cutting/montage commands.\n- Why agents should prefer `work/sentences.json` for readable timestamped context.\n- When `work/transcript.json` is useful for raw segment and word-level traceability.\n- Expected artifact paths and JSON fields.\n- Agent-grounding rules, including not inventing transcript content and citing timestamps.\n- Example prompts for summary, quiz generation, glossary extraction, and topic outlines using the agent's own model context.",
+      "changedFiles": [
+        ".ralph/orchestrator/loops/clipper-issues-019-026/iterations/004/verification.md",
+        "skills/clipper/SKILL.md",
+        "skills/clipper/references/transcribe.md",
+        "skills/clipper/references/transcript-scoring.md",
+        ".ralph/orchestrator/loops/clipper-issues-019-026/iterations/004/handoff-out.md",
+        "skills/clipper/references/transcript-qa.md"
+      ],
+      "commitSubject": "feat: Document transcript QA workflow",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands\n\n```bash\ngit diff -- skills/clipper/SKILL.md skills/clipper/references/transcribe.md skills/clipper/references/transcript-scoring.md skills/clipper/references/transcript-qa.md\n```\n\nResult: passed — reviewed documentation diff for the new transcript QA/summarization reference, root skill link, and cross-reference updates.\n\n```bash\ngit status --short && rg -n \"transcript-qa\" skills/clipper clipper tests pyproject.toml || true\n```\n\nResult: passed — changes are bounded to Clipper skill documentation; `transcript-qa` appears only in skill docs and no CLI/test/package command surface was added.\n\n## Notes\n\nNo runtime tests were run because this iteration is documentation-only and intentionally does not modify CLI behavior."
+          }
+        ]
+      },
+      "afterRef": "ralph/clipper-issues-019-026/iter-004-after",
+      "completedAt": "2026-06-02T10:43:55.797Z"
     }
   ],
   "runBudget": {

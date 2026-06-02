@@ -38,6 +38,7 @@ Read only the references needed for the task:
 - [Start videos](references/start.md)
 - [Transcribe](references/transcribe.md)
 - [Transcript scoring](references/transcript-scoring.md)
+- [Transcript QA and summarization](references/transcript-qa.md)
 - [Visual scoring prerequisites](references/visual-scoring.md)
 - [Cut clips](references/cut.md)
 - [Montage](references/montage.md)
@@ -75,4 +76,15 @@ uv run clipper score interview --with-transcript --with-visuals \
   --directive "Find moments where strong dialogue is reinforced by expressive visuals"
 ```
 
-Detailed transcript QA/summarization recipes and multi-video hero-background recipes are intentionally out of scope for this root skill.
+Transcript-only QA/summarization:
+
+```bash
+uv run clipper doctor --json
+uv run clipper start ./source/interview.mp4 --name interview
+uv run clipper transcribe interview --verbose
+# Stop here. Read .clipper/interview/work/sentences.json into the agent's own context.
+```
+
+Use this flow for summaries, quizzes, study guides, glossary extraction, and topic outlines. Prefer `work/sentences.json` for readable timestamped context; use `work/transcript.json` only when raw segment or word timing traceability is needed. Do not invent a `transcript-qa` command or call Clipper's configured LLM for transcript-only QA.
+
+Detailed multi-video hero-background recipes are intentionally out of scope for this root skill.
