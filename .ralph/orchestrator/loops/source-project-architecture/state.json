@@ -4,7 +4,7 @@
   "branch": "orchestrator/source-project-architecture",
   "currentIteration": 8,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:36:04.422Z",
+  "updatedAt": "2026-06-04T21:38:56.372Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -48,7 +48,7 @@
     {
       "id": "008-035-project-level-montage",
       "title": "035 — Project-Level Montage",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "009-036-docs-migration-and-compatibility",
@@ -390,10 +390,49 @@
     },
     {
       "number": 8,
-      "status": "running",
+      "status": "accepted",
       "todoId": "008-035-project-level-montage",
       "beforeRef": "ralph/source-project-architecture/iter-008-before",
-      "startedAt": "2026-06-04T21:36:04.272Z"
+      "startedAt": "2026-06-04T21:36:04.272Z",
+      "diff": {
+        "filesChanged": 3,
+        "insertions": 200,
+        "deletions": 37
+      },
+      "usage": {
+        "input": 51798,
+        "output": 6980,
+        "cacheRead": 785920,
+        "cacheWrite": 0,
+        "totalTokens": 844698,
+        "cost": 0.8613500000000001,
+        "contextWindow": 272000,
+        "contextTokens": 44629
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed todo #008-035-project-level-montage. `clipper montage PROJECT` now detects a positional project when `.clipper/projects/{project}/project.json` exists and assembles from project-owned `clips.json` into project-owned `montage.mp4` / `montage.json`.",
+      "changedFiles": [
+        "clipper/montage.py",
+        "clipper/cli.py",
+        "tests/test_issue035.py",
+        "Added coverage for project montage creation, max-duration trimming, reuse, failure cleanup, and CLI positional project routing."
+      ],
+      "commitSubject": "Implement project-level montage assembly",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue035.py tests/test_project_outputs.py tests/test_issue009.py\n```\n\nResult: passed — 14 passed.\n\n```bash\nuv run pytest\n```\n\nResult: passed — 147 passed, 3 skipped.\n\n```bash\nuv run pytest tests/test_issue035.py\n```\n\nResult: passed — 5 passed after final cleanup edit."
+          }
+        ]
+      },
+      "afterRef": "ralph/source-project-architecture/iter-008-after",
+      "completedAt": "2026-06-04T21:38:56.295Z"
     }
   ],
   "runBudget": {

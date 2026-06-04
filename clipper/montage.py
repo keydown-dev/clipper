@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from .artifacts import ArtifactError, ArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
+from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
 from .progress import CliProgress
 from .schemas import SCHEMA_VERSION
 
@@ -106,29 +106,20 @@ def ffmpeg_montage_command(*, filelist: Path, output: Path, width: int, height: 
     return command
 
 
-def montage_video(
+def _montage_from_layout(
     *,
-    store: Path,
-    video: str | None,
-    options: MontageOptions | None = None,
-    reuse: bool = False,
-    force: bool = False,
-    json_output: bool = False,
-    progress: CliProgress | None = None,
-    project: str | None = None,
+    layout: ArtifactLayout | ProjectArtifactLayout,
+    owner: str,
+    options: MontageOptions,
+    reuse: bool,
+    force: bool,
+    progress: CliProgress | None,
 ) -> tuple[str, Path, dict[str, Any], bool]:
-    """Assemble work/clips.json into output/montage.mp4 and output/montage.json."""
-
-    options = options or MontageOptions()
-    root = resolve_video(store, video, json_output=json_output)
-    layout = ArtifactLayout.for_video(root.parent, root.name).for_project(project)
-
-    layout.output_dir.mkdir(parents=True, exist_ok=True)
     layout.montage_video.parent.mkdir(parents=True, exist_ok=True)
     layout.montage_json.parent.mkdir(parents=True, exist_ok=True)
     policy = output_policy([layout.montage_video, layout.montage_json], reuse=reuse, force=force, schema="montage")
     if policy == "reuse":
-        return layout.video, layout.montage_json, read_validated_json(layout.montage_json, "montage"), True
+        return owner, layout.montage_json, read_validated_json(layout.montage_json, "montage"), True
 
     manifest = read_validated_json(layout.clips_manifest, "clips")
     selected, selected_duration = select_clips_for_montage(manifest["clips"], min_duration=options.min_duration, max_duration=options.max_duration)
@@ -180,7 +171,43 @@ def montage_video(
             "silent": bool(options.silent),
         }
         write_json(layout.montage_json, montage)
-        return layout.video, layout.montage_json, montage, False
+        return owner, layout.montage_json, montage, False
     except Exception:
         _cleanup([layout.montage_video, layout.montage_json, *temp_paths])
         raise
+
+
+def montage_project(
+    *,
+    store: Path,
+    project: str,
+    options: MontageOptions | None = None,
+    reuse: bool = False,
+    force: bool = False,
+    progress: CliProgress | None = None,
+) -> tuple[str, Path, dict[str, Any], bool]:
+    """Assemble project clips.json into project montage.mp4 and montage.json."""
+
+    options = options or MontageOptions()
+    layout = ProjectArtifactLayout.for_project(store, project)
+    return _montage_from_layout(layout=layout, owner=layout.project, options=options, reuse=reuse, force=force, progress=progress)
+
+
+def montage_video(
+    *,
+    store: Path,
+    video: str | None,
+    options: MontageOptions | None = None,
+    reuse: bool = False,
+    force: bool = False,
+    json_output: bool = False,
+    progress: CliProgress | None = None,
+    project: str | None = None,
+) -> tuple[str, Path, dict[str, Any], bool]:
+    """Assemble work/clips.json into output/montage.mp4 and output/montage.json."""
+
+    options = options or MontageOptions()
+    root = resolve_video(store, video, json_output=json_output)
+    layout = ArtifactLayout.for_video(root.parent, root.name).for_project(project)
+    layout.output_dir.mkdir(parents=True, exist_ok=True)
+    return _montage_from_layout(layout=layout, owner=layout.video, options=options, reuse=reuse, force=force, progress=progress)

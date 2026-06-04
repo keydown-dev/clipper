@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, SourceArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_json, read_validated_json, validate_video_name, write_json
 from .config import load_config
 from .cutting import CutOptions, cut_project, cut_video
-from .montage import MontageOptions, montage_video
+from .montage import MontageOptions, montage_project, montage_video
 from .progress import CliProgress
 from .scoring import score_project, score_video
 from .shots import ShotOptions, shots_video
@@ -507,25 +507,39 @@ def run_montage(args: argparse.Namespace) -> int:
 
     command_config = config_from_args(args)
     app_config = load_config(store_override=command_config.store)
-    video, montage_path, montage, reused = montage_video(
-        store=command_config.store,
-        video=args.video,
-        options=MontageOptions(
-            min_duration=args.min_duration,
-            max_duration=args.max_duration,
-            width=app_config.default_width,
-            height=app_config.default_height,
-            silent=args.silent,
-        ),
-        reuse=args.reuse,
-        force=args.force,
-        json_output=command_config.json_output,
-        progress=CliProgress(enabled=command_config.verbose > 0),
-        project=args.project,
+    options = MontageOptions(
+        min_duration=args.min_duration,
+        max_duration=args.max_duration,
+        width=app_config.default_width,
+        height=app_config.default_height,
+        silent=args.silent,
     )
+    project_arg = args.video if args.video and args.project is None and (command_config.store / "projects" / args.video / "project.json").exists() else None
+    if project_arg is not None:
+        video, montage_path, montage, reused = montage_project(
+            store=command_config.store,
+            project=project_arg,
+            options=options,
+            reuse=args.reuse,
+            force=args.force,
+            progress=CliProgress(enabled=command_config.verbose > 0),
+        )
+        result_project = project_arg
+    else:
+        video, montage_path, montage, reused = montage_video(
+            store=command_config.store,
+            video=args.video,
+            options=options,
+            reuse=args.reuse,
+            force=args.force,
+            json_output=command_config.json_output,
+            progress=CliProgress(enabled=command_config.verbose > 0),
+            project=args.project,
+        )
+        result_project = args.project
     result = {
         "montage_json": str(montage_path),
-        "project": args.project,
+        "project": result_project,
         "montage_path": montage["montage_path"],
         "clip_count": len(montage["clips"]),
         "duration": montage["duration"],
@@ -538,7 +552,8 @@ def run_montage(args: argparse.Namespace) -> int:
         print_json(success_envelope(video=video, artifact_path=str(montage_path), result=result))
     else:
         action = "Reused" if reused else "Assembled"
-        print(f"{action} montage for video {video}")
+        owner_label = "project" if result_project is not None else "video"
+        print(f"{action} montage for {owner_label} {video}")
         print(f"Montage: {montage_path}")
         print(f"Clip count: {result['clip_count']}")
     return EXIT_SUCCESS
