@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 
 from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, SourceArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_json, read_validated_json, validate_video_name, write_json
 from .config import load_config
-from .cutting import CutOptions, cut_video
+from .cutting import CutOptions, cut_project, cut_video
 from .montage import MontageOptions, montage_video
 from .progress import CliProgress
 from .scoring import score_project, score_video
@@ -459,19 +459,32 @@ def run_cut(args: argparse.Namespace) -> int:
     """Cut scored segments into individual clip files."""
 
     command_config = config_from_args(args)
-    video, clips_path, manifest, reused = cut_video(
-        store=command_config.store,
-        video=args.video,
-        options=CutOptions(min_score=args.min_score, silent=args.silent),
-        reuse=args.reuse,
-        force=args.force,
-        json_output=command_config.json_output,
-        progress=CliProgress(enabled=command_config.verbose > 0),
-        project=args.project,
-    )
+    project_arg = args.video if args.video and args.project is None and (command_config.store / "projects" / args.video / "project.json").exists() else None
+    if project_arg is not None:
+        video, clips_path, manifest, reused = cut_project(
+            store=command_config.store,
+            project=project_arg,
+            options=CutOptions(min_score=args.min_score, silent=args.silent),
+            reuse=args.reuse,
+            force=args.force,
+            progress=CliProgress(enabled=command_config.verbose > 0),
+        )
+        result_project = project_arg
+    else:
+        video, clips_path, manifest, reused = cut_video(
+            store=command_config.store,
+            video=args.video,
+            options=CutOptions(min_score=args.min_score, silent=args.silent),
+            reuse=args.reuse,
+            force=args.force,
+            json_output=command_config.json_output,
+            progress=CliProgress(enabled=command_config.verbose > 0),
+            project=args.project,
+        )
+        result_project = args.project
     result = {
         "clips_path": str(clips_path),
-        "project": args.project,
+        "project": result_project,
         "source_file": manifest["source_file"],
         "clip_count": len(manifest["clips"]),
         "clips": manifest["clips"],

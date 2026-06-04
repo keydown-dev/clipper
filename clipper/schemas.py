@@ -90,6 +90,7 @@ class Scores(TypedDict, total=False):
 class ClipEntry(TypedDict, total=False):
     id: str
     path: str
+    source: NotRequired[str]
     start: float
     end: float
     duration: float
@@ -345,6 +346,8 @@ def validate_clips(data: Any) -> dict[str, Any]:
     for clip in data["clips"]:
         _require(clip, ["id", "path", "start", "end", "duration", "score", "reason"])
         _relative_path(clip["path"], "clip.path")
+        if "source" in clip and not isinstance(clip["source"], str):
+            raise SchemaError("clip.source must be a string")
     return data
 
 

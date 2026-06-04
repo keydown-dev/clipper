@@ -4,7 +4,7 @@
   "branch": "orchestrator/source-project-architecture",
   "currentIteration": 7,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:27:46.899Z",
+  "updatedAt": "2026-06-04T21:36:03.776Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -43,7 +43,7 @@
     {
       "id": "007-034-project-level-cutting",
       "title": "034 — Project-Level Cutting",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "008-035-project-level-montage",
@@ -342,10 +342,51 @@
     },
     {
       "number": 7,
-      "status": "running",
+      "status": "accepted",
       "todoId": "007-034-project-level-cutting",
       "beforeRef": "ralph/source-project-architecture/iter-007-before",
-      "startedAt": "2026-06-04T21:27:46.726Z"
+      "startedAt": "2026-06-04T21:27:46.726Z",
+      "diff": {
+        "filesChanged": 4,
+        "insertions": 264,
+        "deletions": 28
+      },
+      "usage": {
+        "input": 73387,
+        "output": 8602,
+        "cacheRead": 1136128,
+        "cacheWrite": 0,
+        "totalTokens": 1218117,
+        "cost": 1.193059,
+        "contextWindow": 272000,
+        "contextTokens": 55550
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed issue 034 project-level cutting.\n\n`clipper cut PROJECT` now detects when the positional argument is a project and cuts from project-owned `.clipper/projects/{project}/scores.json`. Selected segments must have valid included `source` tags, each clip is cut from that source's media file, and project clip outputs/manifests are written under `.clipper/projects/{project}/`.",
+      "changedFiles": [
+        "clipper/cutting.py",
+        "Ensured project clip reuse/force/failure cleanup follows existing cut semantics.",
+        "clipper/cli.py",
+        "clipper/schemas.py",
+        "tests/test_issue034.py",
+        "Added single-source, multi-source, and missing-source-tag project cutting coverage."
+      ],
+      "commitSubject": "Implement project-level cutting",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n- `uv run pytest tests/test_issue034.py tests/test_project_outputs.py tests/test_issue008.py`\n  - Result: passed — 14 passed in 0.56s.\n- `uv run pytest`\n  - Result: passed — 142 passed, 3 skipped in 3.95s.\n\nAdditional check attempted:\n\n- `uv run ruff check clipper tests/test_issue034.py`\n  - Result: not run by environment — `ruff` executable is not installed in this project environment."
+          }
+        ]
+      },
+      "afterRef": "ralph/source-project-architecture/iter-007-after",
+      "completedAt": "2026-06-04T21:36:03.698Z"
     }
   ],
   "runBudget": {
