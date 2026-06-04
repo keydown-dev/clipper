@@ -10,6 +10,6 @@ Control: active
 - [x] 004-031-create-empty-project. 031 — Create Empty Project (complete)
 - [x] 005-032-include-source-in-project. 032 — Include Source in Project (complete)
 - [x] 006-033-project-level-scoring. 033 — Project-Level Scoring (complete)
-- [ ] 007-034-project-level-cutting. 034 — Project-Level Cutting (queued)
+- [ ] 007-034-project-level-cutting. 034 — Project-Level Cutting (running)
 - [ ] 008-035-project-level-montage. 035 — Project-Level Montage (queued)
 - [ ] 009-036-docs-migration-and-compatibility. 036 — Docs, Migration, and Compatibility (queued)

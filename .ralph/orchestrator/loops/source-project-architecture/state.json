@@ -2,9 +2,9 @@
   "name": "source-project-architecture",
   "control": "active",
   "branch": "orchestrator/source-project-architecture",
-  "currentIteration": 6,
+  "currentIteration": 7,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:27:46.185Z",
+  "updatedAt": "2026-06-04T21:27:46.899Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -43,7 +43,7 @@
     {
       "id": "007-034-project-level-cutting",
       "title": "034 — Project-Level Cutting",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "008-035-project-level-montage",
@@ -339,11 +339,18 @@
       },
       "afterRef": "ralph/source-project-architecture/iter-006-after",
       "completedAt": "2026-06-04T21:27:46.096Z"
+    },
+    {
+      "number": 7,
+      "status": "running",
+      "todoId": "007-034-project-level-cutting",
+      "beforeRef": "ralph/source-project-architecture/iter-007-before",
+      "startedAt": "2026-06-04T21:27:46.726Z"
     }
   ],
   "runBudget": {
-    "remaining": 3,
-    "updatedAt": "2026-06-04T21:24:14.722Z",
+    "remaining": 2,
+    "updatedAt": "2026-06-04T21:27:46.627Z",
     "updatedBy": "orchestrator"
   }
 }
