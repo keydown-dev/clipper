@@ -4,7 +4,7 @@
   "branch": "orchestrator/source-project-architecture",
   "currentIteration": 0,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:10:05.664Z",
+  "updatedAt": "2026-06-04T21:10:08.594Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -56,5 +56,10 @@
       "status": "queued"
     }
   ],
-  "iterations": []
+  "iterations": [],
+  "runBudget": {
+    "remaining": 9,
+    "updatedAt": "2026-06-04T21:10:08.593Z",
+    "updatedBy": "orchestrator"
+  }
 }
