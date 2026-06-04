@@ -2,9 +2,9 @@
   "name": "source-project-architecture",
   "control": "active",
   "branch": "orchestrator/source-project-architecture",
-  "currentIteration": 7,
+  "currentIteration": 8,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:36:03.776Z",
+  "updatedAt": "2026-06-04T21:36:04.422Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -48,7 +48,7 @@
     {
       "id": "008-035-project-level-montage",
       "title": "035 — Project-Level Montage",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "009-036-docs-migration-and-compatibility",
@@ -387,11 +387,18 @@
       },
       "afterRef": "ralph/source-project-architecture/iter-007-after",
       "completedAt": "2026-06-04T21:36:03.698Z"
+    },
+    {
+      "number": 8,
+      "status": "running",
+      "todoId": "008-035-project-level-montage",
+      "beforeRef": "ralph/source-project-architecture/iter-008-before",
+      "startedAt": "2026-06-04T21:36:04.272Z"
     }
   ],
   "runBudget": {
-    "remaining": 2,
-    "updatedAt": "2026-06-04T21:27:46.627Z",
+    "remaining": 1,
+    "updatedAt": "2026-06-04T21:36:04.185Z",
     "updatedBy": "orchestrator"
   }
 }
