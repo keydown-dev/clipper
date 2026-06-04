@@ -2,9 +2,9 @@
   "name": "source-project-architecture",
   "control": "active",
   "branch": "orchestrator/source-project-architecture",
-  "currentIteration": 4,
+  "currentIteration": 5,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:21:49.538Z",
+  "updatedAt": "2026-06-04T21:21:50.251Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -33,7 +33,7 @@
     {
       "id": "005-032-include-source-in-project",
       "title": "032 — Include Source in Project",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "006-033-project-level-scoring",
@@ -246,11 +246,18 @@
       },
       "afterRef": "ralph/source-project-architecture/iter-004-after",
       "completedAt": "2026-06-04T21:21:49.451Z"
+    },
+    {
+      "number": 5,
+      "status": "running",
+      "todoId": "005-032-include-source-in-project",
+      "beforeRef": "ralph/source-project-architecture/iter-005-before",
+      "startedAt": "2026-06-04T21:21:50.081Z"
     }
   ],
   "runBudget": {
-    "remaining": 5,
-    "updatedAt": "2026-06-04T21:19:45.207Z",
+    "remaining": 4,
+    "updatedAt": "2026-06-04T21:21:49.985Z",
     "updatedBy": "orchestrator"
   }
 }
