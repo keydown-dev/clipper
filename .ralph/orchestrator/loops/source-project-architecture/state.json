@@ -2,9 +2,9 @@
   "name": "source-project-architecture",
   "control": "active",
   "branch": "orchestrator/source-project-architecture",
-  "currentIteration": 8,
+  "currentIteration": 9,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:38:56.372Z",
+  "updatedAt": "2026-06-04T21:38:57.001Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -53,7 +53,7 @@
     {
       "id": "009-036-docs-migration-and-compatibility",
       "title": "036 — Docs, Migration, and Compatibility",
-      "status": "queued"
+      "status": "running"
     }
   ],
   "iterations": [
@@ -433,11 +433,18 @@
       },
       "afterRef": "ralph/source-project-architecture/iter-008-after",
       "completedAt": "2026-06-04T21:38:56.295Z"
+    },
+    {
+      "number": 9,
+      "status": "running",
+      "todoId": "009-036-docs-migration-and-compatibility",
+      "beforeRef": "ralph/source-project-architecture/iter-009-before",
+      "startedAt": "2026-06-04T21:38:56.849Z"
     }
   ],
   "runBudget": {
-    "remaining": 1,
-    "updatedAt": "2026-06-04T21:36:04.185Z",
+    "remaining": 0,
+    "updatedAt": "2026-06-04T21:38:56.769Z",
     "updatedBy": "orchestrator"
   }
 }

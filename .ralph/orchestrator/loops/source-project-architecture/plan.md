@@ -12,4 +12,4 @@ Control: active
 - [x] 006-033-project-level-scoring. 033 — Project-Level Scoring (complete)
 - [x] 007-034-project-level-cutting. 034 — Project-Level Cutting (complete)
 - [x] 008-035-project-level-montage. 035 — Project-Level Montage (complete)
-- [ ] 009-036-docs-migration-and-compatibility. 036 — Docs, Migration, and Compatibility (queued)
+- [ ] 009-036-docs-migration-and-compatibility. 036 — Docs, Migration, and Compatibility (running)
