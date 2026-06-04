@@ -4,7 +4,7 @@
   "branch": "orchestrator/source-project-architecture",
   "currentIteration": 5,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:21:50.251Z",
+  "updatedAt": "2026-06-04T21:24:14.288Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -33,7 +33,7 @@
     {
       "id": "005-032-include-source-in-project",
       "title": "032 — Include Source in Project",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "006-033-project-level-scoring",
@@ -249,10 +249,47 @@
     },
     {
       "number": 5,
-      "status": "running",
+      "status": "accepted",
       "todoId": "005-032-include-source-in-project",
       "beforeRef": "ralph/source-project-architecture/iter-005-before",
-      "startedAt": "2026-06-04T21:21:50.081Z"
+      "startedAt": "2026-06-04T21:21:50.081Z",
+      "diff": {
+        "filesChanged": 2,
+        "insertions": 155,
+        "deletions": 1
+      },
+      "usage": {
+        "input": 43088,
+        "output": 4915,
+        "cacheRead": 584192,
+        "cacheWrite": 0,
+        "totalTokens": 632195,
+        "cost": 0.6549860000000001,
+        "contextWindow": 272000,
+        "contextTokens": 32791
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Implemented `clipper include PROJECT SOURCE [--start TIME] [--end TIME]` for issue 032.\n\nThe command now:\n- validates project and source existence,\n- accepts seconds, `MM:SS`, and `HH:MM:SS` through the existing `parse_time`,\n- rejects `end <= start` when both endpoints are present,\n- appends new source entries or updates an existing matching source entry by name,\n- writes deterministic `project.json` via existing sorted JSON writer,\n- emits updated source lists in both JSON and human output.",
+      "changedFiles": [
+        "clipper/cli.py",
+        "tests/test_issue032.py"
+      ],
+      "commitSubject": "Add project source include command",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue032.py tests/test_issue031.py tests/test_issue029.py -q\n```\n\nResult: passed — 11 passed in 0.09s.\n\n```bash\nuv run pytest -q\n```\n\nResult: passed — 136 passed, 3 skipped in 3.96s."
+          }
+        ]
+      },
+      "afterRef": "ralph/source-project-architecture/iter-005-after",
+      "completedAt": "2026-06-04T21:24:14.205Z"
     }
   ],
   "runBudget": {

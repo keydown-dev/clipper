@@ -18,7 +18,7 @@ from typing import Any, Callable, Sequence
 
 from dotenv import load_dotenv
 
-from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, SourceArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
+from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, SourceArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_json, read_validated_json, validate_video_name, write_json
 from .config import load_config
 from .cutting import CutOptions, cut_video
 from .montage import MontageOptions, montage_video
@@ -715,6 +715,68 @@ def run_create(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def _read_project_config(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        raise ArtifactError(f"project not found: {path}")
+    project = read_json(path)
+    if not isinstance(project, dict):
+        raise ArtifactError(f"project config must be a JSON object: {path}")
+    if not isinstance(project.get("sources"), list):
+        raise ArtifactError(f"project config sources must be a list: {path}")
+    return project
+
+
+def run_include(args: argparse.Namespace) -> int:
+    """Include a source, optionally ranged, in an editorial project."""
+
+    config = config_from_args(args)
+    project_name = validate_video_name(args.project)
+    source_name = validate_video_name(args.source)
+    project_layout = ProjectArtifactLayout.for_project(config.store, project_name)
+    source_layout = SourceArtifactLayout.for_source(config.store, source_name)
+    project = _read_project_config(project_layout.project_json)
+    if not source_layout.metadata.exists():
+        raise ArtifactError(f"source not found: {source_layout.root}")
+
+    start = parse_time(args.start)
+    end = parse_time(args.end)
+    if start is not None and end is not None and end <= start:
+        raise ArtifactError("range end must be greater than start")
+
+    entry: dict[str, Any] = {"name": source_name}
+    if start is not None:
+        entry["start"] = start
+    if end is not None:
+        entry["end"] = end
+
+    sources = project["sources"]
+    updated = False
+    for index, existing in enumerate(sources):
+        if isinstance(existing, dict) and existing.get("name") == source_name:
+            sources[index] = entry
+            updated = True
+            break
+    if not updated:
+        sources.append(entry)
+    write_json(project_layout.project_json, project)
+
+    result = {"project": project_name, "source": source_name, "sources": sources, "config_path": str(project_layout.project_json)}
+    if config.json_output:
+        print_json(success_envelope(result=result, artifact_path=str(project_layout.project_json)))
+    else:
+        action = "Updated" if updated else "Included"
+        print(f"{action} source {source_name} in project {project_name}")
+        print(f"Config: {project_layout.project_json}")
+        for source in sources:
+            if not isinstance(source, dict):
+                continue
+            range_text = ""
+            if "start" in source or "end" in source:
+                range_text = f" start={source.get('start', '-')} end={source.get('end', '-')}"
+            print(f"- {source.get('name')}{range_text}")
+    return EXIT_SUCCESS
+
+
 def _mirror_source_to_legacy_start(args: argparse.Namespace, name: str, source_layout: SourceArtifactLayout, result: dict[str, Any]) -> None:
     """Keep deprecated start's legacy video workspace available while ingesting a source."""
 
@@ -784,6 +846,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers: dict[str, Callable[[argparse.Namespace], int]] = {name: run_placeholder for name in PLACEHOLDER_COMMANDS}
     handlers["source"] = run_source
     handlers["create"] = run_create
+    handlers["include"] = run_include
     handlers["start"] = run_start
     handlers["list"] = run_list
     handlers["transcribe"] = run_transcribe
@@ -810,6 +873,13 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     create.add_argument("project", metavar="PROJECT", help="Slug-safe project name.")
     create.add_argument("--force", action="store_true", help="Overwrite an existing project.")
     create.set_defaults(handler=handlers["create"])
+
+    include = subparsers.add_parser("include", parents=[common], help="Include a source in an editorial project.")
+    include.add_argument("project", metavar="PROJECT", help="Slug-safe project name.")
+    include.add_argument("source", metavar="SOURCE", help="Slug-safe source name.")
+    include.add_argument("--start", help="Include source evidence at or after this time (seconds, MM:SS, or HH:MM:SS).")
+    include.add_argument("--end", help="Include source evidence at or before this time (seconds, MM:SS, or HH:MM:SS).")
+    include.set_defaults(handler=handlers["include"])
 
     start = subparsers.add_parser("start", parents=[common], help="Deprecated alias for source ingestion.")
     start.add_argument("input", nargs="?", metavar="URL_OR_PATH", help="Remote URL or local media file path.")
