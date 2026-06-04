@@ -2,9 +2,9 @@
   "name": "source-project-architecture",
   "control": "active",
   "branch": "orchestrator/source-project-architecture",
-  "currentIteration": 1,
+  "currentIteration": 2,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:12:39.601Z",
+  "updatedAt": "2026-06-04T21:12:40.281Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -18,7 +18,7 @@
     {
       "id": "002-029-source-command-ingestion",
       "title": "029 — Source Command Ingestion",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "003-030-source-analysis-commands",
@@ -103,11 +103,18 @@
       },
       "afterRef": "ralph/source-project-architecture/iter-001-after",
       "completedAt": "2026-06-04T21:12:39.522Z"
+    },
+    {
+      "number": 2,
+      "status": "running",
+      "todoId": "002-029-source-command-ingestion",
+      "beforeRef": "ralph/source-project-architecture/iter-002-before",
+      "startedAt": "2026-06-04T21:12:40.108Z"
     }
   ],
   "runBudget": {
-    "remaining": 8,
-    "updatedAt": "2026-06-04T21:10:08.994Z",
+    "remaining": 7,
+    "updatedAt": "2026-06-04T21:12:40.021Z",
     "updatedBy": "orchestrator"
   }
 }
