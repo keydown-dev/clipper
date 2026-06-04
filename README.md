@@ -6,9 +6,10 @@ It runs locally on macOS, uses FFmpeg for media work, faster-whisper for transcr
 
 ## Goals
 
-- Download or register source videos.
-- Transcribe videos locally.
-- Score transcript segments using an LLM and a user directive.
+- Download or register reusable source videos.
+- Transcribe and visually analyze sources locally.
+- Create editorial projects that include one or more sources, optionally with per-source time ranges.
+- Score transcript/visual evidence using an LLM and a user directive.
 - Cut scored segments into clips.
 - Assemble clips into a montage.
 - Keep each step independently runnable and importable.
@@ -96,30 +97,41 @@ cp .env.example .env
 uv run clipper doctor
 ffmpeg -f lavfi -i testsrc2=size=320x180:rate=30 -f lavfi -i sine=frequency=1000 \
   -t 3 -pix_fmt yuv420p /tmp/clipper-smoke.mp4 -y
-uv run clipper start /tmp/clipper-smoke.mp4 --name smoke-demo
+uv run clipper source /tmp/clipper-smoke.mp4 --name smoke-demo
+uv run clipper create smoke-project
+uv run clipper include smoke-project smoke-demo
 uv run clipper list
 uv run clipper list --json
 ```
 
 For an installed CLI, replace `uv run clipper` with `clipper` and run from any project directory where you want the default `.clipper/` Artifact Store to be created.
 
-The `start` command copies the local file into `.clipper/smoke-demo/source/` and writes `.clipper/smoke-demo/work/metadata.json`. Re-run the same `start` command with `--reuse` to validate reuse behavior, or `--force` to replace the workspace.
+The `source` command copies the local file into `.clipper/sources/smoke-demo/source.mp4` and writes `.clipper/sources/smoke-demo/metadata.json`. Re-run the same `source` command with `--reuse` to validate reuse behavior, or `--force` to replace the source. `create` writes `.clipper/projects/smoke-project/project.json`, and `include` records which sources the project will use for project-level scoring, cutting, and montage assembly.
 
 ## CLI Overview
 
-Commands that operate on an existing video accept an optional positional `[VIDEO]`. When provided, `[VIDEO]` may be either a video name under `.clipper/` or a path to a video directory. When omitted, Clipper resolves the video as follows: if exactly one video exists in `.clipper/`, use it automatically; if multiple videos exist and the terminal is interactive, use `questionary` to prompt the user to select one; if multiple videos exist under `--json` or non-interactive execution, fail clearly and ask for `[VIDEO]`. If interactive selection is cancelled, exit with code 130 without changing artifacts.
+Clipper now separates reusable **sources** from editorial **projects**:
+
+- `source` ingests one remote or local recording into `.clipper/sources/{source}/`.
+- `transcribe`, `shots`, and `visual` operate on a source because those artifacts are reusable evidence.
+- `create` creates an editorial project in `.clipper/projects/{project}/`.
+- `include` adds a source to a project, optionally constrained by `--start`/`--end`.
+- `score`, `cut`, and `montage` can run against a project by passing the project slug positionally, or can keep the legacy single-source flow with `[SOURCE] --project PROJECT` for scoped outputs under a legacy video/source workspace.
+
+Commands that operate on an existing source accept an optional positional `[SOURCE]`. When omitted in legacy-compatible commands, Clipper still resolves old video workspaces under `.clipper/` as before. Project names are resolved from `.clipper/projects/{project}/project.json` for project-level `score`, `cut`, and `montage`.
 
 ```bash
 uv run clipper doctor
-uv run clipper start URL_OR_VIDEO_PATH --name optional-video-name
-uv run clipper list
-uv run clipper transcribe [VIDEO]
-uv run clipper score [VIDEO] --with-transcript --directive "Find expressive moments"
-uv run clipper shots [VIDEO] --contact-sheet
-uv run clipper visual [VIDEO]
-uv run clipper cut [VIDEO] --min-score 6
-uv run clipper montage [VIDEO]
-uv run clipper pipeline URL_OR_VIDEO_PATH --name optional-video-name --directive "Find expressive moments"
+uv run clipper source URL_OR_VIDEO_PATH --name source-name
+uv run clipper transcribe source-name
+uv run clipper shots source-name --contact-sheet
+uv run clipper visual source-name
+uv run clipper create project-name
+uv run clipper include project-name source-name --start 00:30 --end 02:00
+uv run clipper score project-name --with-transcript --with-visuals --directive "Find expressive moments"
+uv run clipper cut project-name --min-score 6
+uv run clipper montage project-name
+uv run clipper pipeline URL_OR_VIDEO_PATH --name optional-source-name --directive "Find expressive moments"
 ```
 
 All commands should support clean human-readable output. Commands that produce structured results should also support:
@@ -131,7 +143,7 @@ All commands should support clean human-readable output. Commands that produce s
 JSON CLI output should use a consistent result envelope. Successful commands should print:
 
 ```json
-{"ok":true,"video":"my-video","artifact_path":"work/transcript.json","result":{}}
+{"ok":true,"video":"source-a","artifact_path":".clipper/sources/source-a/transcript.json","result":{}}
 ```
 
 Successful envelopes require `ok` and `result`, and may include `video` and `artifact_path` when applicable.
@@ -165,95 +177,148 @@ uv run clipper transcribe my-video --store .clipper --verbose
 | Command | Purpose | Help/smoke command |
 | --- | --- | --- |
 | `doctor` | Check local dependencies and configuration. | `uv run clipper doctor --json` |
-| `start INPUT` | Register/download a source into a video workspace. | `uv run clipper start ./video.mp4 --name local-demo` |
-| `list` | Show known video workspaces and artifact flags. | `uv run clipper list --json` |
-| `transcribe [VIDEO]` | Produce `work/transcript.json` with faster-whisper. | `uv run clipper transcribe --help` |
-| `score [VIDEO]` | Produce `work/scores.json` with an OpenAI-compatible LLM. | `uv run clipper score --help` |
-| `shots [VIDEO]` | Detect visual shots and produce `work/shots.json` plus representative frames. | `uv run clipper shots --help` |
-| `visual [VIDEO]` | Analyze representative shot frames with a multimodal OpenAI-compatible model. | `uv run clipper visual --help` |
-| `cut [VIDEO]` | Cut passing scored segments into `clips/` and `work/clips.json`. | `uv run clipper cut --help` |
-| `montage [VIDEO]` | Assemble clips into `output/montage.mp4` and `output/montage.json`. | `uv run clipper montage --help` |
-| `pipeline INPUT` | Run start, transcribe, score, cut, and montage. | `uv run clipper pipeline --help` |
+| `source INPUT --name SOURCE` | Register/download a reusable source. | `uv run clipper source ./video.mp4 --name local-demo` |
+| `create PROJECT` | Create an empty editorial project. | `uv run clipper create story-a` |
+| `include PROJECT SOURCE` | Include a source in a project, optionally ranged. | `uv run clipper include story-a local-demo --start 60 --end 120` |
+| `list` | Show known legacy video workspaces and artifact flags. | `uv run clipper list --json` |
+| `transcribe [SOURCE]` | Produce source-level `transcript.json` and `sentences.json`. | `uv run clipper transcribe --help` |
+| `score PROJECT` | Produce project-level `scores.json` with an OpenAI-compatible LLM. | `uv run clipper score --help` |
+| `shots [SOURCE]` | Detect visual shots and produce `shots.json` plus representative frames. | `uv run clipper shots --help` |
+| `visual [SOURCE]` | Analyze representative shot frames with a multimodal OpenAI-compatible model. | `uv run clipper visual --help` |
+| `cut PROJECT` | Cut passing scored project segments into project `clips/` and `clips.json`. | `uv run clipper cut --help` |
+| `montage PROJECT` | Assemble project clips into `montage.mp4` and `montage.json`. | `uv run clipper montage --help` |
+| `pipeline INPUT` | Run the compatibility single-source pipeline. | `uv run clipper pipeline --help` |
 
 Use `uv run clipper COMMAND --help` for the exact options accepted by each subcommand.
 
 ## Output and Re-run Semantics
 
-Artifacts should be organized per video under a project-local `.clipper/` artifact store to avoid collisions between runs. The artifact store defaults to `.clipper/`, and may be overridden with per-command `--store PATH` or `CLIPPER_STORE_PATH`. In Clipper, a **video** is a named unit of work rooted at `.clipper/{video}/`. Local video files are copied into the video source directory by default so artifacts remain self-contained. By default, each video directory should use a human-readable lowercase safe source/title stem plus a short stable hash of the canonical input reference, e.g. `.clipper/my-video-a1b2c3d4/`. For remote inputs, only `http` and `https` URLs are supported in v1, and the canonical input reference is the normalized URL. For local inputs, it is the resolved absolute path.
+Artifacts are organized under a project-local `.clipper/` Artifact Store. The store defaults to `.clipper/`, and may be overridden with per-command `--store PATH` or `CLIPPER_STORE_PATH`.
 
-Default behavior when a command's target step output already exists, including `clipper start` against an existing named video:
+Current source/project layout:
+
+```text
+.clipper/
+  sources/{source}/
+    source.{ext}
+    metadata.json
+    transcript.json
+    sentences.json
+    shots.json
+    frames/shot-0001.jpg
+    visual-index.json
+    shot-contact-sheet.jpg
+  projects/{project}/
+    project.json
+    scores.json
+    clips.json
+    clips/clip-0001.mp4
+    montage.mp4
+    montage.json
+```
+
+A **source** is a named reusable recording rooted at `.clipper/sources/{source}/`. A **project** is an editorial assembly rooted at `.clipper/projects/{project}/`; it references sources in `project.json` and owns scoring, cutting, and montage outputs. Local video files are copied into the source directory by default so artifacts remain self-contained. For remote inputs, only `http` and `https` URLs are supported in v1, and the canonical input reference is the normalized URL. For local inputs, it is the resolved absolute path.
+
+Default behavior when a command's target step output already exists, including `clipper source` against an existing named source:
 
 - fail loudly
 
 Explicit alternatives:
 
-- `--reuse` validates and uses existing step outputs, then continues with missing downstream outputs; for `clipper start`, existing metadata must match the same canonical input reference
+- `--reuse` validates and uses existing step outputs, then continues with missing downstream outputs; for `clipper source`, existing metadata must match the same canonical input reference
 - `--force` overwrites each target step output as needed
 
-This behavior should be consistent across commands. The policy is step-output based, not whole-video based: an existing transcript should not prevent scoring unless scoring's own output already exists. Steps with multiple outputs, such as montage's `output/montage.mp4` and `output/montage.json`, treat those files as one output set: default fails if any target exists, `--reuse` requires the complete set to exist and validate, and `--force` overwrites the set. `--reuse` and `--force` are mutually exclusive. Reused JSON artifacts must be loaded and schema-validated; malformed or schema-invalid reused artifacts fail clearly. Artifact schemas should require stable core fields, include top-level `schema_version: 1`, store artifact paths relative to the video directory, and allow additional provider/tool fields for traceability and future extension. Artifacts may include top-level `warnings: []` for non-fatal validation repairs, dropped candidates, or degraded behavior.
+This behavior should be consistent across commands. The policy is step-output based, not whole-source or whole-project based: an existing transcript should not prevent scoring unless scoring's own output already exists. Steps with multiple outputs, such as project montage's `montage.mp4` and `montage.json`, treat those files as one output set: default fails if any target exists, `--reuse` requires the complete set to exist and validate, and `--force` overwrites the set. `--reuse` and `--force` are mutually exclusive. Reused JSON artifacts must be loaded and schema-validated; malformed or schema-invalid reused artifacts fail clearly. Artifact schemas should require stable core fields, include top-level `schema_version: 1`, store artifact paths relative to the owning source or project directory, and allow additional provider/tool fields for traceability and future extension. Artifacts may include top-level `warnings: []` for non-fatal validation repairs, dropped candidates, or degraded behavior.
 
 ## Default Directories
 
-By default, Clipper writes these under per-video directories inside `.clipper/` or the configured artifact store. Each video directory uses exactly these artifact groups:
+By default, source evidence is flat inside `.clipper/sources/{source}/`, while project outputs are flat inside `.clipper/projects/{project}/`. Paths inside JSON manifests are relative to the owning source or project directory.
 
-- `source/` — source videos
-- `work/` — metadata, transcripts, scores, manifests
-- `clips/` — extracted clips
-- `output/` — final montages
-
-Standard artifact filenames within a video should be fixed so commands and agents can discover them consistently:
+Standard artifact filenames should be fixed so commands and agents can discover them consistently:
 
 ```text
-.clipper/{video}/
-  source/source.{ext}
-  work/metadata.json
-  work/transcript.json
-  work/sentences.json
-  work/scores.json
-  work/shots.json
-  work/frames/shot-0001.jpg
-  work/visual-index.json
-  work/clips.json
-  work/pipeline.json
-  output/montage.mp4
-  output/montage.json
+.clipper/sources/{source}/
+  source.{ext}
+  metadata.json
+  transcript.json
+  sentences.json
+  shots.json
+  frames/shot-0001.jpg
+  visual-index.json
+  shot-contact-sheet.jpg
+
+.clipper/projects/{project}/
+  project.json
+  scores.json
+  clips.json
+  clips/clip-0001.mp4
+  montage.mp4
+  montage.json
 ```
 
 Core artifact schema examples:
 
 ```json
-{"schema_version":1,"input_ref":"./video.mp4","input_type":"local","canonical_input_ref":"/abs/video.mp4","source_path":"source/source.mp4","title":"video","duration":123.4,"created_at":"2026-05-26T12:00:00Z"}
+{"schema_version":1,"input_ref":"./video.mp4","input_type":"local","canonical_input_ref":"/abs/video.mp4","source_path":"source.mp4","title":"video","duration":123.4,"created_at":"2026-05-26T12:00:00Z"}
 ```
 
 ```json
-{"schema_version":1,"source_file":"source/source.mp4","language":"en","duration":123.4,"segments":[{"id":0,"start":0.0,"end":5.2,"text":"Welcome","words":[{"word":"Welcome","start":0.0,"end":0.6}]}]}
+{"schema_version":1,"source_file":"source.mp4","language":"en","duration":123.4,"segments":[{"id":0,"start":0.0,"end":5.2,"text":"Welcome","words":[{"word":"Welcome","start":0.0,"end":0.6}]}]}
 ```
 
 ```json
-{"schema_version":1,"source_file":"source/source.mp4","language":"en","duration":123.4,"source_transcript_path":"work/transcript.json","sentences":[{"id":0,"start":0.0,"end":0.6,"text":"Welcome.","source_segments":[0],"word_ranges":[{"segment_id":0,"start_word_index":0,"end_word_index":0}]}]}
+{"schema_version":1,"source_file":"source.mp4","language":"en","duration":123.4,"source_transcript_path":"transcript.json","sentences":[{"id":0,"start":0.0,"end":0.6,"text":"Welcome.","source_segments":[0],"word_ranges":[{"segment_id":0,"start_word_index":0,"end_word_index":0}]}]}
 ```
 
 ```json
-{"schema_version":1,"source_file":"source/source.mp4","directive":"Find expressive moments","segments":[{"start":12.5,"end":22.0,"score":8,"reason":"Strong reaction"}]}
+{"schema_version":1,"name":"story-a","sources":[{"name":"source-a","start":12.5,"end":120.0}],"created_at":"2026-05-26T12:00:00Z"}
 ```
 
 ```json
-{"schema_version":1,"source_file":"source/source.mp4","clips":[{"id":"clip-0001","path":"clips/clip-0001.mp4","start":12.5,"end":22.0,"duration":9.5,"score":8,"reason":"Strong reaction"}]}
+{"schema_version":1,"source_file":"project.json","directive":"Find expressive moments","segments":[{"source":"source-a","start":12.5,"end":22.0,"score":8,"reason":"Strong reaction"}]}
 ```
 
 ```json
-{"schema_version":1,"source_file":"source/source.mp4","shots":[{"id":"shot-0001","start":0.0,"end":4.2,"duration":4.2,"representative_frame_path":"work/frames/shot-0001.jpg","representative_time":2.1,"quality":{"score":0.82,"sharpness":0.9,"contrast":0.7,"exposure":0.8}}],"detection":{"tool":"pyscenedetect","threshold":27.0,"min_duration":0.5,"samples_per_shot":5}}
+{"schema_version":1,"source_file":"project.json","clips":[{"id":"clip-0001","path":"clips/clip-0001.mp4","source":"source-a","start":12.5,"end":22.0,"duration":9.5,"score":8,"reason":"Strong reaction"}]}
 ```
 
 ```json
-{"schema_version":1,"montage_path":"output/montage.mp4","clips":["clips/clip-0001.mp4"],"duration":9.5,"width":1920,"height":1080,"silent":false}
+{"schema_version":1,"source_file":"source.mp4","shots":[{"id":"shot-0001","start":0.0,"end":4.2,"duration":4.2,"representative_frame_path":"frames/shot-0001.jpg","representative_time":2.1,"quality":{"score":0.82,"sharpness":0.9,"contrast":0.7,"exposure":0.8}}],"detection":{"tool":"pyscenedetect","threshold":27.0,"min_duration":0.5,"samples_per_shot":5}}
 ```
 
 ```json
-{"schema_version":1,"metadata_path":"work/metadata.json","transcript_path":"work/transcript.json","scores_path":"work/scores.json","clips_path":"work/clips.json","montage_path":"output/montage.mp4","clip_count":1,"runtime_seconds":42.0}
+{"schema_version":1,"montage_path":"montage.mp4","clips":["clips/clip-0001.mp4"],"duration":9.5,"width":1920,"height":1080,"silent":false}
+```
+
+```json
+{"schema_version":1,"metadata_path":"metadata.json","transcript_path":"transcript.json","scores_path":"scores.json","clips_path":"clips.json","montage_path":"montage.mp4","clip_count":1,"runtime_seconds":42.0}
 ```
 
 All scripts should handle absolute and relative paths and create required directories automatically.
+
+## Migration and Compatibility
+
+The source/project layout supersedes the original single video workspace layout, but the compatibility surface is intentionally conservative:
+
+- Prefer `clipper source INPUT --name SOURCE` instead of `clipper start INPUT --name SOURCE` for new workflows.
+- `clipper start` remains as a deprecated alias. It ingests the source under `.clipper/sources/{source}/`, mirrors a legacy `.clipper/{source}/` workspace for older commands/scripts, and prints a deprecation warning on human-readable runs.
+- Existing legacy workspaces under `.clipper/{video}/` still resolve for commands that historically accepted `[VIDEO]`.
+- `transcribe`, `shots`, and `visual` prefer `.clipper/sources/{name}/` when a source and a legacy video share the same name.
+- `score PROJECT`, `cut PROJECT`, and `montage PROJECT` prefer a project when `.clipper/projects/{project}/project.json` exists. Use `--project PROJECT` with a source/video positional argument only for the older scoped single-source output layout.
+- Legacy scoped outputs still use paths such as `.clipper/{video}/work/projects/{project}/scores.json`, `.clipper/{video}/clips/projects/{project}/`, and `.clipper/{video}/output/projects/{project}/`. New project-level outputs live directly under `.clipper/projects/{project}/`.
+- To migrate an old single-video workflow, ingest or re-ingest the source with `clipper source ... --name SOURCE`, run source-level analysis if needed, then create a project and include the source:
+
+```bash
+uv run clipper source ./episode.mp4 --name episode
+uv run clipper transcribe episode --reuse
+uv run clipper shots episode --reuse
+uv run clipper visual episode --reuse
+uv run clipper create episode-highlights
+uv run clipper include episode-highlights episode
+uv run clipper score episode-highlights --with-transcript --directive "Find highlights"
+uv run clipper cut episode-highlights --min-score 6
+uv run clipper montage episode-highlights --max-duration 60
+```
 
 ## Config Defaults
 
@@ -287,19 +352,20 @@ Checks should include:
 - optional LLM connectivity only when explicitly requested, e.g. `--check-llm`
 - faster-whisper import/config readiness by default, with real model loading only when explicitly requested, e.g. `--check-whisper`
 
-## Start
+## Source Ingestion
 
-`clipper start INPUT` creates a named video workspace under `.clipper/`. For a remote input, it downloads a video from YouTube or any yt-dlp-supported site. For a local input, it copies the local file into the video workspace. `start` only prepares source and metadata; later commands or `pipeline` perform transcription, scoring, cutting, and montage assembly.
+`clipper source INPUT --name SOURCE` creates a named source under `.clipper/sources/`. For a remote input, it downloads a video from YouTube or any yt-dlp-supported site. For a local input, it copies the local file into the source directory. `source` only prepares source media and metadata; later commands or a project perform transcription, scoring, cutting, and montage assembly.
 
 Important behavior:
 
-- Accept `--name` to set the video name explicitly; otherwise default to `safe-stem-short-hash`. User-provided names must be slug-safe: lowercase letters, numbers, dashes, and underscores only.
+- Require `--name` to set the source slug. User-provided names must be slug-safe: lowercase letters, numbers, dashes, and underscores only.
 - Use yt-dlp for remote inputs.
 - Prefer best video at or below 720p plus best audio.
-- Copy local inputs into `source/source.{ext}`.
-- For remote downloads, let yt-dlp/FFmpeg choose the actual final extension, discover the resulting `source/source.{ext}` path, and store that video-relative path in metadata `source_path`.
+- Copy local inputs into `source.{ext}`.
+- For remote downloads, let yt-dlp/FFmpeg choose the actual final extension, discover the resulting `source.{ext}` path, and store that source-relative path in metadata `source_path`.
 - Save source metadata as JSON.
 - Support `--proxy` for remote inputs and forward it to yt-dlp.
+- Keep `clipper start INPUT --name SOURCE` as a deprecated compatibility alias that also mirrors a legacy `.clipper/{source}/` workspace.
 
 Recommended yt-dlp format:
 
@@ -309,13 +375,13 @@ bestvideo[height<=720]+bestaudio/best[height<=720]
 
 ## List
 
-`clipper list` lists existing videos in `.clipper/` for humans or automation. It should show at least the video name, path, title, duration, and artifact flags for whether metadata, transcript, scores, clips, and montage outputs currently exist.
+`clipper list` lists existing legacy videos in `.clipper/` for humans or automation. It should show at least the video name, path, title, duration, and artifact flags for whether metadata, transcript, scores, clips, and montage outputs currently exist. Source/project listing is intentionally separate future work; inspect `.clipper/sources/` and `.clipper/projects/` directly until that CLI surface is added.
 
 Metadata should require the traceability core fields `schema_version`, `input_ref`, `input_type`, `canonical_input_ref`, `source_path`, `title`, `duration`, and `created_at`. Timestamps such as `created_at` should be UTC ISO-8601 strings ending in `Z`, e.g. `2026-05-26T12:00:00Z`. `input_type` should be either `remote` for URL inputs or `local` for local file inputs. `title` should come from provider metadata or local filename fallback. `duration` should be numeric and determined via yt-dlp metadata or ffprobe; metadata creation should fail clearly if duration cannot be determined. Metadata may include provider extras such as thumbnail URL, video ID, source URL, extractor, and raw yt-dlp metadata.
 
 ## Transcription
 
-`clipper transcribe [VIDEO]` transcribes a source video workspace with faster-whisper.
+`clipper transcribe [SOURCE]` transcribes a source with faster-whisper. It prefers `.clipper/sources/{source}/` and falls back to legacy `.clipper/{video}/` workspaces for compatibility.
 
 Defaults:
 
@@ -332,7 +398,7 @@ Transcript JSON shape:
 ```json
 {
   "schema_version": 1,
-  "source_file": "source/source.mp4",
+  "source_file": "source.mp4",
   "language": "en",
   "duration": 3600.5,
   "segments": [
@@ -350,27 +416,27 @@ Transcript JSON shape:
 }
 ```
 
-New transcripts enable faster-whisper `word_timestamps` by default and require each generated segment to include word-level timing in `words`. `clipper transcribe` also writes `work/sentences.json`, a readable sentence-grouped transcript derived from those word timestamps. Sentence `start`/`end` values come from the first and last word in each sentence, and `source_segments` plus inclusive `word_ranges` preserve traceability back to `work/transcript.json`. Older transcript artifacts without `words` remain schema-compatible for raw transcript reuse, but sentence transcript generation requires word timings; rerun transcription with `--force` to regenerate both artifacts.
+New transcripts enable faster-whisper `word_timestamps` by default and require each generated segment to include word-level timing in `words`. `clipper transcribe` also writes `sentences.json`, a readable sentence-grouped transcript derived from those word timestamps. Sentence `start`/`end` values come from the first and last word in each sentence, and `source_segments` plus inclusive `word_ranges` preserve traceability back to `transcript.json`. Older transcript artifacts without `words` remain schema-compatible for raw transcript reuse, but sentence transcript generation requires word timings; rerun transcription with `--force` to regenerate both artifacts.
 
 ## Scoring
 
-`clipper score [VIDEO]` asks an OpenAI-compatible LLM to identify candidate segments using explicitly selected evidence from the workspace. Callers must choose at least one context flag: `--with-transcript`, `--with-visuals`, or both. Default generation settings are temperature `0` and timeout `60` seconds.
+`clipper score PROJECT` asks an OpenAI-compatible LLM to identify candidate segments using explicitly selected evidence from all sources included in the project. Callers must choose at least one context flag: `--with-transcript`, `--with-visuals`, or both. Default generation settings are temperature `0` and timeout `60` seconds. For a single-source compatibility flow, `clipper score SOURCE --project PROJECT` writes scoped outputs under the legacy source/video workspace instead of `.clipper/projects/PROJECT/`.
 
 Examples:
 
 ```bash
 # Sound-bite scoring from sentence-level dialogue.
-uv run clipper score my-video \
+uv run clipper score story-a \
   --with-transcript \
   --directive "Find moments where hosts laugh, react strongly, or discuss surprising topics"
 
 # Silent visual montage scoring from cached shot/vision artifacts.
-uv run clipper score my-video \
+uv run clipper score story-a \
   --with-visuals \
   --directive "Find scenic, kinetic, or visually striking silent shots"
 
 # Combined multimodal scoring.
-uv run clipper score my-video \
+uv run clipper score story-a \
   --with-transcript --with-visuals \
   --directive "Find moments where strong dialogue is reinforced by expressive visuals"
 ```
@@ -397,7 +463,7 @@ Return ONLY a JSON array of objects. No markdown, no explanation, no code fences
 ### Robust Scoring Requirements
 
 - Include timestamps in the transcript prompt.
-- Use `work/sentences.json` as the transcript prompt context when available, so the LLM sees complete sentence-level dialogue instead of raw faster-whisper segments.
+- Use each source's `sentences.json` as the transcript prompt context when available, so the LLM sees complete sentence-level dialogue instead of raw faster-whisper segments.
 - Chunk long transcripts into overlapping windows of about 10 minutes with about 30 seconds of overlap.
 - Score each window independently.
 - Parse valid JSON arrays, including extracting the first JSON array from common markdown/code-fence wrappers.
@@ -407,7 +473,7 @@ Return ONLY a JSON array of objects. No markdown, no explanation, no code fences
 - Clamp segment times to transcript bounds when safe, and drop segments with `end <= start` or unusable times.
 - Normalize segment values where safe.
 - Merge or deduplicate overlapping segments, preferring higher scores.
-- After validation and merging, deterministically attach overlapping sentence objects from `work/sentences.json` to each scored segment and add a joined `dialogue` string when overlapping sentence text exists. The LLM should not rewrite or restate dialogue for this field.
+- After validation and merging, deterministically attach overlapping sentence objects from the matching source's `sentences.json` to each scored segment and add a joined `dialogue` string when overlapping sentence text exists. The LLM should not rewrite or restate dialogue for this field.
 
 If scoring produces zero valid candidate segments, `clipper score` should still write `scores.json` with an empty `segments` array and a warning; `clipper cut` is responsible for failing clearly when no clips pass the threshold.
 
@@ -416,10 +482,11 @@ Score JSON shape:
 ```json
 {
   "schema_version": 1,
-  "source_file": "source/source.mp4",
+  "source_file": "project.json",
   "directive": "Find moments where hosts laugh...",
   "segments": [
     {
+      "source": "source-a",
       "start": 120.5,
       "end": 135.2,
       "score": 8,
@@ -467,7 +534,7 @@ Token usage is shown only when the configured OpenAI-compatible endpoint returns
 
 ## Cutting Clips
 
-`clipper cut [VIDEO]` extracts scored segments from a source video workspace.
+`clipper cut PROJECT` extracts scored project segments from their referenced sources.
 
 Important behavior:
 
@@ -478,7 +545,7 @@ Important behavior:
 - Do not add padding by default; cut exactly the scored/merged start and end times.
 - Audio is preserved by default and encoded as AAC.
 - `--silent` strips audio.
-- If no segments pass the threshold, fail clearly and do not create or update `work/clips.json`, clip files, or an empty montage.
+- If no segments pass the threshold, fail clearly and do not create or update project `clips.json`, clip files, or an empty montage.
 
 Example FFmpeg shape:
 
@@ -493,12 +560,12 @@ Silent mode should add audio stripping behavior, e.g. `-an`.
 
 ## Montage
 
-`clipper montage [VIDEO]` concatenates clips from a video workspace into one normalized video.
+`clipper montage PROJECT` concatenates clips from a project into one normalized video.
 
 First-version behavior:
 
 - chronological ordering by default
-- use `work/clips.json` exactly as produced by `clipper cut`; score filtering belongs to `cut`
+- use project `clips.json` exactly as produced by `clipper cut`; score filtering belongs to `cut`
 - support `--min-duration`; fail clearly without creating a montage if selected clips cannot meet it
 - support `--max-duration`
 - include clips chronologically and trim the final included clip when needed to fit `--max-duration`
@@ -518,9 +585,9 @@ Silent mode should add `-an`.
 
 ## Pipeline
 
-`clipper pipeline INPUT` creates or reuses a video workspace, then runs the full flow:
+`clipper pipeline INPUT` is the compatibility single-source pipeline. It creates or reuses a source/legacy workspace, then runs the full flow:
 
-1. start source preparation
+1. source preparation
 2. transcribe
 3. score
 4. cut
@@ -560,26 +627,30 @@ result = run_pipeline(
 
 The result should include paths and summary data for source video, metadata, transcript, scores, clips, montage, counts, durations, and runtime.
 
-Stage 2 narrative edit planning is intentionally deferred. Its extension point is after scoring and before cutting: a future planner can consume the transcript plus `work/scores.json` candidate segments and write an ordered clip plan compatible with the existing cut/montage artifact flow.
+Stage 2 narrative edit planning is intentionally deferred. Its extension point is after project scoring and before cutting: a future planner can consume the source transcripts plus project `scores.json` candidate segments and write an ordered clip plan compatible with the existing cut/montage artifact flow.
 
 ## Manual Validation Flows
 
-### Local file
+### Local source and project
 
 ```bash
 uv run clipper doctor
-uv run clipper start ./source/example.mp4 --name local-example
+uv run clipper source ./source/example.mp4 --name local-example
 uv run clipper transcribe local-example --verbose
-uv run clipper score local-example --with-transcript --directive "Find expressive reactions" --json
-uv run clipper cut local-example --min-score 6
-uv run clipper montage local-example --max-duration 60
+uv run clipper create local-highlights
+uv run clipper include local-highlights local-example
+uv run clipper score local-highlights --with-transcript --directive "Find expressive reactions" --json
+uv run clipper cut local-highlights --min-score 6
+uv run clipper montage local-highlights --max-duration 60
 ```
 
 ### URL input
 
 ```bash
 uv run clipper doctor
-uv run clipper start "https://youtube.com/watch?v=XXX" --name url-example
+uv run clipper source "https://youtube.com/watch?v=XXX" --name url-example
+uv run clipper create url-highlights
+uv run clipper include url-highlights url-example
 uv run clipper pipeline "https://youtube.com/watch?v=XXX" --name url-example --reuse \
   --directive "Find laughter and strong reactions" --max-duration 60
 ```
@@ -591,7 +662,8 @@ Use `--proxy PROXY_URL` with `start` or `pipeline` when yt-dlp needs a proxy. UR
 - `uv run clipper doctor` reports missing `ffmpeg` or `ffprobe`: install FFmpeg with `brew install ffmpeg` and make sure Homebrew's bin directory is on `PATH`.
 - `.env` or LLM configuration fails: copy `.env.example` to `.env`, set `LLM_BASE_URL` and `LLM_MODEL`, and set `LLM_API_KEY` only if the endpoint requires authentication.
 - Want to test real services: run `uv run clipper doctor --check-llm` for LLM connectivity and `uv run clipper doctor --check-whisper` to load the configured Whisper model.
-- `start` says the output already exists: use `--reuse` to validate and reuse matching artifacts, or `--force` to overwrite the target workspace.
+- `source` says the output already exists: use `--reuse` to validate and reuse matching artifacts, or `--force` to overwrite the target source.
+- `score PROJECT`, `cut PROJECT`, or `montage PROJECT` is using the wrong target: if `.clipper/projects/PROJECT/project.json` exists, the positional name is treated as a project; use a source name plus `--project PROJECT` only for legacy scoped single-source outputs.
 - `--json` output is not parseable: rerun without `--verbose`, or check stderr; diagnostics are expected on stderr while stdout remains a single JSON envelope.
 - Whisper or LLM tests are skipped by default. Opt in with `CLIPPER_RUN_WHISPER_TESTS=1` or `CLIPPER_RUN_LLM_TESTS=1` when credentials/models are available.
 

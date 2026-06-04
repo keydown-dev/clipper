@@ -4,7 +4,7 @@
   "branch": "orchestrator/source-project-architecture",
   "currentIteration": 9,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:38:57.001Z",
+  "updatedAt": "2026-06-04T21:44:22.777Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -53,7 +53,7 @@
     {
       "id": "009-036-docs-migration-and-compatibility",
       "title": "036 — Docs, Migration, and Compatibility",
-      "status": "running"
+      "status": "complete"
     }
   ],
   "iterations": [
@@ -436,10 +436,54 @@
     },
     {
       "number": 9,
-      "status": "running",
+      "status": "accepted",
       "todoId": "009-036-docs-migration-and-compatibility",
       "beforeRef": "ralph/source-project-architecture/iter-009-before",
-      "startedAt": "2026-06-04T21:38:56.849Z"
+      "startedAt": "2026-06-04T21:38:56.849Z",
+      "diff": {
+        "filesChanged": 4,
+        "insertions": 189,
+        "deletions": 102
+      },
+      "usage": {
+        "input": 79574,
+        "output": 13798,
+        "cacheRead": 1605120,
+        "cacheWrite": 0,
+        "totalTokens": 1698492,
+        "cost": 1.6143700000000003,
+        "contextWindow": 272000,
+        "contextTokens": 65370
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed todo #009-036-docs-migration-and-compatibility. Updated user-facing docs and domain docs for the source/project architecture, including source ingestion, project creation/inclusion, project-level score/cut/montage outputs, and migration/compatibility guidance for legacy video workspaces and deprecated `clipper start`.",
+      "changedFiles": [
+        "README.md",
+        "CONTEXT.md",
+        "Added Source and Project domain terms.",
+        "Reframed Video as legacy compatibility terminology.",
+        "Updated relationships and workflow command language for source/project flows.",
+        "docs/adr/0001-video-workspaces-as-cli-contract.md",
+        "Superseded the single video workspace ADR with the source/project workspace CLI contract and migration compatibility notes.",
+        "docs/adr/0002-core-first-monorepo-surfaces.md",
+        "Added guidance for future surfaces to understand source/project paths while preserving legacy read access."
+      ],
+      "commitSubject": "Document source/project migration compatibility",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification — iteration 009\n\nStatus: passed\n\n## Commands\n\n```bash\nuv run pytest\n```\n\nResult: passed — 147 passed, 3 skipped in 3.73s.\n\n```bash\nrg -n \"clipper start|work/|output/|source/source|video workspace\" README.md CONTEXT.md docs/adr\n```\n\nResult: completed. Remaining matches are intentional compatibility/migration references to deprecated `clipper start`, legacy `.clipper/{video}/...` paths, or legacy video workspace wording."
+          }
+        ]
+      },
+      "afterRef": "ralph/source-project-architecture/iter-009-after",
+      "completedAt": "2026-06-04T21:44:22.696Z"
     }
   ],
   "runBudget": {
