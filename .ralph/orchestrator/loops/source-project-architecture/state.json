@@ -2,9 +2,9 @@
   "name": "source-project-architecture",
   "control": "active",
   "branch": "orchestrator/source-project-architecture",
-  "currentIteration": 5,
+  "currentIteration": 6,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:24:14.288Z",
+  "updatedAt": "2026-06-04T21:24:14.980Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -38,7 +38,7 @@
     {
       "id": "006-033-project-level-scoring",
       "title": "033 — Project-Level Scoring",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "007-034-project-level-cutting",
@@ -290,11 +290,18 @@
       },
       "afterRef": "ralph/source-project-architecture/iter-005-after",
       "completedAt": "2026-06-04T21:24:14.205Z"
+    },
+    {
+      "number": 6,
+      "status": "running",
+      "todoId": "006-033-project-level-scoring",
+      "beforeRef": "ralph/source-project-architecture/iter-006-before",
+      "startedAt": "2026-06-04T21:24:14.813Z"
     }
   ],
   "runBudget": {
-    "remaining": 4,
-    "updatedAt": "2026-06-04T21:21:49.985Z",
+    "remaining": 3,
+    "updatedAt": "2026-06-04T21:24:14.722Z",
     "updatedBy": "orchestrator"
   }
 }
