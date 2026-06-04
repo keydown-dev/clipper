@@ -1,0 +1,60 @@
+{
+  "name": "source-project-architecture",
+  "control": "active",
+  "branch": "orchestrator/source-project-architecture",
+  "currentIteration": 0,
+  "createdAt": "2026-06-04T21:10:05.663Z",
+  "updatedAt": "2026-06-04T21:10:05.664Z",
+  "maxIterations": 9,
+  "workerDefaults": {
+    "contextWindow": 272000
+  },
+  "todos": [
+    {
+      "id": "001-028-source-and-project-layouts",
+      "title": "028 — Source and Project Layouts",
+      "status": "queued"
+    },
+    {
+      "id": "002-029-source-command-ingestion",
+      "title": "029 — Source Command Ingestion",
+      "status": "queued"
+    },
+    {
+      "id": "003-030-source-analysis-commands",
+      "title": "030 — Source Analysis Commands",
+      "status": "queued"
+    },
+    {
+      "id": "004-031-create-empty-project",
+      "title": "031 — Create Empty Project",
+      "status": "queued"
+    },
+    {
+      "id": "005-032-include-source-in-project",
+      "title": "032 — Include Source in Project",
+      "status": "queued"
+    },
+    {
+      "id": "006-033-project-level-scoring",
+      "title": "033 — Project-Level Scoring",
+      "status": "queued"
+    },
+    {
+      "id": "007-034-project-level-cutting",
+      "title": "034 — Project-Level Cutting",
+      "status": "queued"
+    },
+    {
+      "id": "008-035-project-level-montage",
+      "title": "035 — Project-Level Montage",
+      "status": "queued"
+    },
+    {
+      "id": "009-036-docs-migration-and-compatibility",
+      "title": "036 — Docs, Migration, and Compatibility",
+      "status": "queued"
+    }
+  ],
+  "iterations": []
+}
