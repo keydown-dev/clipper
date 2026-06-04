@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import urlparse
 
-from .artifacts import ArtifactError, ArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
+from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, SourceArtifactLayout, output_policy, read_json, read_validated_json, resolve_video, write_json
 from .config import ClipperConfig
 from .progress import CliProgress
 from .schemas import SCHEMA_VERSION
@@ -163,7 +163,14 @@ def _coerce_float(value: Any) -> float:
     return float(value)
 
 
-def validate_normalize_segments(raw_segments: Iterable[Any], *, lower_bound: float, upper_bound: float) -> tuple[list[dict[str, Any]], list[str]]:
+def validate_normalize_segments(
+    raw_segments: Iterable[Any],
+    *,
+    lower_bound: float,
+    upper_bound: float,
+    default_source: str | None = None,
+    valid_sources: set[str] | None = None,
+) -> tuple[list[dict[str, Any]], list[str]]:
     valid: list[dict[str, Any]] = []
     warnings: list[str] = []
     for index, raw in enumerate(raw_segments):
@@ -191,16 +198,24 @@ def validate_normalize_segments(raw_segments: Iterable[Any], *, lower_bound: flo
         if clamped_end <= clamped_start:
             warnings.append(f"dropped segment {index}: end <= start")
             continue
-        valid.append({"start": clamped_start, "end": clamped_end, "score": score, "reason": reason})
+        source = raw.get("source", default_source)
+        segment = {"start": clamped_start, "end": clamped_end, "score": score, "reason": reason}
+        if source is not None:
+            source_text = str(source).strip()
+            if valid_sources is not None and source_text not in valid_sources:
+                warnings.append(f"dropped segment {index}: invalid source {source_text!r}")
+                continue
+            segment["source"] = source_text
+        valid.append(segment)
     return valid, warnings
 
 
 def merge_overlapping_segments(segments: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
-    ordered = sorted(segments, key=lambda seg: (float(seg["start"]), -float(seg["score"])))
+    ordered = sorted(segments, key=lambda seg: (float(seg["start"]), str(seg.get("source", "")), -float(seg["score"])))
     merged: list[dict[str, Any]] = []
     for seg in ordered:
         current = dict(seg)
-        if not merged or float(current["start"]) > float(merged[-1]["end"]):
+        if not merged or float(current["start"]) > float(merged[-1]["end"]) or current.get("source") != merged[-1].get("source"):
             merged.append(current)
             continue
         previous = merged[-1]
@@ -311,6 +326,8 @@ def score_context(
     token_usage: TokenUsageTotals | None = None,
     sentence_transcript: dict[str, Any] | None = None,
     context_label: str = "Context",
+    default_source: str | None = None,
+    valid_sources: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     lower, upper = transcript_bounds(context)
     all_segments: list[dict[str, Any]] = []
@@ -338,7 +355,7 @@ def score_context(
                 warnings.append(f"dropped window {window.start:.2f}-{window.end:.2f}: invalid JSON after retry ({exc})")
                 _log_window_progress(progress, index=index, total=total_windows, window=window)
                 continue
-        valid, segment_warnings = validate_normalize_segments(raw, lower_bound=lower, upper_bound=upper)
+        valid, segment_warnings = validate_normalize_segments(raw, lower_bound=lower, upper_bound=upper, default_source=default_source, valid_sources=valid_sources)
         all_segments.extend(valid)
         warnings.extend(segment_warnings)
         _log_window_progress(progress, index=index, total=total_windows, window=window)
@@ -401,6 +418,7 @@ def build_explicit_scoring_context(
     sentence_transcript: dict[str, Any] | None = None,
     shots_manifest: dict[str, Any] | None = None,
     visual_index: dict[str, Any] | None = None,
+    source: str | None = None,
 ) -> dict[str, Any]:
     segments: list[dict[str, Any]] = []
     source_file = "source/source.mp4"
@@ -409,21 +427,174 @@ def build_explicit_scoring_context(
         source_file = str(sentence_transcript["source_file"])
         duration = max(duration, float(sentence_transcript.get("duration") or 0.0))
         for sentence in sentence_transcript.get("sentences", []):
-            segments.append({"start": sentence["start"], "end": sentence["end"], "text": f"Transcript: {sentence['text']}"})
+            prefix = f"Source {source} transcript" if source else "Transcript"
+            segment = {"start": sentence["start"], "end": sentence["end"], "text": f"{prefix}: {sentence['text']}"}
+            if source:
+                segment["source"] = source
+            segments.append(segment)
     if visual_index is not None:
         source_file = str(visual_index["source_file"])
         shots_by_id = {shot["id"]: shot for shot in (shots_manifest or {}).get("shots", [])}
         for observation in visual_index.get("observations", []):
-            segments.append(
-                {
-                    "start": observation["start"],
-                    "end": observation["end"],
-                    "text": _visual_observation_text(observation, shots_by_id.get(observation["shot_id"])),
-                }
-            )
+            text = _visual_observation_text(observation, shots_by_id.get(observation["shot_id"]))
+            if source:
+                text = f"Source {source} visual: {text}"
+            segment = {"start": observation["start"], "end": observation["end"], "text": text}
+            if source:
+                segment["source"] = source
+            segments.append(segment)
             duration = max(duration, float(observation.get("end") or 0.0))
     segments.sort(key=lambda segment: (float(segment["start"]), float(segment["end"]), str(segment.get("text", ""))))
     return {"schema_version": SCHEMA_VERSION, "source_file": source_file, "duration": duration, "segments": segments}
+
+
+def _read_project_config(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        raise ArtifactError(f"project not found: {path}")
+    project = read_json(path)
+    if not isinstance(project, dict):
+        raise ArtifactError(f"project config must be a JSON object: {path}")
+    if not isinstance(project.get("sources"), list):
+        raise ArtifactError(f"project config sources must be a list: {path}")
+    return project
+
+
+def _range_overlaps(item: dict[str, Any], *, start: float | None, end: float | None) -> bool:
+    lower = 0.0 if start is None else float(start)
+    upper = float("inf") if end is None else float(end)
+    return float(item["end"]) >= lower and float(item["start"]) <= upper
+
+
+def _filter_source_artifact_by_range(artifact: dict[str, Any], collection_key: str, *, start: float | None, end: float | None) -> dict[str, Any]:
+    if start is None and end is None:
+        return artifact
+    lower = 0.0 if start is None else float(start)
+    upper = float(artifact.get("duration") or 0.0) if end is None else float(end)
+    if upper <= lower:
+        raise ArtifactError("range end must be greater than start")
+    result = dict(artifact)
+    result[collection_key] = [item for item in artifact.get(collection_key, []) if _range_overlaps(item, start=start, end=end)]
+    if "duration" in result:
+        result["duration"] = max(float(result.get("duration") or 0.0), upper)
+    return result
+
+
+def _enrich_project_segments_with_dialogue(segments: Iterable[dict[str, Any]], sentences_by_source: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    enriched: list[dict[str, Any]] = []
+    for segment in segments:
+        current = dict(segment)
+        source = str(current.get("source", ""))
+        sentence_transcript = sentences_by_source.get(source)
+        if sentence_transcript is not None:
+            overlapping = [dict(sentence) for sentence in sentence_transcript.get("sentences", []) if _sentence_overlaps_segment(sentence, current)]
+            current["sentences"] = overlapping
+            dialogue = " ".join(str(sentence.get("text", "")).strip() for sentence in overlapping if str(sentence.get("text", "")).strip())
+            if dialogue:
+                current["dialogue"] = dialogue
+        enriched.append(current)
+    return enriched
+
+
+def build_project_scoring_context(
+    *,
+    store: Path,
+    project: str,
+    with_transcript: bool,
+    with_visuals: bool,
+) -> tuple[ProjectArtifactLayout, dict[str, Any], dict[str, dict[str, Any]], set[str]]:
+    layout = ProjectArtifactLayout.for_project(store, project)
+    project_config = _read_project_config(layout.project_json)
+    included = project_config.get("sources", [])
+    if not included:
+        raise ArtifactError(f"project {project} has no included sources; add one with `clipper include {project} SOURCE`")
+    context_segments: list[dict[str, Any]] = []
+    sentence_artifacts: dict[str, dict[str, Any]] = {}
+    valid_sources: set[str] = set()
+    duration = 0.0
+    for entry in included:
+        if not isinstance(entry, dict) or not isinstance(entry.get("name"), str):
+            raise ArtifactError(f"project {project} has an invalid source entry")
+        source_name = entry["name"]
+        source_layout = SourceArtifactLayout.for_source(store, source_name)
+        if not source_layout.metadata.exists():
+            raise ArtifactError(f"source not found for project {project}: {source_name}")
+        start = float(entry["start"]) if "start" in entry else None
+        end = float(entry["end"]) if "end" in entry else None
+        sentence_transcript = None
+        shots_manifest = None
+        visual_index = None
+        if with_transcript:
+            _require_artifact(source_layout.sentence_transcript, "--with-transcript", f"sentence transcript for source {source_name}", "run `clipper transcribe SOURCE` first")
+            sentence_transcript = _filter_source_artifact_by_range(read_validated_json(source_layout.sentence_transcript, "sentence_transcript"), "sentences", start=start, end=end)
+            sentence_artifacts[source_name] = sentence_transcript
+        if with_visuals:
+            _require_artifact(source_layout.shots_manifest, "--with-visuals", f"shot manifest for source {source_name}", "run `clipper shots SOURCE` first")
+            _require_artifact(source_layout.visual_index, "--with-visuals", f"visual index for source {source_name}", "run `clipper visual SOURCE` first")
+            shots_manifest = _filter_source_artifact_by_range(read_validated_json(source_layout.shots_manifest, "shots"), "shots", start=start, end=end)
+            visual_index = _filter_source_artifact_by_range(read_validated_json(source_layout.visual_index, "visual_index"), "observations", start=start, end=end)
+        source_context = build_explicit_scoring_context(sentence_transcript=sentence_transcript, shots_manifest=shots_manifest, visual_index=visual_index, source=source_name)
+        context_segments.extend(source_context.get("segments", []))
+        duration = max(duration, float(source_context.get("duration") or 0.0))
+        valid_sources.add(source_name)
+    if not context_segments:
+        raise ArtifactError(f"project {project} has no scoring evidence in included source ranges")
+    context_segments.sort(key=lambda segment: (float(segment["start"]), str(segment.get("source", "")), float(segment["end"])))
+    context = {"schema_version": SCHEMA_VERSION, "source_file": "project.json", "duration": duration, "segments": context_segments}
+    return layout, context, sentence_artifacts, valid_sources
+
+
+def score_project(
+    *,
+    store: Path,
+    project: str,
+    directive: str,
+    config: ClipperConfig,
+    reuse: bool = False,
+    force: bool = False,
+    client: Any | None = None,
+    progress: CliProgress | None = None,
+    with_transcript: bool = False,
+    with_visuals: bool = False,
+) -> tuple[str, Path, dict[str, Any], bool]:
+    if not with_transcript and not with_visuals:
+        raise ArtifactError("clipper score requires at least one scoring context: add --with-transcript, --with-visuals, or both")
+    layout = ProjectArtifactLayout.for_project(store, project)
+    policy = output_policy([layout.scores], reuse=reuse, force=force, schema="scores")
+    if policy == "reuse":
+        return project, layout.scores, read_validated_json(layout.scores, "scores"), True
+    layout, scoring_context, sentence_artifacts, valid_sources = build_project_scoring_context(store=store, project=project, with_transcript=with_transcript, with_visuals=with_visuals)
+    options = ScoringOptions(directive=directive, model=config.llm_model, temperature=config.llm_temperature, timeout_seconds=config.llm_timeout_seconds)
+    if progress:
+        selected = ",".join(name for name, enabled in [("transcript", with_transcript), ("visuals", with_visuals)] if enabled)
+        progress.log(f"project {project}: scoring_context={selected} sources={len(valid_sources)}")
+        progress.log(f"scoring evidence items={len(scoring_context.get('segments', []))}")
+        progress.log(f"scores output={layout.scores}")
+    client = client or make_openai_client(config)
+    token_usage = TokenUsageTotals()
+    default_source = next(iter(valid_sources)) if len(valid_sources) == 1 else None
+    segments, warnings = score_context(
+        scoring_context,
+        client=client,
+        options=options,
+        progress=progress,
+        token_usage=token_usage,
+        sentence_transcript=None,
+        context_label="Project transcript and visual context",
+        default_source=default_source,
+        valid_sources=valid_sources,
+    )
+    segments = _enrich_project_segments_with_dialogue(segments, sentence_artifacts)
+    scores: dict[str, Any] = {"schema_version": SCHEMA_VERSION, "source_file": "project.json", "directive": directive, "segments": segments}
+    if warnings:
+        scores["warnings"] = warnings
+    write_json(layout.scores, scores)
+    if progress:
+        if token_usage.responses_with_usage:
+            progress.log(f"token usage: prompt={token_usage.prompt_tokens} completion={token_usage.completion_tokens} total={token_usage.total_tokens} responses_with_usage={token_usage.responses_with_usage}")
+        else:
+            progress.log("token usage unavailable: API did not provide usage metadata")
+        progress.log(f"completed project scoring: segments={len(segments)} scores={layout.scores}")
+    return project, layout.scores, scores, False
 
 
 def make_openai_client(config: ClipperConfig) -> Any:

@@ -70,6 +70,7 @@ class SentenceTranscript(TypedDict, total=False):
 
 
 class ScoreSegment(TypedDict, total=False):
+    source: NotRequired[str]
     start: float
     end: float
     score: float
@@ -325,6 +326,8 @@ def validate_scores(data: Any) -> dict[str, Any]:
         _number(seg["score"], "segment.score")
         if not isinstance(seg["reason"], str):
             raise SchemaError("segment.reason must be a string")
+        if "source" in seg and not isinstance(seg["source"], str):
+            raise SchemaError("segment.source must be a string")
         if "dialogue" in seg and not isinstance(seg["dialogue"], str):
             raise SchemaError("segment.dialogue must be a string")
         if "sentences" in seg:

@@ -4,7 +4,7 @@
   "branch": "orchestrator/source-project-architecture",
   "currentIteration": 6,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:24:14.980Z",
+  "updatedAt": "2026-06-04T21:27:46.185Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -38,7 +38,7 @@
     {
       "id": "006-033-project-level-scoring",
       "title": "033 — Project-Level Scoring",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "007-034-project-level-cutting",
@@ -293,10 +293,52 @@
     },
     {
       "number": 6,
-      "status": "running",
+      "status": "accepted",
       "todoId": "006-033-project-level-scoring",
       "beforeRef": "ralph/source-project-architecture/iter-006-before",
-      "startedAt": "2026-06-04T21:24:14.813Z"
+      "startedAt": "2026-06-04T21:24:14.813Z",
+      "diff": {
+        "filesChanged": 4,
+        "insertions": 393,
+        "deletions": 33
+      },
+      "usage": {
+        "input": 74035,
+        "output": 9008,
+        "cacheRead": 847360,
+        "cacheWrite": 0,
+        "totalTokens": 930403,
+        "cost": 1.0640949999999998,
+        "contextWindow": 272000,
+        "contextTokens": 60863
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed issue 033 project-level scoring.\n\n`clipper score PROJECT` now detects when the positional target is an editorial project and scores included sources from `.clipper/projects/{project}/project.json`. It loads flattened source transcript and visual artifacts, applies per-source include ranges, builds a combined source-labelled scoring context, writes project-owned `scores.json`, and ensures scored segments include valid `source` tags.",
+      "changedFiles": [
+        "clipper/cli.py",
+        "clipper/scoring.py",
+        "Added source-aware context construction, validation, merging, and dialogue enrichment.",
+        "Preserves existing single-video scoring behavior.",
+        "clipper/schemas.py",
+        "tests/test_issue033.py",
+        "Covers single-source ranged project scoring, multi-source source-tagged scoring, and empty-project failure."
+      ],
+      "commitSubject": "Add project-level scoring",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue033.py tests/test_issue006.py tests/test_issue018.py tests/test_issue032.py\n```\n\nResult: passed — 29 passed, 1 skipped.\n\n```bash\nuv run pytest\n```\n\nResult: passed — 139 passed, 3 skipped."
+          }
+        ]
+      },
+      "afterRef": "ralph/source-project-architecture/iter-006-after",
+      "completedAt": "2026-06-04T21:27:46.096Z"
     }
   ],
   "runBudget": {

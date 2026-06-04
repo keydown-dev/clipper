@@ -23,7 +23,7 @@ from .config import load_config
 from .cutting import CutOptions, cut_video
 from .montage import MontageOptions, montage_video
 from .progress import CliProgress
-from .scoring import score_video
+from .scoring import score_project, score_video
 from .shots import ShotOptions, shots_video
 from .transcription import TranscriptionOptions, transcribe_video
 from .visual import visual_video
@@ -322,26 +322,48 @@ def run_score(args: argparse.Namespace) -> int:
 
     command_config = config_from_args(args)
     app_config = load_config(store_override=command_config.store)
-    video, scores_path, scores, reused = score_video(
-        store=command_config.store,
-        video=args.video,
-        directive=args.directive,
-        config=app_config,
-        reuse=args.reuse,
-        force=args.force,
-        json_output=command_config.json_output,
-        progress=CliProgress(enabled=command_config.verbose > 0),
-        with_transcript=args.with_transcript,
-        with_visuals=args.with_visuals,
-        project=args.project,
-        start=parse_time(args.start),
-        end=parse_time(args.end),
-    )
+    project_arg = args.video if args.video and args.project is None and (command_config.store / "projects" / args.video / "project.json").exists() else None
+    if project_arg is not None:
+        if args.start or args.end:
+            raise ArtifactError("project scoring ranges are configured per source with `clipper include`; --start/--end are for single-source scoring")
+        video, scores_path, scores, reused = score_project(
+            store=command_config.store,
+            project=project_arg,
+            directive=args.directive,
+            config=app_config,
+            reuse=args.reuse,
+            force=args.force,
+            progress=CliProgress(enabled=command_config.verbose > 0),
+            with_transcript=args.with_transcript,
+            with_visuals=args.with_visuals,
+        )
+        result_project = project_arg
+        result_start = None
+        result_end = None
+    else:
+        video, scores_path, scores, reused = score_video(
+            store=command_config.store,
+            video=args.video,
+            directive=args.directive,
+            config=app_config,
+            reuse=args.reuse,
+            force=args.force,
+            json_output=command_config.json_output,
+            progress=CliProgress(enabled=command_config.verbose > 0),
+            with_transcript=args.with_transcript,
+            with_visuals=args.with_visuals,
+            project=args.project,
+            start=parse_time(args.start),
+            end=parse_time(args.end),
+        )
+        result_project = args.project
+        result_start = parse_time(args.start)
+        result_end = parse_time(args.end)
     result = {
         "scores_path": str(scores_path),
-        "project": args.project,
-        "start": parse_time(args.start),
-        "end": parse_time(args.end),
+        "project": result_project,
+        "start": result_start,
+        "end": result_end,
         "source_file": scores["source_file"],
         "directive": scores["directive"],
         "segments": len(scores["segments"]),
