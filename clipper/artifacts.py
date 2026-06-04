@@ -23,6 +23,101 @@ class ArtifactError(ValueError):
 
 
 @dataclass(frozen=True)
+class SourceArtifactLayout:
+    store: Path
+    source: str
+    root: Path
+    metadata: Path
+    transcript: Path
+    sentence_transcript: Path
+    shots_manifest: Path
+    shot_frames_dir: Path
+    visual_index: Path
+    shot_contact_sheet: Path
+
+    @classmethod
+    def for_source(cls, store: Path, source: str) -> "SourceArtifactLayout":
+        source = validate_video_name(source)
+        root = store / "sources" / source
+        return cls(
+            store=store,
+            source=source,
+            root=root,
+            metadata=root / "metadata.json",
+            transcript=root / "transcript.json",
+            sentence_transcript=root / "sentences.json",
+            shots_manifest=root / "shots.json",
+            shot_frames_dir=root / "frames",
+            visual_index=root / "visual-index.json",
+            shot_contact_sheet=root / "shot-contact-sheet.jpg",
+        )
+
+    def source_media(self, source_ext: str = ".mp4") -> Path:
+        ext = source_ext if source_ext.startswith(".") else f".{source_ext}"
+        return self.root / f"source{ext}"
+
+    def create_dirs(self) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
+        self.shot_frames_dir.mkdir(parents=True, exist_ok=True)
+
+    def fixed_paths(self, source_ext: str = ".mp4") -> dict[str, str]:
+        ext = source_ext if source_ext.startswith(".") else f".{source_ext}"
+        return {
+            "source": f"source{ext}",
+            "metadata": "metadata.json",
+            "transcript": "transcript.json",
+            "sentence_transcript": "sentences.json",
+            "shots": "shots.json",
+            "visual_index": "visual-index.json",
+            "shot_contact_sheet": "shot-contact-sheet.jpg",
+            "frames": "frames/",
+        }
+
+
+@dataclass(frozen=True)
+class ProjectArtifactLayout:
+    store: Path
+    project: str
+    root: Path
+    project_json: Path
+    scores: Path
+    clips_manifest: Path
+    clips_dir: Path
+    montage_video: Path
+    montage_json: Path
+
+    @classmethod
+    def for_project(cls, store: Path, project: str) -> "ProjectArtifactLayout":
+        project = validate_video_name(project)
+        root = store / "projects" / project
+        return cls(
+            store=store,
+            project=project,
+            root=root,
+            project_json=root / "project.json",
+            scores=root / "scores.json",
+            clips_manifest=root / "clips.json",
+            clips_dir=root / "clips",
+            montage_video=root / "montage.mp4",
+            montage_json=root / "montage.json",
+        )
+
+    def create_dirs(self) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
+        self.clips_dir.mkdir(parents=True, exist_ok=True)
+
+    def fixed_paths(self) -> dict[str, str]:
+        return {
+            "project": "project.json",
+            "scores": "scores.json",
+            "clips": "clips.json",
+            "montage_video": "montage.mp4",
+            "montage_json": "montage.json",
+            "clips_dir": "clips/",
+        }
+
+
+@dataclass(frozen=True)
 class ArtifactLayout:
     store: Path
     video: str

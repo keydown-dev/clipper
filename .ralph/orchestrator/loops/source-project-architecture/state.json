@@ -4,7 +4,7 @@
   "branch": "orchestrator/source-project-architecture",
   "currentIteration": 1,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:10:09.239Z",
+  "updatedAt": "2026-06-04T21:12:39.601Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -13,7 +13,7 @@
     {
       "id": "001-028-source-and-project-layouts",
       "title": "028 — Source and Project Layouts",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "002-029-source-command-ingestion",
@@ -59,10 +59,50 @@
   "iterations": [
     {
       "number": 1,
-      "status": "running",
+      "status": "accepted",
       "todoId": "001-028-source-and-project-layouts",
       "beforeRef": "ralph/source-project-architecture/iter-001-before",
-      "startedAt": "2026-06-04T21:10:09.076Z"
+      "startedAt": "2026-06-04T21:10:09.076Z",
+      "diff": {
+        "filesChanged": 2,
+        "insertions": 178,
+        "deletions": 0
+      },
+      "usage": {
+        "input": 34623,
+        "output": 3308,
+        "cacheRead": 323584,
+        "cacheWrite": 0,
+        "totalTokens": 361515,
+        "cost": 0.43414699999999995,
+        "contextWindow": 272000,
+        "contextTokens": 29728
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed issue 028 by adding first-class source and project artifact layout resolvers while preserving the existing video layout.",
+      "changedFiles": [
+        "clipper/artifacts.py",
+        "tests/test_issue028.py",
+        "Added coverage for source layout path generation.",
+        "Added coverage for project layout path generation.",
+        "Added coverage for same-slug source/project coexistence and invalid names."
+      ],
+      "commitSubject": "artifacts: Add source and project layouts",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```sh\nuv run pytest tests/test_issue028.py tests/test_issue002.py\nuv run pytest\n```\n\nResults:\n\n- `uv run pytest tests/test_issue028.py tests/test_issue002.py`: 11 passed.\n- `uv run pytest`: 120 passed, 3 skipped."
+          }
+        ]
+      },
+      "afterRef": "ralph/source-project-architecture/iter-001-after",
+      "completedAt": "2026-06-04T21:12:39.522Z"
     }
   ],
   "runBudget": {
