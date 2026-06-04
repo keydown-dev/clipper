@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from .artifacts import ArtifactError, ArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
+from .artifacts import ArtifactError, ArtifactLayout, SourceArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
 from .progress import CliProgress
 from .schemas import SCHEMA_VERSION
 
@@ -24,8 +24,24 @@ class TranscriptionOptions:
     language: str | None = None
 
 
-def _video_relative(layout: ArtifactLayout, path: Path) -> str:
+def _video_relative(layout: ArtifactLayout | SourceArtifactLayout, path: Path) -> str:
     return path.relative_to(layout.root).as_posix()
+
+
+def _resolve_analysis_layout(store: Path, target: str | None, *, json_output: bool = False) -> ArtifactLayout | SourceArtifactLayout:
+    """Resolve source-level analysis target, preferring .clipper/sources/{name}."""
+
+    if target:
+        path = Path(target).expanduser()
+        if path.exists() and path.is_dir():
+            if path.parent.name == "sources":
+                return SourceArtifactLayout.for_source(path.parent.parent, path.name)
+            return ArtifactLayout.for_video(path.parent, path.name)
+        source = store / "sources" / target
+        if source.exists() and source.is_dir():
+            return SourceArtifactLayout.for_source(store, target)
+    root = resolve_video(store, target, json_output=json_output)
+    return ArtifactLayout.for_video(root.parent, root.name)
 
 
 def _load_model(options: TranscriptionOptions) -> Any:
@@ -187,26 +203,26 @@ def transcribe_video(
 ) -> tuple[str, Path, dict[str, Any], bool]:
     """Transcribe a video workspace and persist work/transcript.json."""
 
-    root = resolve_video(store, video, json_output=json_output)
-    layout = ArtifactLayout.for_video(root.parent, root.name)
+    layout = _resolve_analysis_layout(store, video, json_output=json_output)
+    target_name = layout.source if isinstance(layout, SourceArtifactLayout) else layout.video
     metadata = read_validated_json(layout.metadata, "metadata")
     policy = output_policy([layout.transcript, layout.sentence_transcript], reuse=reuse, force=force)
     if policy == "reuse":
         transcript = read_validated_json(layout.transcript, "transcript")
         read_validated_json(layout.sentence_transcript, "sentence_transcript")
         if progress:
-            progress.log(f"reusing existing transcript for video {layout.video}: {layout.transcript}")
-            progress.log(f"reusing existing sentence transcript for video {layout.video}: {layout.sentence_transcript}")
-        return layout.video, layout.transcript, transcript, True
+            progress.log(f"reusing existing transcript for source {target_name}: {layout.transcript}")
+            progress.log(f"reusing existing sentence transcript for source {target_name}: {layout.sentence_transcript}")
+        return target_name, layout.transcript, transcript, True
 
     source_file = str(metadata["source_path"])
     source_path = layout.root / source_file
     if not source_path.exists():
-        raise ArtifactError(f"source file missing for {layout.video}: {source_file}")
+        raise ArtifactError(f"source file missing for {target_name}: {source_file}")
 
     if progress:
         language_mode = options.language or "auto-detect"
-        progress.log(f"video {layout.video}: source={source_path}")
+        progress.log(f"source {target_name}: source={source_path}")
         progress.log(f"Whisper model={options.model} device={options.device} compute_type={options.compute_type} language={language_mode}")
         progress.log("loading Whisper model")
         progress.log("first use of this model may download files from Hugging Face and may be slow")
@@ -228,4 +244,4 @@ def transcribe_video(
             f"segments={len(transcript['segments'])} sentences={len(sentence_transcript['sentences'])} detected_language={transcript['language']} "
             f"duration={transcript['duration']} transcript={layout.transcript} sentence_transcript={layout.sentence_transcript}"
         )
-    return layout.video, layout.transcript, transcript, False
+    return target_name, layout.transcript, transcript, False

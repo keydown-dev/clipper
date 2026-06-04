@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from .artifacts import ArtifactError, ArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
+from .artifacts import ArtifactError, ArtifactLayout, SourceArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
 from .schemas import SCHEMA_VERSION
 
 
@@ -21,8 +21,24 @@ class ShotOptions:
     contact_sheet: bool = False
 
 
-def _video_relative(layout: ArtifactLayout, path: Path) -> str:
+def _video_relative(layout: ArtifactLayout | SourceArtifactLayout, path: Path) -> str:
     return path.relative_to(layout.root).as_posix()
+
+
+def _resolve_analysis_layout(store: Path, target: str | None, *, json_output: bool = False) -> ArtifactLayout | SourceArtifactLayout:
+    """Resolve source-level analysis target, preferring .clipper/sources/{name}."""
+
+    if target:
+        path = Path(target).expanduser()
+        if path.exists() and path.is_dir():
+            if path.parent.name == "sources":
+                return SourceArtifactLayout.for_source(path.parent.parent, path.name)
+            return ArtifactLayout.for_video(path.parent, path.name)
+        source = store / "sources" / target
+        if source.exists() and source.is_dir():
+            return SourceArtifactLayout.for_source(store, target)
+    root = resolve_video(store, target, json_output=json_output)
+    return ArtifactLayout.for_video(root.parent, root.name)
 
 
 def _probe_fps(path: Path) -> float:
@@ -256,8 +272,8 @@ def shots_video(
     if options.samples_per_shot <= 0:
         raise ArtifactError("--samples-per-shot must be positive")
 
-    root = resolve_video(store, video, json_output=json_output)
-    layout = ArtifactLayout.for_video(root.parent, root.name)
+    layout = _resolve_analysis_layout(store, video, json_output=json_output)
+    target_name = layout.source if isinstance(layout, SourceArtifactLayout) else layout.video
     manifest_path = layout.shots_manifest
     frames_dir = layout.shot_frames_dir
     contact_sheet = layout.shot_contact_sheet
@@ -269,7 +285,7 @@ def shots_video(
             missing.append(_video_relative(layout, contact_sheet))
         if missing:
             raise ArtifactError(f"--reuse requires existing shot artifacts; missing: {', '.join(missing)}")
-        return layout.video, manifest_path, manifest, True
+        return target_name, manifest_path, manifest, True
 
     metadata = read_validated_json(layout.metadata, "metadata")
     source = layout.root / metadata["source_path"]
@@ -338,4 +354,4 @@ def shots_video(
                 pass
         raise
 
-    return layout.video, manifest_path, manifest, False
+    return target_name, manifest_path, manifest, False

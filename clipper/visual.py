@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from .artifacts import ArtifactError, ArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
+from .artifacts import ArtifactError, ArtifactLayout, SourceArtifactLayout, output_policy, read_validated_json, resolve_video, write_json
 from .config import ClipperConfig
 from .progress import CliProgress
 from .schemas import SCHEMA_VERSION
@@ -63,8 +63,24 @@ def _base_url_origin(base_url: str) -> str:
     return base_url
 
 
-def _video_relative(layout: ArtifactLayout, path: Path) -> str:
+def _video_relative(layout: ArtifactLayout | SourceArtifactLayout, path: Path) -> str:
     return path.relative_to(layout.root).as_posix()
+
+
+def _resolve_analysis_layout(store: Path, target: str | None, *, json_output: bool = False) -> ArtifactLayout | SourceArtifactLayout:
+    """Resolve source-level analysis target, preferring .clipper/sources/{name}."""
+
+    if target:
+        path = Path(target).expanduser()
+        if path.exists() and path.is_dir():
+            if path.parent.name == "sources":
+                return SourceArtifactLayout.for_source(path.parent.parent, path.name)
+            return ArtifactLayout.for_video(path.parent, path.name)
+        source = store / "sources" / target
+        if source.exists() and source.is_dir():
+            return SourceArtifactLayout.for_source(store, target)
+    root = resolve_video(store, target, json_output=json_output)
+    return ArtifactLayout.for_video(root.parent, root.name)
 
 
 def _data_url(path: Path) -> str:
@@ -175,7 +191,7 @@ def normalize_observation(raw: dict[str, Any], *, shot: dict[str, Any], warnings
 def analyze_frames(
     shots: dict[str, Any],
     *,
-    layout: ArtifactLayout,
+    layout: ArtifactLayout | SourceArtifactLayout,
     client: Any,
     options: VisualOptions,
     progress: CliProgress | None = None,
@@ -216,14 +232,14 @@ def visual_video(
 ) -> tuple[str, Path, dict[str, Any], bool]:
     """Analyze shot frames and write work/visual-index.json."""
 
-    root = resolve_video(store, video, json_output=json_output)
-    layout = ArtifactLayout.for_video(root.parent, root.name)
+    layout = _resolve_analysis_layout(store, video, json_output=json_output)
+    target_name = layout.source if isinstance(layout, SourceArtifactLayout) else layout.video
     if not layout.shots_manifest.exists():
-        raise ArtifactError(f"missing shot manifest; run `clipper shots {layout.video}` first: {layout.shots_manifest}")
+        raise ArtifactError(f"missing shot manifest; run `clipper shots {target_name}` first: {layout.shots_manifest}")
     shots = read_validated_json(layout.shots_manifest, "shots")
     policy = output_policy([layout.visual_index], reuse=reuse, force=force, schema="visual_index")
     if policy == "reuse":
-        return layout.video, layout.visual_index, read_validated_json(layout.visual_index, "visual_index"), True
+        return target_name, layout.visual_index, read_validated_json(layout.visual_index, "visual_index"), True
 
     missing = [shot["representative_frame_path"] for shot in shots.get("shots", []) if not (layout.root / shot["representative_frame_path"]).exists()]
     if missing:
@@ -254,4 +270,4 @@ def visual_video(
     if warnings:
         index["warnings"] = warnings
     write_json(layout.visual_index, index)
-    return layout.video, layout.visual_index, index, False
+    return target_name, layout.visual_index, index, False
