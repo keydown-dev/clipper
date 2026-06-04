@@ -58,10 +58,11 @@ def build_clip_entries(segments: Iterable[dict[str, Any]], layout: ArtifactLayou
     clips: list[dict[str, Any]] = []
     for index, segment in enumerate(sorted(segments, key=lambda segment: float(segment["start"])), start=1):
         clip_id = f"clip-{index:04d}"
+        clip_path = (layout.clips_dir / f"{clip_id}.mp4").relative_to(layout.root).as_posix()
         clips.append(
             {
                 "id": clip_id,
-                "path": f"clips/{clip_id}.mp4",
+                "path": clip_path,
                 "start": float(segment["start"]),
                 "end": float(segment["end"]),
                 "duration": float(segment["end"]) - float(segment["start"]),
@@ -116,12 +117,13 @@ def cut_video(
     force: bool = False,
     json_output: bool = False,
     progress: CliProgress | None = None,
+    project: str | None = None,
 ) -> tuple[str, Path, dict[str, Any], bool]:
     """Cut scored segments for a video workspace and write work/clips.json."""
 
     options = options or CutOptions()
     root = resolve_video(store, video, json_output=json_output)
-    layout = ArtifactLayout.for_video(root.parent, root.name)
+    layout = ArtifactLayout.for_video(root.parent, root.name).for_project(project)
 
     if reuse:
         manifest = read_validated_json(layout.clips_manifest, "clips")
@@ -137,6 +139,7 @@ def cut_video(
         raise ArtifactError(f"no scored segments met --min-score {options.min_score:g}; no clips were created")
 
     layout.create_dirs()
+    layout.clips_dir.mkdir(parents=True, exist_ok=True)
     clips = build_clip_entries(merged, layout)
     output_paths = [layout.root / clip["path"] for clip in clips]
     output_policy([layout.clips_manifest, *output_paths], reuse=False, force=force, schema="clips")

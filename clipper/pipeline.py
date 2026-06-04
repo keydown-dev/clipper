@@ -71,6 +71,7 @@ def _build_result(
     montage: dict[str, Any],
     runtime_seconds: float,
     reused: dict[str, bool],
+    project: str | None = None,
 ) -> dict[str, Any]:
     clip_entries = list(clips.get("clips", []))
     montage_duration = float(montage.get("duration") or 0.0)
@@ -80,10 +81,11 @@ def _build_result(
         "source_path": _video_relative(layout, source),
         "metadata_path": "work/metadata.json",
         "transcript_path": "work/transcript.json",
-        "scores_path": "work/scores.json",
-        "clips_path": "work/clips.json",
+        "scores_path": _video_relative(layout, layout.scores),
+        "clips_path": _video_relative(layout, layout.clips_manifest),
         "montage_path": str(montage["montage_path"]),
-        "montage_json_path": "output/montage.json",
+        "montage_json_path": _video_relative(layout, layout.montage_json),
+        "project": project,
         "input_ref": metadata.get("input_ref"),
         "input_type": metadata.get("input_type"),
         "video": layout.video,
@@ -114,6 +116,7 @@ def run_pipeline(
     max_duration: float | None = None,
     silent: bool = False,
     proxy: str | None = None,
+    project: str | None = None,
     force: bool = False,
     reuse: bool = False,
     config: ClipperConfig | None = None,
@@ -136,13 +139,14 @@ def run_pipeline(
     app_config = config or load_config(store_override=Path(store) if store is not None else None)
     store_path = Path(store) if store is not None else app_config.store_path
     video = validate_video_name(name) if name else default_video_name(input_ref)
-    layout = ArtifactLayout.for_video(store_path, video)
+    root_layout = ArtifactLayout.for_video(store_path, video)
+    layout = root_layout.for_project(project)
 
     if reuse and layout.pipeline.exists():
         return read_validated_json(layout.pipeline, "pipeline")
     output_policy([layout.pipeline], reuse=False, force=force, schema="pipeline")
 
-    source, metadata, source_reused = _prepare_source(input_ref=input_ref, layout=layout, reuse=reuse, force=force, proxy=proxy)
+    source, metadata, source_reused = _prepare_source(input_ref=input_ref, layout=root_layout, reuse=reuse, force=force, proxy=proxy)
 
     _, _, transcript, transcript_reused = transcribe_video(
         store=store_path,
@@ -164,6 +168,7 @@ def run_pipeline(
         client=scoring_client,
         progress=progress,
         with_transcript=True,
+        project=project,
     )
     _, _, clips, clips_reused = cut_video(
         store=store_path,
@@ -173,6 +178,7 @@ def run_pipeline(
         force=force,
         json_output=json_output,
         progress=progress,
+        project=project,
     )
     _, _, montage, montage_reused = montage_video(
         store=store_path,
@@ -182,6 +188,7 @@ def run_pipeline(
         force=force,
         json_output=json_output,
         progress=progress,
+        project=project,
     )
 
     result = _build_result(
@@ -194,6 +201,7 @@ def run_pipeline(
         montage=montage,
         runtime_seconds=time.monotonic() - started,
         reused={"source": source_reused, "transcript": transcript_reused, "scores": scores_reused, "clips": clips_reused, "montage": montage_reused},
+        project=project,
     )
     write_json(layout.pipeline, result)
     return result

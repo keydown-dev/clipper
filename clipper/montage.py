@@ -115,13 +115,17 @@ def montage_video(
     force: bool = False,
     json_output: bool = False,
     progress: CliProgress | None = None,
+    project: str | None = None,
 ) -> tuple[str, Path, dict[str, Any], bool]:
     """Assemble work/clips.json into output/montage.mp4 and output/montage.json."""
 
     options = options or MontageOptions()
     root = resolve_video(store, video, json_output=json_output)
-    layout = ArtifactLayout.for_video(root.parent, root.name)
+    layout = ArtifactLayout.for_video(root.parent, root.name).for_project(project)
 
+    layout.output_dir.mkdir(parents=True, exist_ok=True)
+    layout.montage_video.parent.mkdir(parents=True, exist_ok=True)
+    layout.montage_json.parent.mkdir(parents=True, exist_ok=True)
     policy = output_policy([layout.montage_video, layout.montage_json], reuse=reuse, force=force, schema="montage")
     if policy == "reuse":
         return layout.video, layout.montage_json, read_validated_json(layout.montage_json, "montage"), True
@@ -168,7 +172,7 @@ def montage_video(
 
         montage: dict[str, Any] = {
             "schema_version": SCHEMA_VERSION,
-            "montage_path": "output/montage.mp4",
+            "montage_path": layout.montage_video.relative_to(layout.root).as_posix(),
             "clips": [str(clip["path"]) for clip in selected],
             "duration": float(selected_duration),
             "width": int(options.width),

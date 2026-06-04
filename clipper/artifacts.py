@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Callable, Iterable
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -86,6 +86,28 @@ class ArtifactLayout:
             "montage_video": "output/montage.mp4",
             "montage_json": "output/montage.json",
         }
+
+    def for_project(self, project: str | None) -> "ArtifactLayout":
+        """Return a layout whose downstream outputs are scoped to a project.
+
+        Source, metadata, transcript, shots, and visual-index artifacts remain at
+        the video root so expensive, generic analysis can be shared. Scoring,
+        cutting, montage, and pipeline outputs move under project-specific
+        subfolders.
+        """
+
+        if project is None:
+            return self
+        project = validate_video_name(project)
+        return replace(
+            self,
+            scores=self.root / "work" / "projects" / project / "scores.json",
+            clips_dir=self.root / "clips" / "projects" / project,
+            clips_manifest=self.root / "work" / "projects" / project / "clips.json",
+            pipeline=self.root / "work" / "projects" / project / "pipeline.json",
+            montage_video=self.root / "output" / "projects" / project / "montage.mp4",
+            montage_json=self.root / "output" / "projects" / project / "montage.json",
+        )
 
 
 def is_remote(input_ref: str) -> bool:

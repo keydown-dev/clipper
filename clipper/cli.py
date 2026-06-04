@@ -295,6 +295,28 @@ def run_transcribe(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def parse_time(value: str | None) -> float | None:
+    """Parse seconds, MM:SS, or HH:MM:SS into seconds."""
+
+    if value is None:
+        return None
+    parts = value.split(":")
+    try:
+        if len(parts) == 1:
+            seconds = float(parts[0])
+        elif len(parts) == 2:
+            seconds = int(parts[0]) * 60 + float(parts[1])
+        elif len(parts) == 3:
+            seconds = int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
+        else:
+            raise ValueError
+    except ValueError as exc:
+        raise ArtifactError(f"invalid time value {value!r}; use seconds, MM:SS, or HH:MM:SS") from exc
+    if seconds < 0:
+        raise ArtifactError(f"invalid time value {value!r}; time must be non-negative")
+    return seconds
+
+
 def run_score(args: argparse.Namespace) -> int:
     """Score transcript segments with an OpenAI-compatible LLM."""
 
@@ -311,9 +333,15 @@ def run_score(args: argparse.Namespace) -> int:
         progress=CliProgress(enabled=command_config.verbose > 0),
         with_transcript=args.with_transcript,
         with_visuals=args.with_visuals,
+        project=args.project,
+        start=parse_time(args.start),
+        end=parse_time(args.end),
     )
     result = {
         "scores_path": str(scores_path),
+        "project": args.project,
+        "start": parse_time(args.start),
+        "end": parse_time(args.end),
         "source_file": scores["source_file"],
         "directive": scores["directive"],
         "segments": len(scores["segments"]),
@@ -417,9 +445,11 @@ def run_cut(args: argparse.Namespace) -> int:
         force=args.force,
         json_output=command_config.json_output,
         progress=CliProgress(enabled=command_config.verbose > 0),
+        project=args.project,
     )
     result = {
         "clips_path": str(clips_path),
+        "project": args.project,
         "source_file": manifest["source_file"],
         "clip_count": len(manifest["clips"]),
         "clips": manifest["clips"],
@@ -456,9 +486,11 @@ def run_montage(args: argparse.Namespace) -> int:
         force=args.force,
         json_output=command_config.json_output,
         progress=CliProgress(enabled=command_config.verbose > 0),
+        project=args.project,
     )
     result = {
         "montage_json": str(montage_path),
+        "project": args.project,
         "montage_path": montage["montage_path"],
         "clip_count": len(montage["clips"]),
         "duration": montage["duration"],
@@ -495,12 +527,13 @@ def run_pipeline_cli(args: argparse.Namespace) -> int:
         max_duration=args.max_duration,
         silent=args.silent,
         proxy=args.proxy,
+        project=args.project,
         reuse=args.reuse,
         force=args.force,
         json_output=command_config.json_output,
         progress=CliProgress(enabled=command_config.verbose > 0),
     )
-    layout = ArtifactLayout.for_video(command_config.store, result["video"])
+    layout = ArtifactLayout.for_video(command_config.store, result["video"]).for_project(args.project)
     if command_config.json_output:
         print_json(success_envelope(video=result["video"], artifact_path=str(layout.pipeline), result=result))
     else:
@@ -677,6 +710,10 @@ def add_reuse_force(parser: argparse.ArgumentParser) -> None:
     group.add_argument("--force", action="store_true", help="Overwrite target artifacts.")
 
 
+def add_project(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--project", help="Optional project slug for scoped score/cut/montage outputs.")
+
+
 def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.ArgumentParser], common: argparse.ArgumentParser) -> None:
     """Register all first-version placeholder subcommands."""
 
@@ -720,6 +757,9 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     score.add_argument("--directive", default="Find expressive, visually interesting, or emotionally engaging moments.", help="Scoring directive.")
     score.add_argument("--with-transcript", action="store_true", help="Use work/sentences.json as scoring evidence.")
     score.add_argument("--with-visuals", action="store_true", help="Use cached work/shots.json and work/visual-index.json as scoring evidence.")
+    score.add_argument("--start", help="Limit scoring to evidence at or after this time (seconds, MM:SS, or HH:MM:SS).")
+    score.add_argument("--end", help="Limit scoring to evidence at or before this time (seconds, MM:SS, or HH:MM:SS).")
+    add_project(score)
     add_reuse_force(score)
     score.set_defaults(handler=handlers["score"])
 
@@ -746,6 +786,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     cut.add_argument("video", nargs="?", metavar="VIDEO", help="Video name or video directory path.")
     cut.add_argument("--min-score", type=float, default=6, help="Minimum score to cut (default: 6).")
     cut.add_argument("--silent", action="store_true", help="Strip audio from generated clips.")
+    add_project(cut)
     add_reuse_force(cut)
     cut.set_defaults(handler=handlers["cut"])
 
@@ -754,6 +795,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     montage.add_argument("--min-duration", type=float, help="Require a minimum montage duration in seconds.")
     montage.add_argument("--max-duration", type=float, help="Limit montage duration in seconds.")
     montage.add_argument("--silent", action="store_true", help="Strip audio from the montage.")
+    add_project(montage)
     add_reuse_force(montage)
     montage.set_defaults(handler=handlers["montage"])
 
@@ -766,6 +808,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     pipeline.add_argument("--max-duration", type=float, help="Limit montage duration in seconds.")
     pipeline.add_argument("--silent", action="store_true", help="Strip audio from clips and montage.")
     pipeline.add_argument("--proxy", help="Proxy URL for remote downloads.")
+    add_project(pipeline)
     add_reuse_force(pipeline)
     pipeline.set_defaults(handler=handlers["pipeline"])
 

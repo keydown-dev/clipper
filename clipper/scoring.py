@@ -376,6 +376,26 @@ def _visual_observation_text(observation: dict[str, Any], shot: dict[str, Any] |
     return "; ".join(parts)
 
 
+def filter_scoring_context_by_time(context: dict[str, Any], *, start: float | None = None, end: float | None = None) -> dict[str, Any]:
+    """Return scoring context limited to segments overlapping a time range."""
+
+    if start is None and end is None:
+        return context
+    lower = 0.0 if start is None else float(start)
+    upper = float(context.get("duration") or 0.0) if end is None else float(end)
+    if lower < 0:
+        raise ArtifactError("--start must be non-negative")
+    if upper <= lower:
+        raise ArtifactError("--end must be greater than --start")
+    filtered = [seg for seg in context.get("segments", []) if float(seg["end"]) >= lower and float(seg["start"]) <= upper]
+    if not filtered:
+        raise ArtifactError(f"no scoring evidence overlaps requested range {lower:g}-{upper:g}s")
+    result = dict(context)
+    result["duration"] = upper
+    result["segments"] = filtered
+    return result
+
+
 def build_explicit_scoring_context(
     *,
     sentence_transcript: dict[str, Any] | None = None,
@@ -434,9 +454,12 @@ def score_video(
     progress: CliProgress | None = None,
     with_transcript: bool = False,
     with_visuals: bool = False,
+    project: str | None = None,
+    start: float | None = None,
+    end: float | None = None,
 ) -> tuple[str, Path, dict[str, Any], bool]:
     root = resolve_video(store, video, json_output=json_output)
-    layout = ArtifactLayout.for_video(root.parent, root.name)
+    layout = ArtifactLayout.for_video(root.parent, root.name).for_project(project)
     if not with_transcript and not with_visuals:
         raise ArtifactError("clipper score requires at least one scoring context: add --with-transcript, --with-visuals, or both")
     policy = output_policy([layout.scores], reuse=reuse, force=force, schema="scores")
@@ -455,12 +478,17 @@ def score_video(
         _require_artifact(layout.visual_index, "--with-visuals", "visual index", "run `clipper visual` first")
         shots_manifest = read_validated_json(layout.shots_manifest, "shots")
         visual_index = read_validated_json(layout.visual_index, "visual_index")
-    scoring_context = build_explicit_scoring_context(sentence_transcript=sentence_transcript, shots_manifest=shots_manifest, visual_index=visual_index)
+    scoring_context = filter_scoring_context_by_time(
+        build_explicit_scoring_context(sentence_transcript=sentence_transcript, shots_manifest=shots_manifest, visual_index=visual_index),
+        start=start,
+        end=end,
+    )
     options = ScoringOptions(directive=directive, model=config.llm_model, temperature=config.llm_temperature, timeout_seconds=config.llm_timeout_seconds)
     windows = chunk_transcript(scoring_context)
     if progress:
         selected = ",".join(name for name, enabled in [("transcript", with_transcript), ("visuals", with_visuals)] if enabled)
-        progress.log(f"video {layout.video}: scoring_context={selected}")
+        project_text = f" project={project}" if project else ""
+        progress.log(f"video {layout.video}{project_text}: scoring_context={selected}")
         progress.log(f"scoring directive: {directive}")
         progress.log(
             "LLM "
@@ -476,6 +504,8 @@ def score_video(
                 f"visual index={layout.visual_index} observations={len(visual_index.get('observations', []))} "
                 f"shots={len((shots_manifest or {}).get('shots', []))}"
             )
+        if start is not None or end is not None:
+            progress.log(f"scoring range={start if start is not None else 0:g}-{end if end is not None else float(scoring_context.get('duration') or 0.0):g}s")
         progress.log(f"scoring evidence items={len(scoring_context.get('segments', []))}")
         progress.log(f"scoring windows={len(windows)}")
         progress.log(f"scores output={layout.scores}")
