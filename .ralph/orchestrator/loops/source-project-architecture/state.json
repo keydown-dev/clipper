@@ -2,9 +2,9 @@
   "name": "source-project-architecture",
   "control": "active",
   "branch": "orchestrator/source-project-architecture",
-  "currentIteration": 0,
+  "currentIteration": 1,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:10:08.594Z",
+  "updatedAt": "2026-06-04T21:10:09.239Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -13,7 +13,7 @@
     {
       "id": "001-028-source-and-project-layouts",
       "title": "028 — Source and Project Layouts",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "002-029-source-command-ingestion",
@@ -56,10 +56,18 @@
       "status": "queued"
     }
   ],
-  "iterations": [],
+  "iterations": [
+    {
+      "number": 1,
+      "status": "running",
+      "todoId": "001-028-source-and-project-layouts",
+      "beforeRef": "ralph/source-project-architecture/iter-001-before",
+      "startedAt": "2026-06-04T21:10:09.076Z"
+    }
+  ],
   "runBudget": {
-    "remaining": 9,
-    "updatedAt": "2026-06-04T21:10:08.593Z",
+    "remaining": 8,
+    "updatedAt": "2026-06-04T21:10:08.994Z",
     "updatedBy": "orchestrator"
   }
 }
