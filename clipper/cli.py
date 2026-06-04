@@ -18,7 +18,7 @@ from typing import Any, Callable, Sequence
 
 from dotenv import load_dotenv
 
-from .artifacts import ArtifactError, ArtifactLayout, SourceArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
+from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, SourceArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
 from .config import load_config
 from .cutting import CutOptions, cut_video
 from .montage import MontageOptions, montage_video
@@ -693,6 +693,28 @@ def run_source(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def run_create(args: argparse.Namespace) -> int:
+    """Create an empty editorial project config."""
+
+    config = config_from_args(args)
+    name = validate_video_name(args.project)
+    layout = ProjectArtifactLayout.for_project(config.store, name)
+    if layout.root.exists() and not args.force:
+        raise ArtifactError(f"project already exists: {layout.root}")
+    if args.force:
+        shutil.rmtree(layout.root, ignore_errors=True)
+    layout.root.mkdir(parents=True, exist_ok=True)
+    project = {"schema_version": 1, "name": name, "sources": [], "created_at": _utc_now()}
+    write_json(layout.project_json, project)
+    result = {"project": name, "path": str(layout.root), "config_path": str(layout.project_json)}
+    if config.json_output:
+        print_json(success_envelope(result=result, artifact_path=str(layout.project_json)))
+    else:
+        print(f"Created project {name} at {layout.root}")
+        print(f"Config: {layout.project_json}")
+    return EXIT_SUCCESS
+
+
 def _mirror_source_to_legacy_start(args: argparse.Namespace, name: str, source_layout: SourceArtifactLayout, result: dict[str, Any]) -> None:
     """Keep deprecated start's legacy video workspace available while ingesting a source."""
 
@@ -761,6 +783,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
 
     handlers: dict[str, Callable[[argparse.Namespace], int]] = {name: run_placeholder for name in PLACEHOLDER_COMMANDS}
     handlers["source"] = run_source
+    handlers["create"] = run_create
     handlers["start"] = run_start
     handlers["list"] = run_list
     handlers["transcribe"] = run_transcribe
@@ -782,6 +805,11 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     source.add_argument("--proxy", help="Proxy URL for remote downloads.")
     add_reuse_force(source)
     source.set_defaults(handler=handlers["source"])
+
+    create = subparsers.add_parser("create", parents=[common], help="Create an empty editorial project.")
+    create.add_argument("project", metavar="PROJECT", help="Slug-safe project name.")
+    create.add_argument("--force", action="store_true", help="Overwrite an existing project.")
+    create.set_defaults(handler=handlers["create"])
 
     start = subparsers.add_parser("start", parents=[common], help="Deprecated alias for source ingestion.")
     start.add_argument("input", nargs="?", metavar="URL_OR_PATH", help="Remote URL or local media file path.")

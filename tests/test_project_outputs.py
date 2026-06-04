@@ -84,7 +84,7 @@ def test_project_montage_uses_project_clips_and_writes_project_output(monkeypatc
 
 def test_project_flag_is_exposed_on_downstream_commands() -> None:
     help_text = build_parser().format_help()
-    assert "project" not in help_text.lower()
+    assert "--project" not in help_text.lower()
     for command in ["score", "cut", "montage", "pipeline"]:
         parser = build_parser()
         subparser = parser._subparsers._group_actions[0].choices[command]  # type: ignore[attr-defined]

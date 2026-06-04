@@ -4,7 +4,7 @@
   "branch": "orchestrator/source-project-architecture",
   "currentIteration": 4,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:19:45.454Z",
+  "updatedAt": "2026-06-04T21:21:49.538Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -28,7 +28,7 @@
     {
       "id": "004-031-create-empty-project",
       "title": "031 — Create Empty Project",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "005-032-include-source-in-project",
@@ -203,10 +203,49 @@
     },
     {
       "number": 4,
-      "status": "running",
+      "status": "accepted",
       "todoId": "004-031-create-empty-project",
       "beforeRef": "ralph/source-project-architecture/iter-004-before",
-      "startedAt": "2026-06-04T21:19:45.293Z"
+      "startedAt": "2026-06-04T21:19:45.293Z",
+      "diff": {
+        "filesChanged": 3,
+        "insertions": 83,
+        "deletions": 2
+      },
+      "usage": {
+        "input": 72349,
+        "output": 3961,
+        "cacheRead": 503296,
+        "cacheWrite": 0,
+        "totalTokens": 579606,
+        "cost": 0.732223,
+        "contextWindow": 272000,
+        "contextTokens": 32314
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed issue 031 by adding `clipper create PROJECT` for empty editorial project creation. The command writes `.clipper/projects/{project}/project.json` with `schema_version`, `name`, empty `sources`, and `created_at`, fails on existing projects by default, and supports `--force` overwrite.",
+      "changedFiles": [
+        "clipper/cli.py",
+        "tests/test_issue031.py",
+        "Added coverage for project creation success, existing-project failure, and force overwrite.",
+        "tests/test_project_outputs.py"
+      ],
+      "commitSubject": "cli: Add empty project creation",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n```bash\nuv run pytest tests/test_issue031.py tests/test_issue028.py\n```\n\nResult: passed — 7 passed.\n\n```bash\nuv run pytest\n```\n\nResult: passed — 132 passed, 3 skipped."
+          }
+        ]
+      },
+      "afterRef": "ralph/source-project-architecture/iter-004-after",
+      "completedAt": "2026-06-04T21:21:49.451Z"
     }
   ],
   "runBudget": {

@@ -1,0 +1,6 @@
+## orchestrator/source-project-architecture
+ M .ralph/orchestrator/loops/source-project-architecture/iterations/004/verification.md
+ M clipper/cli.py
+ M tests/test_project_outputs.py
+?? .ralph/orchestrator/loops/source-project-architecture/iterations/004/handoff-out.md
+?? tests/test_issue031.py
