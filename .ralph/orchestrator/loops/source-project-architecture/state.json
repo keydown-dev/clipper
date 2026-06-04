@@ -2,9 +2,9 @@
   "name": "source-project-architecture",
   "control": "active",
   "branch": "orchestrator/source-project-architecture",
-  "currentIteration": 3,
+  "currentIteration": 4,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:19:44.754Z",
+  "updatedAt": "2026-06-04T21:19:45.454Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -28,7 +28,7 @@
     {
       "id": "004-031-create-empty-project",
       "title": "031 — Create Empty Project",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "005-032-include-source-in-project",
@@ -200,11 +200,18 @@
       },
       "afterRef": "ralph/source-project-architecture/iter-003-after",
       "completedAt": "2026-06-04T21:19:44.672Z"
+    },
+    {
+      "number": 4,
+      "status": "running",
+      "todoId": "004-031-create-empty-project",
+      "beforeRef": "ralph/source-project-architecture/iter-004-before",
+      "startedAt": "2026-06-04T21:19:45.293Z"
     }
   ],
   "runBudget": {
-    "remaining": 6,
-    "updatedAt": "2026-06-04T21:16:29.671Z",
+    "remaining": 5,
+    "updatedAt": "2026-06-04T21:19:45.207Z",
     "updatedBy": "orchestrator"
   }
 }
