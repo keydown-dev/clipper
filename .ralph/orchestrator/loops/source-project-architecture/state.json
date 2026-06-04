@@ -2,9 +2,9 @@
   "name": "source-project-architecture",
   "control": "active",
   "branch": "orchestrator/source-project-architecture",
-  "currentIteration": 2,
+  "currentIteration": 3,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:16:29.195Z",
+  "updatedAt": "2026-06-04T21:16:29.952Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -23,7 +23,7 @@
     {
       "id": "003-030-source-analysis-commands",
       "title": "030 — Source Analysis Commands",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "004-031-create-empty-project",
@@ -150,11 +150,18 @@
       },
       "afterRef": "ralph/source-project-architecture/iter-002-after",
       "completedAt": "2026-06-04T21:16:29.099Z"
+    },
+    {
+      "number": 3,
+      "status": "running",
+      "todoId": "003-030-source-analysis-commands",
+      "beforeRef": "ralph/source-project-architecture/iter-003-before",
+      "startedAt": "2026-06-04T21:16:29.769Z"
     }
   ],
   "runBudget": {
-    "remaining": 7,
-    "updatedAt": "2026-06-04T21:12:40.021Z",
+    "remaining": 6,
+    "updatedAt": "2026-06-04T21:16:29.671Z",
     "updatedBy": "orchestrator"
   }
 }
