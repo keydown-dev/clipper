@@ -7,7 +7,7 @@ import pytest
 from clipper.cli import EXIT_FAILURE, EXIT_SUCCESS, EXIT_USAGE, build_parser, config_from_args, main
 
 
-COMMANDS = ["doctor", "start", "list", "transcribe", "score", "cut", "montage", "pipeline"]
+COMMANDS = ["doctor", "source", "start", "list", "transcribe", "score", "cut", "montage", "pipeline"]
 PLACEHOLDER_COMMANDS: list[str] = []
 
 

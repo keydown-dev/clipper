@@ -5,7 +5,7 @@ Control: active
 ## Todo
 
 - [x] 001-028-source-and-project-layouts. 028 — Source and Project Layouts (complete)
-- [ ] 002-029-source-command-ingestion. 029 — Source Command Ingestion (running)
+- [x] 002-029-source-command-ingestion. 029 — Source Command Ingestion (complete)
 - [ ] 003-030-source-analysis-commands. 030 — Source Analysis Commands (queued)
 - [ ] 004-031-create-empty-project. 031 — Create Empty Project (queued)
 - [ ] 005-032-include-source-in-project. 032 — Include Source in Project (queued)

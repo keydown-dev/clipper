@@ -18,7 +18,7 @@ from typing import Any, Callable, Sequence
 
 from dotenv import load_dotenv
 
-from .artifacts import ArtifactError, ArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
+from .artifacts import ArtifactError, ArtifactLayout, SourceArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_validated_json, validate_video_name, write_json
 from .config import load_config
 from .cutting import CutOptions, cut_video
 from .montage import MontageOptions, montage_video
@@ -549,7 +549,7 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _video_relative(layout: ArtifactLayout, path: Path) -> str:
+def _video_relative(layout: ArtifactLayout | SourceArtifactLayout, path: Path) -> str:
     return path.relative_to(layout.root).as_posix()
 
 
@@ -572,26 +572,31 @@ def _probe_duration(path: Path) -> float:
     return duration
 
 
-def _prepare_local_source(input_ref: str, layout: ArtifactLayout) -> tuple[Path, float, dict[str, Any]]:
+def _source_media_dir(layout: ArtifactLayout | SourceArtifactLayout) -> Path:
+    return layout.source_dir if isinstance(layout, ArtifactLayout) else layout.root
+
+
+def _prepare_local_source(input_ref: str, layout: ArtifactLayout | SourceArtifactLayout) -> tuple[Path, float, dict[str, Any]]:
     src = Path(input_ref).expanduser()
     if not src.exists() or not src.is_file():
         raise ArtifactError(f"local input file not found: {input_ref}")
     duration = _probe_duration(src)
     ext = src.suffix or ".mp4"
-    dest = layout.source_dir / f"source{ext}"
+    dest = _source_media_dir(layout) / f"source{ext}"
     shutil.copy2(src, dest)
     return dest, duration, {"title": src.stem}
 
 
-def _prepare_remote_source(input_ref: str, layout: ArtifactLayout, *, proxy: str | None = None) -> tuple[Path, float, dict[str, Any]]:
+def _prepare_remote_source(input_ref: str, layout: ArtifactLayout | SourceArtifactLayout, *, proxy: str | None = None) -> tuple[Path, float, dict[str, Any]]:
     try:
         from yt_dlp import YoutubeDL
     except ImportError as exc:  # pragma: no cover - doctor catches this in normal installs
         raise ArtifactError("yt-dlp is not installed; install project dependencies with `uv sync`") from exc
 
+    source_dir = _source_media_dir(layout)
     options: dict[str, Any] = {
         "format": "bestvideo[height<=720]+bestaudio/best[height<=720]",
-        "outtmpl": str(layout.source_dir / "source.%(ext)s"),
+        "outtmpl": str(source_dir / "source.%(ext)s"),
         "noplaylist": True,
     }
     if proxy:
@@ -604,7 +609,7 @@ def _prepare_remote_source(input_ref: str, layout: ArtifactLayout, *, proxy: str
 
     candidates = sorted(
         path
-        for path in layout.source_dir.glob("source.*")
+        for path in source_dir.glob("source.*")
         if path.is_file() and path.suffix not in {".part", ".ytdl", ".json"}
     )
     if not candidates:
@@ -636,17 +641,15 @@ def _start_metadata(input_ref: str, input_type: str, canonical: str, source_path
     return metadata
 
 
-def run_start(args: argparse.Namespace) -> int:
-    """Create a video workspace and register/download its source video."""
-
+def _source_ingestion_result(args: argparse.Namespace, *, command_name: str) -> tuple[CommandConfig, str, SourceArtifactLayout, dict[str, Any]]:
     if not args.input:
-        raise ArtifactError("clipper start requires INPUT")
+        raise ArtifactError(f"clipper {command_name} requires INPUT")
     config = config_from_args(args)
     input_ref = args.input
     remote = is_remote(input_ref)
     canonical = canonical_input_ref(input_ref)
     name = validate_video_name(args.name) if args.name else default_video_name(input_ref)
-    layout = ArtifactLayout.for_video(config.store, name)
+    layout = SourceArtifactLayout.for_source(config.store, name)
 
     if args.reuse:
         if not layout.metadata.exists():
@@ -656,15 +659,13 @@ def run_start(args: argparse.Namespace) -> int:
             raise ArtifactError("--reuse target metadata does not match the requested input")
         if not (layout.root / metadata["source_path"]).exists():
             raise ArtifactError(f"--reuse requires existing source: {metadata['source_path']}")
-        result = {"name": name, "path": str(layout.root), "metadata_path": str(layout.metadata), "source_path": metadata["source_path"], "reused": True}
+        result = {"source": name, "path": str(layout.root), "metadata_path": str(layout.metadata), "source_path": metadata["source_path"], "reused": True}
     else:
         if layout.root.exists() and not args.force:
             raise ArtifactError(f"output already exists: {layout.root}")
-        layout.create_dirs()
         if args.force:
-            shutil.rmtree(layout.source_dir, ignore_errors=True)
-            layout.source_dir.mkdir(parents=True, exist_ok=True)
-            layout.metadata.unlink(missing_ok=True)
+            shutil.rmtree(layout.root, ignore_errors=True)
+        layout.create_dirs()
         if remote:
             source, duration, extras = _prepare_remote_source(input_ref, layout, proxy=args.proxy)
             input_type = "remote"
@@ -674,13 +675,54 @@ def run_start(args: argparse.Namespace) -> int:
         source_path = _video_relative(layout, source)
         metadata = _start_metadata(input_ref, input_type, canonical, source_path, duration, extras)
         write_json(layout.metadata, metadata)
-        result = {"name": name, "path": str(layout.root), "metadata_path": str(layout.metadata), "source_path": source_path, "reused": False}
+        result = {"source": name, "path": str(layout.root), "metadata_path": str(layout.metadata), "source_path": source_path, "reused": False}
+    return config, name, layout, result
 
+
+def run_source(args: argparse.Namespace) -> int:
+    """Ingest exactly one remote or local media source into the source namespace."""
+
+    config, name, layout, result = _source_ingestion_result(args, command_name="source")
     if config.json_output:
-        print_json(success_envelope(video=name, artifact_path=str(layout.metadata), result=result))
+        print_json(success_envelope(result={"source": name, **result}, artifact_path=str(layout.metadata)))
     else:
-        action = "Reused" if result["reused"] else "Started"
-        print(f"{action} video {name} at {layout.root}")
+        action = "Reused" if result["reused"] else "Ingested"
+        print(f"{action} source {name} at {layout.root}")
+        print(f"Metadata: {layout.metadata}")
+        print(f"Source: {result['source_path']}")
+    return EXIT_SUCCESS
+
+
+def _mirror_source_to_legacy_start(args: argparse.Namespace, name: str, source_layout: SourceArtifactLayout, result: dict[str, Any]) -> None:
+    """Keep deprecated start's legacy video workspace available while ingesting a source."""
+
+    legacy = ArtifactLayout.for_video(config_from_args(args).store, name)
+    if args.force:
+        shutil.rmtree(legacy.root, ignore_errors=True)
+    legacy.create_dirs()
+    source_rel = str(result["source_path"])
+    source_path = source_layout.root / source_rel
+    legacy_source_rel = f"source/{source_path.name}"
+    shutil.copy2(source_path, legacy.source_dir / source_path.name)
+    metadata = read_validated_json(source_layout.metadata, "metadata")
+    metadata["source_path"] = legacy_source_rel
+    write_json(legacy.metadata, metadata)
+
+
+def run_start(args: argparse.Namespace) -> int:
+    """Deprecated compatibility alias for source ingestion."""
+
+    config, name, layout, result = _source_ingestion_result(args, command_name="start")
+    _mirror_source_to_legacy_start(args, name, layout, result)
+    legacy = ArtifactLayout.for_video(config.store, name)
+    legacy_source_path = f"source/{Path(str(result['source_path'])).name}"
+    alias_result = {"source": name, "deprecated_alias": "start", **result, "path": str(legacy.root), "metadata_path": str(legacy.metadata), "source_path": legacy_source_path}
+    if config.json_output:
+        print_json(success_envelope(video=name, result=alias_result, artifact_path=str(legacy.metadata)))
+    else:
+        action = "Reused" if result["reused"] else "Ingested"
+        print("warning: clipper start is deprecated; use clipper source", file=sys.stderr)
+        print(f"{action} source {name} at {layout.root}")
         print(f"Metadata: {layout.metadata}")
         print(f"Source: {result['source_path']}")
     return EXIT_SUCCESS
@@ -718,6 +760,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     """Register all first-version placeholder subcommands."""
 
     handlers: dict[str, Callable[[argparse.Namespace], int]] = {name: run_placeholder for name in PLACEHOLDER_COMMANDS}
+    handlers["source"] = run_source
     handlers["start"] = run_start
     handlers["list"] = run_list
     handlers["transcribe"] = run_transcribe
@@ -733,9 +776,16 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     doctor.add_argument("--check-whisper", action="store_true", help="Also load/check Whisper model.")
     doctor.set_defaults(handler=run_doctor)
 
-    start = subparsers.add_parser("start", parents=[common], help="Create a video workspace from a URL or local video.")
-    start.add_argument("input", nargs="?", metavar="URL_OR_VIDEO_PATH", help="Remote URL or local source video path.")
-    start.add_argument("--name", help="Optional slug-safe video name.")
+    source = subparsers.add_parser("source", parents=[common], help="Ingest a remote URL or local media file into the source store.")
+    source.add_argument("input", nargs="?", metavar="URL_OR_PATH", help="Remote URL or local media file path.")
+    source.add_argument("--name", required=True, help="Slug-safe source name.")
+    source.add_argument("--proxy", help="Proxy URL for remote downloads.")
+    add_reuse_force(source)
+    source.set_defaults(handler=handlers["source"])
+
+    start = subparsers.add_parser("start", parents=[common], help="Deprecated alias for source ingestion.")
+    start.add_argument("input", nargs="?", metavar="URL_OR_PATH", help="Remote URL or local media file path.")
+    start.add_argument("--name", help="Optional slug-safe source name.")
     start.add_argument("--proxy", help="Proxy URL for remote downloads.")
     add_reuse_force(start)
     start.set_defaults(handler=handlers["start"])

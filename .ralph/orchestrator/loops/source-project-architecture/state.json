@@ -4,7 +4,7 @@
   "branch": "orchestrator/source-project-architecture",
   "currentIteration": 2,
   "createdAt": "2026-06-04T21:10:05.663Z",
-  "updatedAt": "2026-06-04T21:12:40.281Z",
+  "updatedAt": "2026-06-04T21:16:29.195Z",
   "maxIterations": 9,
   "workerDefaults": {
     "contextWindow": 272000
@@ -18,7 +18,7 @@
     {
       "id": "002-029-source-command-ingestion",
       "title": "029 — Source Command Ingestion",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "003-030-source-analysis-commands",
@@ -106,10 +106,50 @@
     },
     {
       "number": 2,
-      "status": "running",
+      "status": "accepted",
       "todoId": "002-029-source-command-ingestion",
       "beforeRef": "ralph/source-project-architecture/iter-002-before",
-      "startedAt": "2026-06-04T21:12:40.108Z"
+      "startedAt": "2026-06-04T21:12:40.108Z",
+      "diff": {
+        "filesChanged": 3,
+        "insertions": 176,
+        "deletions": 25
+      },
+      "usage": {
+        "input": 56439,
+        "output": 9363,
+        "cacheRead": 765440,
+        "cacheWrite": 0,
+        "totalTokens": 831242,
+        "cost": 0.945805,
+        "contextWindow": 272000,
+        "contextTokens": 47521
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed issue 029 by adding `clipper source INPUT --name SOURCE` for source ingestion into `.clipper/sources/{source}/` with flattened `source.{ext}` and `metadata.json` artifacts. Remote ingestion still uses yt-dlp and forwards `--proxy`; local ingestion copies one media file into the source folder. `clipper start` now acts as a deprecated source-ingestion alias while also mirroring legacy video workspace artifacts for existing compatibility tests.",
+      "changedFiles": [
+        "clipper/cli.py",
+        "Updated local/remote preparation helpers to support flattened source layouts and legacy video layouts.",
+        "tests/test_cli.py",
+        "tests/test_issue029.py",
+        "Added local source, reuse/force, remote yt-dlp/proxy, and deprecated start-alias coverage."
+      ],
+      "commitSubject": "cli: Add source ingestion command",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\n## Commands\n\n- `uv run pytest tests/test_issue029.py tests/test_cli.py tests/test_issue002.py`\n  - Result: passed\n  - Summary: 30 passed, 1 skipped in 0.14s\n\n- `uv run pytest`\n  - Result: passed\n  - Summary: 125 passed, 3 skipped in 3.89s"
+          }
+        ]
+      },
+      "afterRef": "ralph/source-project-architecture/iter-002-after",
+      "completedAt": "2026-06-04T21:16:29.099Z"
     }
   ],
   "runBudget": {
