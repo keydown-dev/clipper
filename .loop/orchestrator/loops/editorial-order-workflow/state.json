@@ -2,9 +2,9 @@
   "name": "editorial-order-workflow",
   "control": "active",
   "branch": "orchestrator/editorial-order-workflow",
-  "currentIteration": 5,
+  "currentIteration": 6,
   "createdAt": "2026-06-05T16:16:14.063Z",
-  "updatedAt": "2026-06-05T19:23:42.972Z",
+  "updatedAt": "2026-06-05T19:23:43.802Z",
   "maxIterations": 6,
   "workerDefaults": {
     "contextWindow": 272000
@@ -38,7 +38,7 @@
     {
       "id": "006-issue-042-update-readme-and-skills-clipper-docs",
       "title": "Issue 042 — Update README and skills/clipper docs for canonical editorial LLM montage workflow, artifact layout, troubleshooting, examples, and obsolete candidate-order.json guidance.",
-      "status": "queued"
+      "status": "running"
     }
   ],
   "iterations": [
@@ -275,11 +275,18 @@
       },
       "afterRef": "ralph/editorial-order-workflow/iter-005-after",
       "completedAt": "2026-06-05T19:23:42.851Z"
+    },
+    {
+      "number": 6,
+      "status": "running",
+      "todoId": "006-issue-042-update-readme-and-skills-clipper-docs",
+      "beforeRef": "ralph/editorial-order-workflow/iter-006-before",
+      "startedAt": "2026-06-05T19:23:43.618Z"
     }
   ],
   "runBudget": {
-    "remaining": 1,
-    "updatedAt": "2026-06-05T19:20:49.917Z",
+    "remaining": 0,
+    "updatedAt": "2026-06-05T19:23:43.521Z",
     "updatedBy": "orchestrator"
   }
 }
