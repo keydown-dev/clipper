@@ -1,0 +1,3 @@
+## orchestrator/editorial-order-workflow
+ M .loop/orchestrator/loops/editorial-order-workflow/state.json
+?? .loop/orchestrator/loops/editorial-order-workflow/iterations/005/
