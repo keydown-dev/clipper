@@ -1,0 +1,6 @@
+## orchestrator/editorial-order-workflow
+ M .loop/orchestrator/loops/editorial-order-workflow/iterations/005/verification.md
+ M .loop/orchestrator/loops/editorial-order-workflow/iterations/005/worker-output.jsonl
+ M clipper/cli.py
+?? .loop/orchestrator/loops/editorial-order-workflow/iterations/005/handoff-out.md
+?? tests/test_issue041.py

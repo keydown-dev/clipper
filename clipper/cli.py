@@ -21,9 +21,9 @@ from dotenv import load_dotenv
 from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, SourceArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_json, read_validated_json, validate_video_name, write_json
 from .config import load_config
 from .contact_sheet import ContactSheetOptions, render_project_contact_sheet
-from .cutting import CutOptions, cut_project, cut_video
+from .cutting import CutOptions, cut_project, cut_video, ffmpeg_cut_command
 from .montage import MontageOptions, montage_project, montage_video
-from .order import move_clip_order, read_clip_order, swap_clip_order, total_duration, write_clip_order
+from .order import move_clip_order, read_clip_order, swap_clip_order, total_duration, utc_now, write_clip_order
 from .progress import CliProgress
 from .scoring import score_project, score_video
 from .shots import ShotOptions, shots_video
@@ -501,6 +501,116 @@ def run_cut(args: argparse.Namespace) -> int:
         print(f"{action} video {video}")
         print(f"Clips: {clips_path}")
         print(f"Clip count: {result['clip_count']}")
+    return EXIT_SUCCESS
+
+
+def _project_source_media_and_duration(store: Path, source: str) -> tuple[Path, float]:
+    source = validate_video_name(source)
+    source_layout = SourceArtifactLayout.for_source(store, source)
+    metadata = read_validated_json(source_layout.metadata, "metadata")
+    source_path = str(metadata["source_path"])
+    media_path = source_layout.root / source_path
+    if not media_path.exists():
+        raise ArtifactError(f"source media not found for {source}: {source_path}")
+    duration = float(metadata.get("duration") or 0.0)
+    if duration <= 0:
+        duration = _probe_duration(media_path)
+    return media_path, duration
+
+
+def _resolve_trim_times(clip: dict[str, Any], *, start: float | None, end: float | None, duration: float | None, source_duration: float) -> tuple[float, float]:
+    if start is None and end is None and duration is None:
+        raise ArtifactError("trim requires at least one of --start, --end, or --duration")
+    if duration is not None and duration <= 0:
+        raise ArtifactError("--duration must be positive")
+    if duration is not None and end is not None:
+        raise ArtifactError("--duration and --end cannot be combined; use --start --duration or --start --end")
+
+    new_start = float(clip["start"]) if start is None else start
+    if duration is not None:
+        new_end = new_start + duration
+    else:
+        new_end = float(clip["end"]) if end is None else end
+
+    if new_end <= new_start:
+        raise ArtifactError("trim end must be greater than start")
+    if new_start < 0:
+        raise ArtifactError("trim start must be non-negative")
+    if new_end > source_duration:
+        raise ArtifactError(f"trim end {new_end:g}s exceeds source duration {source_duration:g}s")
+    return new_start, new_end
+
+
+def _update_clip_order_duration(layout: ProjectArtifactLayout, clip_id: str, duration: float) -> Path | None:
+    if not layout.clip_order.exists():
+        return None
+    order = read_validated_json(layout.clip_order, "clip_order")
+    updated = False
+    for entry in order["order"]:
+        if entry["id"] == clip_id:
+            entry["duration"] = duration
+            updated = True
+            break
+    if not updated:
+        raise ArtifactError(f"clip id not found in clip-order.json: {clip_id}")
+    order["updated_at"] = utc_now()
+    write_json(layout.clip_order, order)
+    return layout.clip_order
+
+
+def run_trim(args: argparse.Namespace) -> int:
+    """Trim one project clip in place while preserving its ID and path."""
+
+    command_config = config_from_args(args)
+    project = validate_video_name(args.project)
+    layout = ProjectArtifactLayout.for_project(command_config.store, project)
+    manifest = read_validated_json(layout.clips_manifest, "clips")
+    clip_id = args.clip_id
+    clips = manifest["clips"]
+    clip = next((entry for entry in clips if entry["id"] == clip_id), None)
+    if clip is None:
+        raise ArtifactError(f"clip id not found in clips.json: {clip_id}")
+    source = str(clip.get("source", "")).strip()
+    if not source:
+        raise ArtifactError(f"project clip is missing source: {clip_id}")
+
+    start = parse_time(args.start)
+    end = parse_time(args.end)
+    duration = parse_time(args.duration)
+    source_media, source_duration = _project_source_media_and_duration(command_config.store, source)
+    new_start, new_end = _resolve_trim_times(clip, start=start, end=end, duration=duration, source_duration=source_duration)
+    new_duration = new_end - new_start
+    output = layout.root / str(clip["path"])
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temp_output = output.with_name(f".{output.stem}.trim-{os.getpid()}{output.suffix}")
+    silent = bool(manifest.get("silent", False) if args.silent is None else args.silent)
+    command = ffmpeg_cut_command(source=source_media, output=temp_output, start=new_start, end=new_end, silent=silent)
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        temp_output.unlink(missing_ok=True)
+        raise ArtifactError(f"ffmpeg trim failed for {clip_id}: {result.stderr.strip() or result.stdout.strip()}")
+
+    try:
+        temp_output.replace(output)
+    except Exception:
+        temp_output.unlink(missing_ok=True)
+        raise
+
+    clip["start"] = new_start
+    clip["end"] = new_end
+    clip["duration"] = new_duration
+    write_json(layout.clips_manifest, manifest)
+    order_path = _update_clip_order_duration(layout, clip_id, new_duration)
+    touched = [str(output), str(layout.clips_manifest)]
+    if order_path is not None:
+        touched.append(str(order_path))
+    payload = {"project": project, "clip": clip, "paths_touched": touched, "silent": silent, "force": bool(args.force)}
+    if command_config.json_output:
+        print_json(success_envelope(artifact_path=str(layout.clips_manifest), result=payload))
+    else:
+        print(f"Trimmed clip {clip_id} in project {project}")
+        print(f"Clip: {output}")
+        print(f"Duration: {new_duration:.3f}s")
     return EXIT_SUCCESS
 
 
@@ -988,6 +1098,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["cut"] = run_cut
     handlers["montage"] = run_montage
     handlers["order"] = run_order
+    handlers["trim"] = run_trim
     handlers["contact_sheet"] = run_contact_sheet
     handlers["pipeline"] = run_pipeline_cli
 
@@ -1081,6 +1192,16 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     order.add_argument("--to", type=int, metavar="POSITION", help="1-based destination position for --move.")
     order.add_argument("--swap", nargs=2, metavar=("CLIP_A", "CLIP_B"), help="Swap two clip IDs in the order.")
     order.set_defaults(handler=handlers["order"])
+
+    trim = subparsers.add_parser("trim", parents=[common], help="Trim one project clip in place.")
+    trim.add_argument("project", metavar="PROJECT", help="Slug-safe project name.")
+    trim.add_argument("clip_id", metavar="CLIP_ID", help="Clip ID from project clips.json.")
+    trim.add_argument("--start", help="New source start time (seconds, MM:SS, or HH:MM:SS).")
+    trim.add_argument("--end", help="New source end time (seconds, MM:SS, or HH:MM:SS).")
+    trim.add_argument("--duration", help="New clip duration in seconds from the chosen/current start.")
+    trim.add_argument("--silent", action="store_true", default=None, help="Strip audio from the regenerated clip; defaults to clips.json silent setting.")
+    trim.add_argument("--force", action="store_true", help="Allow in-place overwrite of the existing clip file.")
+    trim.set_defaults(handler=handlers["trim"])
 
     montage = subparsers.add_parser("montage", parents=[common], help="Assemble clips into a montage.")
     montage.add_argument("video", nargs="?", metavar="VIDEO", help="Video name or video directory path.")
