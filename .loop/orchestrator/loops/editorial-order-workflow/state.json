@@ -2,9 +2,9 @@
   "name": "editorial-order-workflow",
   "control": "active",
   "branch": "orchestrator/editorial-order-workflow",
-  "currentIteration": 2,
+  "currentIteration": 3,
   "createdAt": "2026-06-05T16:16:14.063Z",
-  "updatedAt": "2026-06-05T19:14:32.424Z",
+  "updatedAt": "2026-06-05T19:14:33.300Z",
   "maxIterations": 6,
   "workerDefaults": {
     "contextWindow": 272000
@@ -23,7 +23,7 @@
     {
       "id": "003-issue-039-extend-clipper-order-project-with-move",
       "title": "Issue 039 — Extend clipper order PROJECT with --move/--to and --swap operations, including initialization from clips.json, validation errors, JSON/human output, and tests.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "004-issue-040-add-clipper-contact-sheet-project-comm",
@@ -138,11 +138,18 @@
       },
       "afterRef": "ralph/editorial-order-workflow/iter-002-after",
       "completedAt": "2026-06-05T19:14:32.310Z"
+    },
+    {
+      "number": 3,
+      "status": "running",
+      "todoId": "003-issue-039-extend-clipper-order-project-with-move",
+      "beforeRef": "ralph/editorial-order-workflow/iter-003-before",
+      "startedAt": "2026-06-05T19:14:33.108Z"
     }
   ],
   "runBudget": {
-    "remaining": 4,
-    "updatedAt": "2026-06-05T19:12:05.775Z",
+    "remaining": 3,
+    "updatedAt": "2026-06-05T19:14:32.996Z",
     "updatedBy": "orchestrator"
   }
 }
