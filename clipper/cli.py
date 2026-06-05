@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 
 from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, SourceArtifactLayout, canonical_input_ref, default_video_name, is_remote, list_videos, read_json, read_validated_json, validate_video_name, write_json
 from .config import load_config
+from .contact_sheet import ContactSheetOptions, render_project_contact_sheet
 from .cutting import CutOptions, cut_project, cut_video
 from .montage import MontageOptions, montage_project, montage_video
 from .order import move_clip_order, read_clip_order, swap_clip_order, total_duration, write_clip_order
@@ -544,6 +545,43 @@ def run_order(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def run_contact_sheet(args: argparse.Namespace) -> int:
+    """Render a project contact sheet for editorial review."""
+
+    command_config = config_from_args(args)
+    result = render_project_contact_sheet(
+        store=command_config.store,
+        project=args.project,
+        options=ContactSheetOptions(
+            chronological=args.chronological,
+            columns=args.columns,
+            thumb_width=args.thumb_width,
+            thumb_height=args.thumb_height,
+            output=Path(args.output) if args.output else None,
+            force=args.force,
+        ),
+    )
+    payload = {
+        "project": result.project,
+        "contact_sheet_path": str(result.path),
+        "clip_count": result.clip_count,
+        "order_source": result.order_source,
+        "columns": result.columns,
+        "thumb_width": result.thumb_width,
+        "thumb_height": result.thumb_height,
+        "output_width": result.width,
+        "output_height": result.height,
+        "thumbnail": {"width": result.thumb_width, "height": result.thumb_height},
+        "output": {"width": result.width, "height": result.height},
+    }
+    if command_config.json_output:
+        print_json(success_envelope(artifact_path=str(result.path), result=payload))
+    else:
+        print(f"Contact sheet: {result.path}")
+        print(f"Clip count: {result.clip_count}")
+    return EXIT_SUCCESS
+
+
 def run_montage(args: argparse.Namespace) -> int:
     """Assemble clip files into a normalized montage."""
 
@@ -950,6 +988,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["cut"] = run_cut
     handlers["montage"] = run_montage
     handlers["order"] = run_order
+    handlers["contact_sheet"] = run_contact_sheet
     handlers["pipeline"] = run_pipeline_cli
 
     doctor = subparsers.add_parser("doctor", parents=[common], help="Validate local Clipper environment.")
@@ -1052,6 +1091,16 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     add_project(montage)
     add_reuse_force(montage)
     montage.set_defaults(handler=handlers["montage"])
+
+    contact_sheet = subparsers.add_parser("contact-sheet", parents=[common], help="Render a project clip contact sheet.")
+    contact_sheet.add_argument("project", metavar="PROJECT", help="Slug-safe project name.")
+    contact_sheet.add_argument("--chronological", action="store_true", help="Sort clips by source/start/end time instead of preserving editorial order.")
+    contact_sheet.add_argument("--columns", type=int, default=4, help="Thumbnail columns (default: 4).")
+    contact_sheet.add_argument("--thumb-width", type=int, default=320, help="Thumbnail width in pixels (default: 320).")
+    contact_sheet.add_argument("--thumb-height", type=int, default=180, help="Thumbnail height in pixels (default: 180).")
+    contact_sheet.add_argument("--output", help="Alternate contact sheet output path.")
+    contact_sheet.add_argument("--force", action="store_true", help="Overwrite existing contact sheet and previews.")
+    contact_sheet.set_defaults(handler=handlers["contact_sheet"])
 
     pipeline = subparsers.add_parser("pipeline", parents=[common], help="Run start, transcribe, score, cut, and montage.")
     pipeline.add_argument("input", nargs="?", metavar="URL_OR_VIDEO_PATH", help="Remote URL or local source video path.")
