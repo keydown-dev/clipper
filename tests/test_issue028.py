@@ -49,6 +49,7 @@ def test_project_layout_uses_project_namespace_and_editorial_outputs(tmp_path: P
         "project": "project.json",
         "scores": "scores.json",
         "clips": "clips.json",
+        "clip_order": "clip-order.json",
         "montage_video": "montage.mp4",
         "montage_json": "montage.json",
         "clips_dir": "clips/",

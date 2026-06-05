@@ -22,6 +22,7 @@ from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, Sou
 from .config import load_config
 from .cutting import CutOptions, cut_project, cut_video
 from .montage import MontageOptions, montage_project, montage_video
+from .order import read_clip_order, total_duration, write_clip_order
 from .progress import CliProgress
 from .scoring import score_project, score_video
 from .shots import ShotOptions, shots_video
@@ -502,6 +503,38 @@ def run_cut(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def run_order(args: argparse.Namespace) -> int:
+    """Create, replace, and show project editorial clip order."""
+
+    command_config = config_from_args(args)
+    project = validate_video_name(args.project)
+    if args.reset and args.clip_ids:
+        raise ArtifactError("--reset cannot be combined with explicit clip IDs")
+    if args.reset:
+        order_path, order = write_clip_order(command_config.store, project)
+        wrote = True
+    elif args.clip_ids:
+        order_path, order = write_clip_order(command_config.store, project, list(args.clip_ids))
+        wrote = True
+    else:
+        order_path, order = read_clip_order(command_config.store, project)
+        wrote = False
+    total = total_duration(order)
+    result = {"project": project, "order_path": str(order_path), "order": order["order"], "total_duration": total}
+    if command_config.json_output:
+        print_json(success_envelope(artifact_path=str(order_path), result=result))
+    elif args.show or not wrote:
+        print(f"Clip order: {order_path}")
+        for index, entry in enumerate(order["order"], start=1):
+            print(f"{index}. {entry['id']} {entry['duration']:.3f}s")
+        print(f"Total duration: {total:.3f}s")
+    else:
+        print(f"Wrote clip order: {order_path}")
+        print(f"Clips: {len(order['order'])}")
+        print(f"Total duration: {total:.3f}s")
+    return EXIT_SUCCESS
+
+
 def run_montage(args: argparse.Namespace) -> int:
     """Assemble clip files into a normalized montage."""
 
@@ -905,6 +938,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     handlers["visual"] = run_visual
     handlers["cut"] = run_cut
     handlers["montage"] = run_montage
+    handlers["order"] = run_order
     handlers["pipeline"] = run_pipeline_cli
 
     doctor = subparsers.add_parser("doctor", parents=[common], help="Validate local Clipper environment.")
@@ -987,6 +1021,13 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     add_project(cut)
     add_reuse_force(cut)
     cut.set_defaults(handler=handlers["cut"])
+
+    order = subparsers.add_parser("order", parents=[common], help="Create, replace, and show project clip order.")
+    order.add_argument("project", metavar="PROJECT", help="Slug-safe project name.")
+    order.add_argument("clip_ids", nargs="*", metavar="CLIP_ID", help="Full replacement order by clip ID.")
+    order.add_argument("--reset", action="store_true", help="Reset order to the current clips.json order.")
+    order.add_argument("--show", action="store_true", help="Show the current order.")
+    order.set_defaults(handler=handlers["order"])
 
     montage = subparsers.add_parser("montage", parents=[common], help="Assemble clips into a montage.")
     montage.add_argument("video", nargs="?", metavar="VIDEO", help="Video name or video directory path.")

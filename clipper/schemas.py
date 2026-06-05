@@ -105,6 +105,21 @@ class ClipManifest(TypedDict, total=False):
     clips: list[ClipEntry]
 
 
+class ClipOrderEntry(TypedDict, total=False):
+    id: str
+    path: str
+    duration: float
+
+
+class ClipOrder(TypedDict, total=False):
+    schema_version: Literal[1]
+    warnings: NotRequired[list[str]]
+    source_file: str
+    created_at: str
+    updated_at: str
+    order: list[ClipOrderEntry]
+
+
 class MontageResult(TypedDict, total=False):
     schema_version: Literal[1]
     warnings: NotRequired[list[str]]
@@ -351,6 +366,26 @@ def validate_clips(data: Any) -> dict[str, Any]:
     return data
 
 
+def validate_clip_order(data: Any) -> dict[str, Any]:
+    data = _require_mapping(data)
+    _require(data, ["source_file", "created_at", "updated_at", "order"])
+    _relative_path(data["source_file"], "source_file")
+    for field in ["created_at", "updated_at"]:
+        if not isinstance(data[field], str) or not UTC_Z_RE.match(data[field]):
+            raise SchemaError(f"{field} must be a UTC ISO-8601 string ending in Z")
+    if not isinstance(data["order"], list):
+        raise SchemaError("order must be a list")
+    for entry in data["order"]:
+        if not isinstance(entry, dict):
+            raise SchemaError("order entry must be an object")
+        _require(entry, ["id", "path", "duration"])
+        if not isinstance(entry["id"], str):
+            raise SchemaError("order.id must be a string")
+        _relative_path(entry["path"], "order.path")
+        _number(entry["duration"], "order.duration")
+    return data
+
+
 def validate_montage(data: Any) -> dict[str, Any]:
     data = _require_mapping(data)
     _require(data, ["montage_path", "clips", "duration", "width", "height", "silent"])
@@ -435,6 +470,7 @@ VALIDATORS = {
     "sentence_transcript": validate_sentence_transcript,
     "scores": validate_scores,
     "clips": validate_clips,
+    "clip_order": validate_clip_order,
     "montage": validate_montage,
     "shots": validate_shots,
     "visual_index": validate_visual_index,

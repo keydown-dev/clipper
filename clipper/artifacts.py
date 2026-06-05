@@ -83,6 +83,7 @@ class ProjectArtifactLayout:
     scores: Path
     clips_manifest: Path
     clips_dir: Path
+    clip_order: Path
     montage_video: Path
     montage_json: Path
 
@@ -98,6 +99,7 @@ class ProjectArtifactLayout:
             scores=root / "scores.json",
             clips_manifest=root / "clips.json",
             clips_dir=root / "clips",
+            clip_order=root / "clip-order.json",
             montage_video=root / "montage.mp4",
             montage_json=root / "montage.json",
         )
@@ -111,6 +113,7 @@ class ProjectArtifactLayout:
             "project": "project.json",
             "scores": "scores.json",
             "clips": "clips.json",
+            "clip_order": "clip-order.json",
             "montage_video": "montage.mp4",
             "montage_json": "montage.json",
             "clips_dir": "clips/",

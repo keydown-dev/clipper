@@ -4,7 +4,7 @@
   "branch": "orchestrator/editorial-order-workflow",
   "currentIteration": 1,
   "createdAt": "2026-06-05T16:16:14.063Z",
-  "updatedAt": "2026-06-05T19:09:04.848Z",
+  "updatedAt": "2026-06-05T19:12:05.220Z",
   "maxIterations": 6,
   "workerDefaults": {
     "contextWindow": 272000
@@ -13,7 +13,7 @@
     {
       "id": "001-issue-037-add-canonical-clipper-projects-project",
       "title": "Issue 037 — Add canonical .clipper/projects/{project}/clip-order.json artifact, validation helpers, and clipper order PROJECT --reset/--show/full replacement with tests.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "002-issue-038-change-clipper-montage-project-to-pres",
@@ -44,10 +44,54 @@
   "iterations": [
     {
       "number": 1,
-      "status": "running",
+      "status": "accepted",
       "todoId": "001-issue-037-add-canonical-clipper-projects-project",
       "beforeRef": "ralph/editorial-order-workflow/iter-001-before",
-      "startedAt": "2026-06-05T19:09:04.673Z"
+      "startedAt": "2026-06-05T19:09:04.673Z",
+      "diff": {
+        "filesChanged": 6,
+        "insertions": 304,
+        "deletions": 0
+      },
+      "usage": {
+        "input": 49435,
+        "output": 6435,
+        "cacheRead": 694784,
+        "cacheWrite": 0,
+        "totalTokens": 750654,
+        "cost": 0.7876170000000001,
+        "contextWindow": 272000,
+        "contextTokens": 40440
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Implemented Issue 037: canonical project-level `.clipper/projects/{project}/clip-order.json`, schema validation, order helpers, and `clipper order PROJECT` CLI support for reset, full replacement, show, and JSON output.",
+      "changedFiles": [
+        ".loop/orchestrator/loops/editorial-order-workflow/iterations/001/verification.md",
+        ".loop/orchestrator/loops/editorial-order-workflow/iterations/001/worker-output.jsonl",
+        "clipper/artifacts.py",
+        "clipper/cli.py",
+        "clipper/schemas.py",
+        "tests/test_issue028.py",
+        ".loop/orchestrator/loops/editorial-order-workflow/iterations/001/handoff-out.md",
+        "clipper/order.py",
+        "tests/test_issue037.py"
+      ],
+      "commitSubject": "feat: add project clip order command",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n- `uv run pytest tests/test_issue037.py tests/test_issue031.py tests/test_issue035.py`\n  - Result: passed, 15 passed in 0.11s.\n- `uv run pytest`\n  - Initial result: failed because existing `tests/test_issue028.py` expected `ProjectArtifactLayout.fixed_paths()` without the new `clip_order` artifact.\n  - Follow-up: updated the test expectation for the new canonical project artifact.\n  - Final result: passed, 154 passed, 3 skipped in 4.17s."
+          }
+        ]
+      },
+      "afterRef": "ralph/editorial-order-workflow/iter-001-after",
+      "completedAt": "2026-06-05T19:12:05.106Z"
     }
   ],
   "runBudget": {
