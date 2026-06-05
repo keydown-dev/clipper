@@ -2,9 +2,9 @@
   "name": "editorial-order-workflow",
   "control": "active",
   "branch": "orchestrator/editorial-order-workflow",
-  "currentIteration": 3,
+  "currentIteration": 4,
   "createdAt": "2026-06-05T16:16:14.063Z",
-  "updatedAt": "2026-06-05T19:17:25.900Z",
+  "updatedAt": "2026-06-05T19:17:26.712Z",
   "maxIterations": 6,
   "workerDefaults": {
     "contextWindow": 272000
@@ -28,7 +28,7 @@
     {
       "id": "004-issue-040-add-clipper-contact-sheet-project-comm",
       "title": "Issue 040 — Add clipper contact-sheet PROJECT command with editorial/chronological ordering, previews, configurable thumbnail grid/output/force/JSON behavior, and tests.",
-      "status": "queued"
+      "status": "running"
     },
     {
       "id": "005-issue-041-add-clipper-trim-project-clip-id-comma",
@@ -183,11 +183,18 @@
       },
       "afterRef": "ralph/editorial-order-workflow/iter-003-after",
       "completedAt": "2026-06-05T19:17:25.782Z"
+    },
+    {
+      "number": 4,
+      "status": "running",
+      "todoId": "004-issue-040-add-clipper-contact-sheet-project-comm",
+      "beforeRef": "ralph/editorial-order-workflow/iter-004-before",
+      "startedAt": "2026-06-05T19:17:26.527Z"
     }
   ],
   "runBudget": {
-    "remaining": 3,
-    "updatedAt": "2026-06-05T19:14:32.996Z",
+    "remaining": 2,
+    "updatedAt": "2026-06-05T19:17:26.428Z",
     "updatedBy": "orchestrator"
   }
 }
