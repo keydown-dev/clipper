@@ -1,0 +1,20 @@
+## orchestrator/editorial-order-workflow
+ M .loop/orchestrator/loops/editorial-order-workflow/iterations/006/verification.md
+ M .loop/orchestrator/loops/editorial-order-workflow/iterations/006/worker-output.jsonl
+ M README.md
+ M packages/pi-clipper/skills/clipper/SKILL.md
+ M packages/pi-clipper/skills/clipper/references/cut.md
+ M packages/pi-clipper/skills/clipper/references/montage.md
+ M packages/pi-clipper/skills/clipper/references/store.md
+ M packages/pi-clipper/skills/clipper/references/transcribe.md
+ M packages/pi-clipper/skills/clipper/references/transcript-scoring.md
+ M packages/pi-clipper/skills/clipper/references/troubleshooting.md
+ M packages/pi-clipper/skills/clipper/references/visual-scoring.md
+ M skills/clipper/SKILL.md
+ M skills/clipper/references/cut.md
+ M skills/clipper/references/montage.md
+ M skills/clipper/references/store.md
+ M skills/clipper/references/troubleshooting.md
+?? .loop/orchestrator/loops/editorial-order-workflow/iterations/006/handoff-out.md
+?? packages/pi-clipper/skills/clipper/references/hero-background.md
+?? packages/pi-clipper/skills/clipper/references/transcript-qa.md

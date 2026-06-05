@@ -41,4 +41,4 @@ uv run clipper visual broll --force
 uv run clipper score broll --with-visuals --directive "Find strong visual moments" --force
 ```
 
-Do not invent multi-video hero/background commands. Compose primitive commands per video; detailed multi-video recipes are deferred to a separate workflow skill.
+Do not invent multi-video hero/background commands. Compose primitive commands per video; use [Multi-video hero/background workflows](hero-background.md) for detailed recipes and limitations.

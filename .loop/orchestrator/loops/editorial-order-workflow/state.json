@@ -4,7 +4,7 @@
   "branch": "orchestrator/editorial-order-workflow",
   "currentIteration": 6,
   "createdAt": "2026-06-05T16:16:14.063Z",
-  "updatedAt": "2026-06-05T19:23:43.802Z",
+  "updatedAt": "2026-06-05T19:27:49.521Z",
   "maxIterations": 6,
   "workerDefaults": {
     "contextWindow": 272000
@@ -38,7 +38,7 @@
     {
       "id": "006-issue-042-update-readme-and-skills-clipper-docs",
       "title": "Issue 042 — Update README and skills/clipper docs for canonical editorial LLM montage workflow, artifact layout, troubleshooting, examples, and obsolete candidate-order.json guidance.",
-      "status": "running"
+      "status": "complete"
     }
   ],
   "iterations": [
@@ -278,10 +278,53 @@
     },
     {
       "number": 6,
-      "status": "running",
+      "status": "accepted",
       "todoId": "006-issue-042-update-readme-and-skills-clipper-docs",
       "beforeRef": "ralph/editorial-order-workflow/iter-006-before",
-      "startedAt": "2026-06-05T19:23:43.618Z"
+      "startedAt": "2026-06-05T19:23:43.618Z",
+      "diff": {
+        "filesChanged": 16,
+        "insertions": 619,
+        "deletions": 150
+      },
+      "usage": {
+        "input": 49677,
+        "output": 10408,
+        "cacheRead": 680448,
+        "cacheWrite": 0,
+        "totalTokens": 740533,
+        "cost": 0.9008490000000001,
+        "contextWindow": 272000,
+        "contextTokens": 40900
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Updated docs for Issue 042. README now documents the canonical editorial LLM montage workflow, `clip-order.json`, project review artifacts, `clipper order`, `contact-sheet`, `trim`, and `montage --chronological`. The Clipper skill now directs agents to use supported Clipper commands/artifacts instead of custom Python/FFmpeg scripting or obsolete `candidate-order.json` sidecars.",
+      "changedFiles": [
+        "README.md",
+        "skills/clipper/SKILL.md",
+        "skills/clipper/references/cut.md",
+        "skills/clipper/references/montage.md",
+        "skills/clipper/references/store.md",
+        "skills/clipper/references/troubleshooting.md",
+        ".loop/orchestrator/loops/editorial-order-workflow/iterations/006/verification.md",
+        ".loop/orchestrator/loops/editorial-order-workflow/iterations/006/handoff-out.md"
+      ],
+      "commitSubject": "Document editorial LLM montage workflow",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "Status: passed\n\n## Commands\n\n```bash\nuv run clipper order --help\nuv run clipper montage --help\nuv run clipper contact-sheet --help\nuv run clipper trim --help\n```\n\nResult: passed. Verified documented flags exist: `order --show/--reset/--move/--swap`, full replacement positional IDs, `montage --chronological`, `contact-sheet`, and `trim --start/--end/--duration`.\n\n```bash\ncd packages/pi-clipper && npm run sync:skill\n```\n\nResult: passed. Regenerated packaged Clipper skill from `skills/clipper/`.\n\n```bash\nuv run pytest\n```\n\nResult: passed. 177 passed, 3 skipped."
+          }
+        ]
+      },
+      "afterRef": "ralph/editorial-order-workflow/iter-006-after",
+      "completedAt": "2026-06-05T19:27:49.384Z"
     }
   ],
   "runBudget": {

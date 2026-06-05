@@ -43,4 +43,4 @@ uv run clipper score interview \
 - Do not call `clipper score VIDEO --directive "..."` without a context flag; it must fail.
 - Use `--with-transcript` only after `work/sentences.json` exists.
 - Use `--reuse` to keep a valid existing `work/scores.json`, or `--force` to replace it.
-- Keep directives focused on selecting timestamped clip candidates. Detailed transcript QA and summarization workflows are out of scope for this skill.
+- Keep directives focused on selecting timestamped clip candidates. For summaries, quizzes, study guides, glossary extraction, or topic outlines, stop after `transcribe` and use the agent-context workflow in [Transcript QA and summarization](transcript-qa.md) instead of `clipper score`.

@@ -21,7 +21,7 @@ uv sync
 uv run clipper doctor --json
 ```
 
-The first supported non-dev install path is expected to be `uv tool install` from the project git repository once Issue 026 verifies the exact command. PyPI install is not part of the first documented distribution path.
+For installed use, install Clipper Core with the supported uv tool path and rerun `clipper doctor --json`.
 
 ## Missing ffmpeg or ffprobe
 
@@ -43,7 +43,7 @@ uv sync
 uv run clipper doctor --json
 ```
 
-For an installed CLI, reinstall or upgrade the tool after Issue 026 defines the supported `uv tool install` command.
+For an installed CLI, reinstall or upgrade the tool.
 
 ## LLM configuration problems
 
@@ -68,11 +68,11 @@ Use `--check-whisper` only when you intentionally want to load the configured mo
 
 ## yt-dlp download failures
 
-Remote `start` and `pipeline` inputs depend on yt-dlp and network/provider availability. Retry with a local file to isolate setup from provider issues, or pass a proxy when needed:
+Remote `source` and `pipeline` inputs depend on yt-dlp and network/provider availability. Retry with a local file to isolate setup from provider issues, or pass a proxy when needed:
 
 ```bash
-uv run clipper start ./source/interview.mp4 --name local-check
-uv run clipper start "https://youtube.com/watch?v=XXX" --name url-check --proxy PROXY_URL
+uv run clipper source ./source/interview.mp4 --name local-check
+uv run clipper source "https://youtube.com/watch?v=XXX" --name url-check --proxy PROXY_URL
 ```
 
 If local input works and URL input fails, inspect the provider URL, network access, proxy, and yt-dlp support for that site.
@@ -91,8 +91,10 @@ CLIPPER_STORE_PATH=../shared-clipper-store uv run clipper doctor --json
 Most commands fail when target artifacts already exist. Choose explicitly:
 
 ```bash
-uv run clipper start ./source/interview.mp4 --name interview --reuse
+uv run clipper source ./source/interview.mp4 --name interview --reuse
 uv run clipper transcribe interview --force
+uv run clipper contact-sheet interview-highlights --force
+uv run clipper trim interview-highlights clip-0001 --duration 8 --force
 ```
 
 ## Scoring fails with no context
@@ -100,9 +102,9 @@ uv run clipper transcribe interview --force
 `score` requires at least one context flag:
 
 ```bash
-uv run clipper score interview --with-transcript --directive "Find strong sound bites"
-uv run clipper score broll --with-visuals --directive "Find visually striking shots"
-uv run clipper score interview --with-transcript --with-visuals --directive "Find dialogue supported by visuals"
+uv run clipper score interview-highlights --with-transcript --directive "Find strong sound bites"
+uv run clipper score broll-selects --with-visuals --directive "Find visually striking shots"
+uv run clipper score interview-highlights --with-transcript --with-visuals --directive "Find dialogue supported by visuals"
 ```
 
 ## Missing visual artifacts
@@ -113,6 +115,19 @@ Run the visual prerequisites before `--with-visuals` scoring:
 uv run clipper shots broll --contact-sheet
 uv run clipper visual broll
 ```
+
+## Order references missing clips
+
+If `clipper order`, `clipper contact-sheet`, or `clipper montage` reports missing clip IDs referenced by `clip-order.json`, inspect and repair the canonical order:
+
+```bash
+uv run clipper order interview-highlights --show
+uv run clipper order interview-highlights --reset
+# or provide a full valid replacement order:
+uv run clipper order interview-highlights clip-0003 clip-0001 clip-0002
+```
+
+Reset when the desired order is the current `clips.json` sequence. Use a full replacement when the user/LLM has chosen a specific valid order. Do not create `candidate-order.json`; it is obsolete and ignored by the supported workflow.
 
 ## JSON output is not parseable
 

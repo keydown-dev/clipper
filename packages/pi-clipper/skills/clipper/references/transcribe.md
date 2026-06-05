@@ -35,4 +35,6 @@ uv run clipper transcribe interview --reuse
 uv run clipper transcribe interview --force
 ```
 
-Use `work/sentences.json` for transcript scoring. If sentence generation fails because an old transcript lacks word timings, rerun transcription with `--force`.
+Use `work/sentences.json` for transcript scoring and transcript-only QA/summarization. It is the preferred readable artifact for summaries, quizzes, study guides, glossary extraction, and topic outlines because it preserves sentence text with timestamps. Use `work/transcript.json` when raw segment or word-level timing traceability is needed.
+
+If sentence generation fails because an old transcript lacks word timings, rerun transcription with `--force`.

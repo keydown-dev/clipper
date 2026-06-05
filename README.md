@@ -130,6 +130,9 @@ uv run clipper create project-name
 uv run clipper include project-name source-name --start 00:30 --end 02:00
 uv run clipper score project-name --with-transcript --with-visuals --directive "Find expressive moments"
 uv run clipper cut project-name --min-score 6
+uv run clipper contact-sheet project-name
+uv run clipper order project-name --show
+uv run clipper trim project-name clip-0001 --duration 8 --force
 uv run clipper montage project-name
 uv run clipper pipeline URL_OR_VIDEO_PATH --name optional-source-name --directive "Find expressive moments"
 ```
@@ -185,8 +188,11 @@ uv run clipper transcribe my-video --store .clipper --verbose
 | `score PROJECT` | Produce project-level `scores.json` with an OpenAI-compatible LLM. | `uv run clipper score --help` |
 | `shots [SOURCE]` | Detect visual shots and produce `shots.json` plus representative frames. | `uv run clipper shots --help` |
 | `visual [SOURCE]` | Analyze representative shot frames with a multimodal OpenAI-compatible model. | `uv run clipper visual --help` |
-| `cut PROJECT` | Cut passing scored project segments into project `clips/` and `clips.json`. | `uv run clipper cut --help` |
-| `montage PROJECT` | Assemble project clips into `montage.mp4` and `montage.json`. | `uv run clipper montage --help` |
+| `cut PROJECT` | Cut passing scored project segments into project `clips/`, `clips.json`, and canonical `clip-order.json`. | `uv run clipper cut --help` |
+| `order PROJECT` | Show, reset, replace, move, or swap the canonical project `clip-order.json`. | `uv run clipper order --help` |
+| `contact-sheet PROJECT` | Render an editorial-order review sheet at `contact-sheet.jpg` with thumbnails in `previews/`. | `uv run clipper contact-sheet --help` |
+| `trim PROJECT CLIP_ID` | Regenerate one project clip with adjusted `--start`, `--end`, or `--duration` and update manifests. | `uv run clipper trim --help` |
+| `montage PROJECT` | Assemble project clips into `montage.mp4` and `montage.json`, preserving editorial order by default. | `uv run clipper montage --help` |
 | `pipeline INPUT` | Run the compatibility single-source pipeline. | `uv run clipper pipeline --help` |
 
 Use `uv run clipper COMMAND --help` for the exact options accepted by each subcommand.
@@ -212,6 +218,9 @@ Current source/project layout:
     project.json
     scores.json
     clips.json
+    clip-order.json
+    contact-sheet.jpg
+    previews/clip-0001.jpg
     clips/clip-0001.mp4
     montage.mp4
     montage.json
@@ -234,7 +243,7 @@ This behavior should be consistent across commands. The policy is step-output ba
 
 By default, source evidence is flat inside `.clipper/sources/{source}/`, while project outputs are flat inside `.clipper/projects/{project}/`. Paths inside JSON manifests are relative to the owning source or project directory.
 
-Standard artifact filenames should be fixed so commands and agents can discover them consistently:
+Standard artifact filenames should be fixed so commands and agents can discover them consistently. For project review and LLM-assisted editing, `clip-order.json` is the canonical editable ordering artifact; ad-hoc `candidate-order.json` files are obsolete and should not be created by agents:
 
 ```text
 .clipper/sources/{source}/
@@ -251,6 +260,9 @@ Standard artifact filenames should be fixed so commands and agents can discover 
   project.json
   scores.json
   clips.json
+  clip-order.json
+  contact-sheet.jpg
+  previews/clip-0001.jpg
   clips/clip-0001.mp4
   montage.mp4
   montage.json
@@ -318,6 +330,55 @@ uv run clipper include episode-highlights episode
 uv run clipper score episode-highlights --with-transcript --directive "Find highlights"
 uv run clipper cut episode-highlights --min-score 6
 uv run clipper montage episode-highlights --max-duration 60
+```
+
+
+## Editorial LLM Montage Workflow
+
+Use Clipper project artifacts directly for iterative LLM/user montage editing. After scoring and cutting, `clipper cut PROJECT` writes `clips.json` plus the canonical editable order file, `clip-order.json`. Agents should inspect and modify that order only through `clipper order`; do not invent or maintain obsolete sidecar files such as `candidate-order.json`.
+
+A complete review/edit/render session looks like this:
+
+```bash
+uv run clipper score story-a --with-transcript --with-visuals \
+  --directive "Find expressive moments with strong dialogue"
+uv run clipper cut story-a --min-score 6
+uv run clipper contact-sheet story-a
+uv run clipper order story-a --show
+uv run clipper order story-a clip-0003 clip-0001 clip-0002
+uv run clipper order story-a --move clip-0002 --to 1
+uv run clipper order story-a --swap clip-0001 clip-0003
+uv run clipper trim story-a clip-0002 --duration 8 --force
+uv run clipper trim story-a clip-0003 --start 01:12 --end 01:20 --force
+uv run clipper montage story-a --max-duration 60
+```
+
+Review artifacts live in `.clipper/projects/{project}/`: `contact-sheet.jpg` gives a quick grid of the current editorial order, and `previews/` contains individual thumbnail images for agent/user reference. `clipper contact-sheet PROJECT --chronological` is available when you want source-time review instead of editorial order.
+
+`clipper order` examples:
+
+```bash
+uv run clipper order story-a --show
+uv run clipper order story-a --reset
+uv run clipper order story-a clip-0003 clip-0001 clip-0002
+uv run clipper order story-a --move clip-0002 --to 1
+uv run clipper order story-a --swap clip-0001 clip-0003
+```
+
+`clipper trim PROJECT CLIP_ID` examples:
+
+```bash
+uv run clipper trim story-a clip-0001 --duration 7 --force
+uv run clipper trim story-a clip-0001 --start 42.5 --force
+uv run clipper trim story-a clip-0001 --end 00:55 --force
+uv run clipper trim story-a clip-0001 --start 00:42 --end 00:55 --force
+```
+
+`clipper montage PROJECT` preserves editorial order by default. Pass `--chronological` only when you intentionally want to render by source/start/end time and ignore `clip-order.json`:
+
+```bash
+uv run clipper montage story-a
+uv run clipper montage story-a --chronological
 ```
 
 ## Config Defaults
@@ -564,11 +625,12 @@ Silent mode should add audio stripping behavior, e.g. `-an`.
 
 First-version behavior:
 
-- chronological ordering by default
-- use project `clips.json` exactly as produced by `clipper cut`; score filtering belongs to `cut`
+- preserve the canonical editorial order from project `clip-order.json` by default
+- support `--chronological` to ignore editorial order and sort by source/start/end time
+- use project `clips.json` for clip metadata and `clip-order.json` for ordering; score filtering belongs to `cut`
 - support `--min-duration`; fail clearly without creating a montage if selected clips cannot meet it
 - support `--max-duration`
-- include clips chronologically and trim the final included clip when needed to fit `--max-duration`
+- include clips in selected render order and trim the final included clip when needed to fit `--max-duration`
 - preserve audio by default
 - `--silent` strips audio
 - normalize output dimensions, default `1920x1080`
@@ -641,6 +703,8 @@ uv run clipper create local-highlights
 uv run clipper include local-highlights local-example
 uv run clipper score local-highlights --with-transcript --directive "Find expressive reactions" --json
 uv run clipper cut local-highlights --min-score 6
+uv run clipper contact-sheet local-highlights
+uv run clipper order local-highlights --show
 uv run clipper montage local-highlights --max-duration 60
 ```
 
@@ -663,7 +727,8 @@ Use `--proxy PROXY_URL` with `start` or `pipeline` when yt-dlp needs a proxy. UR
 - `.env` or LLM configuration fails: copy `.env.example` to `.env`, set `LLM_BASE_URL` and `LLM_MODEL`, and set `LLM_API_KEY` only if the endpoint requires authentication.
 - Want to test real services: run `uv run clipper doctor --check-llm` for LLM connectivity and `uv run clipper doctor --check-whisper` to load the configured Whisper model.
 - `source` says the output already exists: use `--reuse` to validate and reuse matching artifacts, or `--force` to overwrite the target source.
-- `score PROJECT`, `cut PROJECT`, or `montage PROJECT` is using the wrong target: if `.clipper/projects/PROJECT/project.json` exists, the positional name is treated as a project; use a source name plus `--project PROJECT` only for legacy scoped single-source outputs.
+- `score PROJECT`, `cut PROJECT`, `order PROJECT`, `contact-sheet PROJECT`, `trim PROJECT CLIP_ID`, or `montage PROJECT` is using the wrong target: if `.clipper/projects/PROJECT/project.json` exists, the positional name is treated as a project; use a source name plus `--project PROJECT` only for legacy scoped single-source outputs.
+- `clipper order`, `contact-sheet`, or `montage` reports missing clips referenced by `clip-order.json`: run `uv run clipper order PROJECT --show` to see the stale IDs, then either restore/regenerate the missing clip files, run `uv run clipper order PROJECT --reset` to reset the order to the current `clips.json`, or provide a full replacement order containing only valid clip IDs. Do not repair this by creating `candidate-order.json`; `clip-order.json` is canonical.
 - `--json` output is not parseable: rerun without `--verbose`, or check stderr; diagnostics are expected on stderr while stdout remains a single JSON envelope.
 - Whisper or LLM tests are skipped by default. Opt in with `CLIPPER_RUN_WHISPER_TESTS=1` or `CLIPPER_RUN_LLM_TESTS=1` when credentials/models are available.
 
