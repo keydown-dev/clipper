@@ -4,7 +4,7 @@
   "branch": "orchestrator/editorial-order-workflow",
   "currentIteration": 0,
   "createdAt": "2026-06-05T16:16:14.063Z",
-  "updatedAt": "2026-06-05T16:16:14.065Z",
+  "updatedAt": "2026-06-05T19:09:04.178Z",
   "maxIterations": 6,
   "workerDefaults": {
     "contextWindow": 272000
@@ -41,5 +41,10 @@
       "status": "queued"
     }
   ],
-  "iterations": []
+  "iterations": [],
+  "runBudget": {
+    "remaining": 6,
+    "updatedAt": "2026-06-05T19:09:04.178Z",
+    "updatedBy": "orchestrator"
+  }
 }
