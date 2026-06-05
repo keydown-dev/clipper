@@ -79,6 +79,12 @@ def write_clip_order(store: Path, project: str, clip_ids: list[str] | None = Non
     return path, order
 
 
+def _write_existing_order(path: Path, order: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
+    order["updated_at"] = utc_now()
+    write_json(path, order)
+    return path, order
+
+
 def read_clip_order(store: Path, project: str) -> tuple[Path, dict[str, Any]]:
     layout = ProjectArtifactLayout.for_project(store, project)
     _clips_by_id(layout)
@@ -103,6 +109,36 @@ def read_clip_order(store: Path, project: str) -> tuple[Path, dict[str, Any]]:
     if missing:
         raise ArtifactError(f"ordered clip id(s) not found in clips.json: {', '.join(missing)}")
     return path, order
+
+
+def move_clip_order(store: Path, project: str, clip_id: str, position: int) -> tuple[Path, dict[str, Any]]:
+    """Move a clip to a 1-based position in the project clip order."""
+
+    path, order = read_clip_order(store, project)
+    entries = order["order"]
+    if position < 1 or position > len(entries):
+        raise ArtifactError(f"--to position must be between 1 and {len(entries)}")
+    index = next((idx for idx, entry in enumerate(entries) if entry["id"] == clip_id), None)
+    if index is None:
+        raise ArtifactError(f"clip id not found in clip-order.json: {clip_id}")
+    entry = entries.pop(index)
+    entries.insert(position - 1, entry)
+    return _write_existing_order(path, order)
+
+
+def swap_clip_order(store: Path, project: str, clip_a: str, clip_b: str) -> tuple[Path, dict[str, Any]]:
+    """Swap two clips in the project clip order."""
+
+    path, order = read_clip_order(store, project)
+    entries = order["order"]
+    indexes = {entry["id"]: idx for idx, entry in enumerate(entries)}
+    missing = [clip_id for clip_id in (clip_a, clip_b) if clip_id not in indexes]
+    if missing:
+        raise ArtifactError(f"clip id(s) not found in clip-order.json: {', '.join(missing)}")
+    index_a = indexes[clip_a]
+    index_b = indexes[clip_b]
+    entries[index_a], entries[index_b] = entries[index_b], entries[index_a]
+    return _write_existing_order(path, order)
 
 
 def total_duration(order: dict[str, Any]) -> float:

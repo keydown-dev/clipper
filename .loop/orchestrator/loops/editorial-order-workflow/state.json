@@ -4,7 +4,7 @@
   "branch": "orchestrator/editorial-order-workflow",
   "currentIteration": 3,
   "createdAt": "2026-06-05T16:16:14.063Z",
-  "updatedAt": "2026-06-05T19:14:33.300Z",
+  "updatedAt": "2026-06-05T19:17:25.900Z",
   "maxIterations": 6,
   "workerDefaults": {
     "contextWindow": 272000
@@ -23,7 +23,7 @@
     {
       "id": "003-issue-039-extend-clipper-order-project-with-move",
       "title": "Issue 039 — Extend clipper order PROJECT with --move/--to and --swap operations, including initialization from clips.json, validation errors, JSON/human output, and tests.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "004-issue-040-add-clipper-contact-sheet-project-comm",
@@ -141,10 +141,48 @@
     },
     {
       "number": 3,
-      "status": "running",
+      "status": "accepted",
       "todoId": "003-issue-039-extend-clipper-order-project-with-move",
       "beforeRef": "ralph/editorial-order-workflow/iter-003-before",
-      "startedAt": "2026-06-05T19:14:33.108Z"
+      "startedAt": "2026-06-05T19:14:33.108Z",
+      "diff": {
+        "filesChanged": 3,
+        "insertions": 132,
+        "deletions": 4
+      },
+      "usage": {
+        "input": 32680,
+        "output": 5314,
+        "cacheRead": 369664,
+        "cacheWrite": 0,
+        "totalTokens": 407658,
+        "cost": 0.507652,
+        "contextWindow": 272000,
+        "contextTokens": 26461
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Completed issue 039 for `clipper order PROJECT`:\n\n- Added `--move CLIP_ID --to POSITION` with 1-based position validation.\n- Added `--swap CLIP_A CLIP_B`.\n- Move/swap initialize from `clips.json` when `clip-order.json` is absent, then write `clip-order.json`.\n- Move/swap update `updated_at`.\n- Move/swap reject unknown clip IDs with clear artifact errors.\n- Order actions (`--reset`, `--show`, explicit IDs, `--move`, `--swap`) are mutually exclusive.\n- Human move/swap output prints numbered resulting order and total duration.\n- JSON output includes resulting order and total duration via the existing success envelope.\n- Added tests for move to beginning/middle/end, swap, invalid position, and missing clip IDs.",
+      "changedFiles": [
+        "clipper/order.py",
+        "clipper/cli.py",
+        "tests/test_issue037.py"
+      ],
+      "commitSubject": "Add order move and swap operations",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "# Verification\n\nStatus: passed\n\nCommands run:\n\n- `uv run pytest tests/test_issue037.py`\n  - Result: passed — 14 passed in 0.10s\n- `uv run pytest`\n  - Result: passed — 166 passed, 3 skipped in 4.15s"
+          }
+        ]
+      },
+      "afterRef": "ralph/editorial-order-workflow/iter-003-after",
+      "completedAt": "2026-06-05T19:17:25.782Z"
     }
   ],
   "runBudget": {

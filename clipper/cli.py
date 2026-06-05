@@ -22,7 +22,7 @@ from .artifacts import ArtifactError, ArtifactLayout, ProjectArtifactLayout, Sou
 from .config import load_config
 from .cutting import CutOptions, cut_project, cut_video
 from .montage import MontageOptions, montage_project, montage_video
-from .order import read_clip_order, total_duration, write_clip_order
+from .order import move_clip_order, read_clip_order, swap_clip_order, total_duration, write_clip_order
 from .progress import CliProgress
 from .scoring import score_project, score_video
 from .shots import ShotOptions, shots_video
@@ -508,10 +508,19 @@ def run_order(args: argparse.Namespace) -> int:
 
     command_config = config_from_args(args)
     project = validate_video_name(args.project)
-    if args.reset and args.clip_ids:
-        raise ArtifactError("--reset cannot be combined with explicit clip IDs")
+    requested_actions = sum(bool(action) for action in (args.reset, args.show, args.clip_ids, args.move, args.swap))
+    if requested_actions > 1:
+        raise ArtifactError("--reset, --show, explicit clip IDs, --move, and --swap are mutually exclusive")
+    if (args.move is None) != (args.to is None):
+        raise ArtifactError("--move requires --to, and --to requires --move")
     if args.reset:
         order_path, order = write_clip_order(command_config.store, project)
+        wrote = True
+    elif args.move:
+        order_path, order = move_clip_order(command_config.store, project, args.move, args.to)
+        wrote = True
+    elif args.swap:
+        order_path, order = swap_clip_order(command_config.store, project, args.swap[0], args.swap[1])
         wrote = True
     elif args.clip_ids:
         order_path, order = write_clip_order(command_config.store, project, list(args.clip_ids))
@@ -523,7 +532,7 @@ def run_order(args: argparse.Namespace) -> int:
     result = {"project": project, "order_path": str(order_path), "order": order["order"], "total_duration": total}
     if command_config.json_output:
         print_json(success_envelope(artifact_path=str(order_path), result=result))
-    elif args.show or not wrote:
+    elif args.show or not wrote or args.move or args.swap:
         print(f"Clip order: {order_path}")
         for index, entry in enumerate(order["order"], start=1):
             print(f"{index}. {entry['id']} {entry['duration']:.3f}s")
@@ -1029,6 +1038,9 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     order.add_argument("clip_ids", nargs="*", metavar="CLIP_ID", help="Full replacement order by clip ID.")
     order.add_argument("--reset", action="store_true", help="Reset order to the current clips.json order.")
     order.add_argument("--show", action="store_true", help="Show the current order.")
+    order.add_argument("--move", metavar="CLIP_ID", help="Move clip ID to a 1-based position.")
+    order.add_argument("--to", type=int, metavar="POSITION", help="1-based destination position for --move.")
+    order.add_argument("--swap", nargs=2, metavar=("CLIP_A", "CLIP_B"), help="Swap two clip IDs in the order.")
     order.set_defaults(handler=handlers["order"])
 
     montage = subparsers.add_parser("montage", parents=[common], help="Assemble clips into a montage.")

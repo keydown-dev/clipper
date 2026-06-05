@@ -112,3 +112,83 @@ def test_order_validation_fails_when_clips_manifest_missing(capsys, tmp_path: Pa
     payload = json.loads(capsys.readouterr().out)
     assert "clips manifest not found" in payload["error"]["message"]
     assert not (project / "clip-order.json").exists()
+
+
+def test_order_move_to_beginning_initializes_and_prints_order(capsys, tmp_path: Path) -> None:
+    store = tmp_path / ".clipper"
+    project = make_project(store)
+
+    assert main(["order", "story-a", "--move", "clip-0003", "--to", "1", "--store", str(store)]) == EXIT_SUCCESS
+
+    out = capsys.readouterr().out
+    data = read_order(project)
+    assert [entry["id"] for entry in data["order"]] == ["clip-0003", "clip-0001", "clip-0002"]
+    assert "Clip order:" in out
+    assert "1. clip-0003 3.000s" in out
+    assert "Total duration: 6.750s" in out
+
+
+def test_order_move_to_middle(tmp_path: Path) -> None:
+    store = tmp_path / ".clipper"
+    project = make_project(store)
+    assert main(["order", "story-a", "clip-0003", "clip-0002", "clip-0001", "--store", str(store)]) == EXIT_SUCCESS
+    before = read_order(project)["updated_at"]
+
+    assert main(["order", "story-a", "--move", "clip-0003", "--to", "2", "--store", str(store)]) == EXIT_SUCCESS
+
+    data = read_order(project)
+    assert [entry["id"] for entry in data["order"]] == ["clip-0002", "clip-0003", "clip-0001"]
+    assert data["updated_at"] >= before
+
+
+def test_order_move_to_end(tmp_path: Path) -> None:
+    store = tmp_path / ".clipper"
+    project = make_project(store)
+
+    assert main(["order", "story-a", "--move", "clip-0001", "--to", "3", "--store", str(store)]) == EXIT_SUCCESS
+
+    data = read_order(project)
+    assert [entry["id"] for entry in data["order"]] == ["clip-0002", "clip-0003", "clip-0001"]
+
+
+def test_order_swap_updates_order_and_json_output(capsys, tmp_path: Path) -> None:
+    store = tmp_path / ".clipper"
+    project = make_project(store)
+
+    assert main(["order", "story-a", "--swap", "clip-0001", "clip-0003", "--json", "--store", str(store)]) == EXIT_SUCCESS
+
+    payload = json.loads(capsys.readouterr().out)
+    data = read_order(project)
+    assert [entry["id"] for entry in data["order"]] == ["clip-0003", "clip-0002", "clip-0001"]
+    assert [entry["id"] for entry in payload["result"]["order"]] == ["clip-0003", "clip-0002", "clip-0001"]
+    assert payload["result"]["total_duration"] == 6.75
+
+
+def test_order_move_rejects_invalid_position(capsys, tmp_path: Path) -> None:
+    store = tmp_path / ".clipper"
+    make_project(store)
+
+    assert main(["order", "story-a", "--move", "clip-0001", "--to", "0", "--json", "--store", str(store)]) == EXIT_FAILURE
+
+    payload = json.loads(capsys.readouterr().out)
+    assert "--to position must be between 1 and 3" in payload["error"]["message"]
+
+
+def test_order_move_rejects_missing_clip_id(capsys, tmp_path: Path) -> None:
+    store = tmp_path / ".clipper"
+    make_project(store)
+
+    assert main(["order", "story-a", "--move", "clip-9999", "--to", "1", "--json", "--store", str(store)]) == EXIT_FAILURE
+
+    payload = json.loads(capsys.readouterr().out)
+    assert "clip id not found" in payload["error"]["message"]
+
+
+def test_order_swap_rejects_missing_clip_id(capsys, tmp_path: Path) -> None:
+    store = tmp_path / ".clipper"
+    make_project(store)
+
+    assert main(["order", "story-a", "--swap", "clip-0001", "clip-9999", "--json", "--store", str(store)]) == EXIT_FAILURE
+
+    payload = json.loads(capsys.readouterr().out)
+    assert "clip id(s) not found" in payload["error"]["message"]
