@@ -546,6 +546,7 @@ def run_montage(args: argparse.Namespace) -> int:
         width=app_config.default_width,
         height=app_config.default_height,
         silent=args.silent,
+        chronological=args.chronological,
     )
     project_arg = args.video if args.video and args.project is None and (command_config.store / "projects" / args.video / "project.json").exists() else None
     if project_arg is not None:
@@ -579,6 +580,7 @@ def run_montage(args: argparse.Namespace) -> int:
         "width": montage["width"],
         "height": montage["height"],
         "silent": montage["silent"],
+        "order_source": montage.get("order_source", "clips.json"),
         "reused": reused,
     }
     if command_config.json_output:
@@ -1034,6 +1036,7 @@ def add_placeholder_subcommands(subparsers: argparse._SubParsersAction[argparse.
     montage.add_argument("--min-duration", type=float, help="Require a minimum montage duration in seconds.")
     montage.add_argument("--max-duration", type=float, help="Limit montage duration in seconds.")
     montage.add_argument("--silent", action="store_true", help="Strip audio from the montage.")
+    montage.add_argument("--chronological", action="store_true", help="Sort selected clips by source/start/end time instead of preserving editorial order.")
     add_project(montage)
     add_reuse_force(montage)
     montage.set_defaults(handler=handlers["montage"])

@@ -20,6 +20,7 @@ class MontageOptions:
     width: int = 1920
     height: int = 1080
     silent: bool = False
+    chronological: bool = False
 
 
 def _cleanup(paths: Iterable[Path]) -> None:
@@ -38,17 +39,21 @@ def _scale_pad_filter(width: int, height: int) -> str:
     return f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2"
 
 
-def select_clips_for_montage(clips: Iterable[dict[str, Any]], *, min_duration: float | None, max_duration: float | None) -> tuple[list[dict[str, Any]], float]:
-    """Return chronological clip selections, trimming the last duration for max duration."""
+def select_clips_for_montage(clips: Iterable[dict[str, Any]], *, min_duration: float | None, max_duration: float | None, chronological: bool = False) -> tuple[list[dict[str, Any]], float]:
+    """Return clip selections, trimming the last duration for max duration."""
 
     if min_duration is not None and min_duration < 0:
         raise ArtifactError("--min-duration must be non-negative")
     if max_duration is not None and max_duration <= 0:
         raise ArtifactError("--max-duration must be greater than zero")
 
+    ordered_clips = [dict(clip) for clip in clips]
+    if chronological:
+        ordered_clips.sort(key=lambda item: (str(item.get("source") or item.get("source_file") or ""), float(item["start"]), float(item["end"])))
+
     selected: list[dict[str, Any]] = []
     remaining = max_duration
-    for clip in sorted((dict(clip) for clip in clips), key=lambda item: (float(item["start"]), float(item["end"]))):
+    for clip in ordered_clips:
         duration = float(clip["duration"])
         if duration <= 0:
             continue
@@ -106,6 +111,40 @@ def ffmpeg_montage_command(*, filelist: Path, output: Path, width: int, height: 
     return command
 
 
+def _project_ordered_clips(layout: ProjectArtifactLayout, manifest: dict[str, Any], *, chronological: bool) -> tuple[list[dict[str, Any]], str]:
+    if chronological:
+        return list(manifest["clips"]), "chronological"
+    if not layout.clip_order.exists():
+        return list(manifest["clips"]), "clips.json"
+
+    order = read_validated_json(layout.clip_order, "clip_order")
+    clips_by_id = {clip["id"]: clip for clip in manifest["clips"]}
+    ordered_clips: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    missing: list[str] = []
+    for entry in order["order"]:
+        clip_id = entry["id"]
+        if clip_id in seen and clip_id not in duplicates:
+            duplicates.append(clip_id)
+        seen.add(clip_id)
+        if clip_id not in clips_by_id:
+            missing.append(clip_id)
+            continue
+        ordered_clips.append(clips_by_id[clip_id])
+    if duplicates:
+        raise ArtifactError(f"duplicate clip id(s) in clip-order.json: {', '.join(duplicates)}")
+    if missing:
+        raise ArtifactError(f"ordered clip id(s) not found in clips.json: {', '.join(missing)}")
+    return ordered_clips, "clip-order.json"
+
+
+def _clips_for_layout(layout: ArtifactLayout | ProjectArtifactLayout, manifest: dict[str, Any], *, chronological: bool) -> tuple[list[dict[str, Any]], str]:
+    if isinstance(layout, ProjectArtifactLayout):
+        return _project_ordered_clips(layout, manifest, chronological=chronological)
+    return list(manifest["clips"]), "chronological" if chronological else "clips.json"
+
+
 def _montage_from_layout(
     *,
     layout: ArtifactLayout | ProjectArtifactLayout,
@@ -122,7 +161,8 @@ def _montage_from_layout(
         return owner, layout.montage_json, read_validated_json(layout.montage_json, "montage"), True
 
     manifest = read_validated_json(layout.clips_manifest, "clips")
-    selected, selected_duration = select_clips_for_montage(manifest["clips"], min_duration=options.min_duration, max_duration=options.max_duration)
+    ordered_clips, order_source = _clips_for_layout(layout, manifest, chronological=options.chronological)
+    selected, selected_duration = select_clips_for_montage(ordered_clips, min_duration=options.min_duration, max_duration=options.max_duration, chronological=options.chronological)
 
     layout.create_dirs()
     for clip in selected:
@@ -169,6 +209,7 @@ def _montage_from_layout(
             "width": int(options.width),
             "height": int(options.height),
             "silent": bool(options.silent),
+            "order_source": order_source,
         }
         write_json(layout.montage_json, montage)
         return owner, layout.montage_json, montage, False

@@ -4,7 +4,7 @@
   "branch": "orchestrator/editorial-order-workflow",
   "currentIteration": 2,
   "createdAt": "2026-06-05T16:16:14.063Z",
-  "updatedAt": "2026-06-05T19:12:06.090Z",
+  "updatedAt": "2026-06-05T19:14:32.424Z",
   "maxIterations": 6,
   "workerDefaults": {
     "contextWindow": 272000
@@ -18,7 +18,7 @@
     {
       "id": "002-issue-038-change-clipper-montage-project-to-pres",
       "title": "Issue 038 — Change clipper montage PROJECT to preserve editorial order by default, add --chronological, include order_source in manifests/JSON, and test ordering/max-duration behavior.",
-      "status": "running"
+      "status": "complete"
     },
     {
       "id": "003-issue-039-extend-clipper-order-project-with-move",
@@ -95,10 +95,49 @@
     },
     {
       "number": 2,
-      "status": "running",
+      "status": "accepted",
       "todoId": "002-issue-038-change-clipper-montage-project-to-pres",
       "beforeRef": "ralph/editorial-order-workflow/iter-002-before",
-      "startedAt": "2026-06-05T19:12:05.890Z"
+      "startedAt": "2026-06-05T19:12:05.890Z",
+      "diff": {
+        "filesChanged": 4,
+        "insertions": 167,
+        "deletions": 7
+      },
+      "usage": {
+        "input": 50114,
+        "output": 5970,
+        "cacheRead": 585728,
+        "cacheWrite": 0,
+        "totalTokens": 641812,
+        "cost": 0.722534,
+        "contextWindow": 272000,
+        "contextTokens": 44388
+      },
+      "observedModel": "gpt-5.5",
+      "model": "gpt-5.5",
+      "observedProvider": "openai-codex",
+      "provider": "openai-codex",
+      "summary": "Implemented Issue 038 for montage ordering:\n\n- `clipper montage PROJECT` now preserves project `clip-order.json` order when present.\n- Falls back to `clips.json` order when no `clip-order.json` exists.\n- Added `--chronological` to sort by source/start/end only when explicitly requested.\n- `--max-duration` trimming now happens after the selected ordering is applied.\n- `montage.json` and CLI JSON output include `order_source`.\n- Legacy/video montage now preserves `clips.json` order by default and supports chronological mode through the same option.",
+      "changedFiles": [
+        "clipper/montage.py",
+        "clipper/cli.py",
+        "tests/test_issue009.py",
+        "tests/test_issue038.py"
+      ],
+      "commitSubject": "Preserve editorial order in montage",
+      "verification": {
+        "status": "passed",
+        "commands": [
+          {
+            "command": "worker-reported verification",
+            "exitCode": 0,
+            "summary": "Status: passed\n\nCommands run:\n\n- `uv run pytest tests/test_issue009.py tests/test_issue035.py tests/test_issue037.py tests/test_issue038.py`\n  - Result: passed, 23 passed in 0.83s\n- `uv run pytest`\n  - Result: passed, 159 passed, 3 skipped in 4.23s"
+          }
+        ]
+      },
+      "afterRef": "ralph/editorial-order-workflow/iter-002-after",
+      "completedAt": "2026-06-05T19:14:32.310Z"
     }
   ],
   "runBudget": {

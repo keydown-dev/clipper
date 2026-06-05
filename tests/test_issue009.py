@@ -31,7 +31,7 @@ def clip(id_: str, path: str, start: float, end: float, *, score: float = 1.0) -
     return {"id": id_, "path": path, "start": start, "end": end, "duration": end - start, "score": score, "reason": id_}
 
 
-def test_selects_chronologically_without_score_refiltering_and_trims_final_clip() -> None:
+def test_select_preserves_input_order_without_score_refiltering_and_trims_final_clip() -> None:
     selected, total = select_clips_for_montage(
         [
             clip("late", "clips/late.mp4", 8, 12, score=0),
@@ -40,6 +40,23 @@ def test_selects_chronologically_without_score_refiltering_and_trims_final_clip(
         ],
         min_duration=None,
         max_duration=6.0,
+    )
+
+    assert [item["id"] for item in selected] == ["late", "early"]
+    assert [item["selected_duration"] for item in selected] == [4.0, 2.0]
+    assert total == 6.0
+
+
+def test_select_chronological_flag_sorts_by_time() -> None:
+    selected, total = select_clips_for_montage(
+        [
+            clip("late", "clips/late.mp4", 8, 12, score=0),
+            clip("early", "clips/early.mp4", 1, 4, score=0),
+            clip("middle", "clips/middle.mp4", 5, 7, score=0),
+        ],
+        min_duration=None,
+        max_duration=6.0,
+        chronological=True,
     )
 
     assert [item["id"] for item in selected] == ["early", "middle", "late"]
@@ -71,11 +88,12 @@ def test_montage_invokes_concat_demuxer_and_writes_manifest(monkeypatch: pytest.
 
     assert reused is False
     assert montage_path == root / "output" / "montage.json"
-    assert manifest["clips"] == ["clips/one.mp4", "clips/two.mp4"]
+    assert manifest["clips"] == ["clips/two.mp4", "clips/one.mp4"]
     assert manifest["duration"] == 4.0
+    assert manifest["order_source"] == "clips.json"
     assert manifest["width"] == 1920
     assert manifest["height"] == 1080
-    assert seen[0][:4] == ["ffmpeg", "-y", "-i", str(root / "clips" / "two.mp4")]
+    assert seen[0][:4] == ["ffmpeg", "-y", "-i", str(root / "clips" / "one.mp4")]
     assert seen[1][0:6] == ["ffmpeg", "-y", "-f", "concat", "-safe", "0"]
     assert "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" in seen[1]
     assert json.loads((root / "output" / "montage.json").read_text()) == manifest
