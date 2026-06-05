@@ -1,0 +1,45 @@
+{
+  "name": "editorial-order-workflow",
+  "control": "active",
+  "branch": "orchestrator/editorial-order-workflow",
+  "currentIteration": 0,
+  "createdAt": "2026-06-05T16:16:14.063Z",
+  "updatedAt": "2026-06-05T16:16:14.065Z",
+  "maxIterations": 6,
+  "workerDefaults": {
+    "contextWindow": 272000
+  },
+  "todos": [
+    {
+      "id": "001-issue-037-add-canonical-clipper-projects-project",
+      "title": "Issue 037 — Add canonical .clipper/projects/{project}/clip-order.json artifact, validation helpers, and clipper order PROJECT --reset/--show/full replacement with tests.",
+      "status": "queued"
+    },
+    {
+      "id": "002-issue-038-change-clipper-montage-project-to-pres",
+      "title": "Issue 038 — Change clipper montage PROJECT to preserve editorial order by default, add --chronological, include order_source in manifests/JSON, and test ordering/max-duration behavior.",
+      "status": "queued"
+    },
+    {
+      "id": "003-issue-039-extend-clipper-order-project-with-move",
+      "title": "Issue 039 — Extend clipper order PROJECT with --move/--to and --swap operations, including initialization from clips.json, validation errors, JSON/human output, and tests.",
+      "status": "queued"
+    },
+    {
+      "id": "004-issue-040-add-clipper-contact-sheet-project-comm",
+      "title": "Issue 040 — Add clipper contact-sheet PROJECT command with editorial/chronological ordering, previews, configurable thumbnail grid/output/force/JSON behavior, and tests.",
+      "status": "queued"
+    },
+    {
+      "id": "005-issue-041-add-clipper-trim-project-clip-id-comma",
+      "title": "Issue 041 — Add clipper trim PROJECT CLIP_ID command to update clip timing, regenerate only affected media, preserve IDs/paths, update clip-order duration, validate bounds/options, and test behavior.",
+      "status": "queued"
+    },
+    {
+      "id": "006-issue-042-update-readme-and-skills-clipper-docs",
+      "title": "Issue 042 — Update README and skills/clipper docs for canonical editorial LLM montage workflow, artifact layout, troubleshooting, examples, and obsolete candidate-order.json guidance.",
+      "status": "queued"
+    }
+  ],
+  "iterations": []
+}
